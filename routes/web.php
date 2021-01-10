@@ -12,7 +12,9 @@
 | and give it the Closure to call when that URI is requested.
 |
 */
+use Illuminate\Support\Facades\Redis;
 
-$router->get('/', function () use ($router) {
-    return $router->app->version();
+$router->get('/', function () {
+    $p = Redis::incr('p');
+    return $p;
 });
