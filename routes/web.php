@@ -18,3 +18,6 @@ $router->get('/', function () {
     $p = Redis::incr('p');
     return $p;
 });
+
+$router->get('users_with_query', "UserController@getUser");
+$router->get('users_with_cache', "UserController@index");
