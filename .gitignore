@@ -50,5 +50,3 @@ Thumbs.db
 
 .env
 /vendor/
-cloud_sql_proxy
-credentials.json
