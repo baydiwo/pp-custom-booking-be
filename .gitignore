@@ -50,6 +50,5 @@ Thumbs.db
 
 .env
 /vendor/
-composer.lock
 cloud_sql_proxy
 credentials.json
