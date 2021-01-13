@@ -21,3 +21,4 @@ $router->get('/', function () {
 
 $router->get('users_with_query', "UserController@getUser");
 $router->get('users_with_cache', "UserController@index");
+$router->post('auth-token', "ApiController@authToken");
