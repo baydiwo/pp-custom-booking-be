@@ -22,3 +22,14 @@ $router->get('/', function () {
 $router->get('users_with_query', "UserController@getUser");
 $router->get('users_with_cache', "UserController@index");
 $router->post('auth-token', "ApiController@authToken");
+
+$router->group(['middleware' => 'auth.token'], function () use ($router) {
+    $router->group(['prefix' => 'booking'], function () use ($router) {
+        $router->get('{id}', 'BookingController@detail');
+        $router->post('', 'BookingController@create');
+    });
+    $router->group(['prefix' => 'property'], function () use ($router) {
+        $router->get('{id}', 'PropertyController@detail');
+    });
+});
+
