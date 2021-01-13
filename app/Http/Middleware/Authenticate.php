@@ -2,8 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\ApiController;
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Contracts\Auth\Factory as Auth;
+use Illuminate\Support\Facades\Redis;
 
 class Authenticate
 {
@@ -35,9 +38,24 @@ class Authenticate
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if ($this->auth->guard($guard)->guest()) {
-            return response('Unauthorized.', 401);
-        }
+        // $redis = Redis::connection();
+
+        // if(!$redis->get('authToken')) {
+        //     $api = new ApiController();
+        //     $auth = $api->authToken(); 
+
+        //     $redis->set('authToken', $auth['token']);
+        //     $redis->set('expiryDateToken', $auth['expiryDate']);
+        // } else {
+        //     if($redis->get('expiryDateToken') < Carbon::now()) {
+        //         $api = new ApiController();
+        //         $auth = $api->authToken(); 
+    
+        //         $redis->set('authToken', $auth['token']);
+        //         $redis->set('expiryDateToken', $auth['expiryDate']);
+    
+        //     }
+        // }
 
         return $next($request);
     }

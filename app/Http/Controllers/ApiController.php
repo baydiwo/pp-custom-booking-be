@@ -18,8 +18,18 @@ class ApiController {
                 'Distribution'
             ]
         ];
-
         $response = Http::post(env('BASE_URL_RMS').$endpoint, $param);
+        return $response->json();
+    }
+
+    public function createGuest($token, $param)
+    {
+        $endpoint = 'guests?ignoreMandatoryFieldWarnings=true';
+        
+        $response = Http::withHeaders([
+            'authtoken' => $token
+        ])->post(env('BASE_URL_RMS').$endpoint, $param);
+
         return $response->json();
     }
 }
