@@ -19,7 +19,7 @@ class BookingController
     public function __construct(Request $request)
     {
         // $this->authToken = Redis::get('authToken');
-        $this->authToken = "f77835c98d2c8e467d7dcdf195d02f73";
+        $this->authToken = "0ac1471aa0ed1c85a4b1651c804754f0"; // please update
         $this->request = $request;
         $this->params  = $request->all();
     }
