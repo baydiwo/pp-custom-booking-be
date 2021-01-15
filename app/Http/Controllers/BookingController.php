@@ -34,7 +34,6 @@ class BookingController
                 'departureDate'   => 'required|date_format:Y-m-d H:i:s',
                 'surname'         => 'required',
                 'given'           => 'required',
-                // 'bookingSourceId' => 'required|integer',
                 'adults'          => 'required|integer',
                 'areaId'          => 'required|integer',
                 'categoryId'      => 'required|integer',

@@ -24,7 +24,7 @@ class ApiController {
 
     public function createGuest($token, $param)
     {
-        $endpoint = 'guests?ignoreMandatoryFieldWarnings=true';
+        $endpoint = 'guests?ignoreMandatoryFieldWarnings=false';
         
         $response = Http::withHeaders([
             'authtoken' => $token
