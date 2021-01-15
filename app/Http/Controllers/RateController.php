@@ -44,8 +44,8 @@ class RateController
 
     public function rateList()
     {
+        die("sdf");
         $endpoint = 'rates';
-
         $response = Http::withHeaders([
             'authtoken' => $this->authToken
         ])->get(env('BASE_URL_RMS') . $endpoint);

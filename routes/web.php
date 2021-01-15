@@ -34,7 +34,7 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
     $router->get('countries', 'CountryController@list');
     $router->group(['prefix' => 'rate'], function () use ($router) {
         $router->post('rateQuote', 'RateController@rateQuote');
-        $router->post('', 'RateController@rateList');
+        $router->get('', 'RateController@rateList');
     });
 });
 
