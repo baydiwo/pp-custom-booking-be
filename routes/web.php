@@ -31,5 +31,6 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
     $router->group(['prefix' => 'property'], function () use ($router) {
         $router->get('{id}', 'PropertyController@detail');
     });
+    $router->get('countries', 'CountryController@list');
 });
 
