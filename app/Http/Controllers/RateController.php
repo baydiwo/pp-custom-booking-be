@@ -41,4 +41,22 @@ class RateController
             'data' => $response->json()
         ];
     }
+
+    public function rateList()
+    {
+        $endpoint = 'rates';
+
+        $response = Http::withHeaders([
+            'authtoken' => $this->authToken
+        ])->get(env('BASE_URL_RMS') . $endpoint);
+
+        if(isset($response['Message'])) {
+            throw new Exception(ucwords($response['Message']));
+        }
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => $response->json()
+        ];
+    }
 }
