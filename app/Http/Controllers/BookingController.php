@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Helpers\Constant;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
@@ -18,8 +19,7 @@ class BookingController
 
     public function __construct(Request $request)
     {
-        // $this->authToken = Redis::get('authToken');
-        $this->authToken = env('AUTH_TOKEN'); // please update
+        $this->authToken = Cache::get('authToken');
         $this->request = $request;
         $this->params  = $request->all();
     }

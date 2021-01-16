@@ -6,6 +6,7 @@ use App\Http\Controllers\ApiController;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Contracts\Auth\Factory as Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 
 class Authenticate
@@ -38,6 +39,17 @@ class Authenticate
      */
     public function handle($request, Closure $next, $guard = null)
     {
+        $api = new ApiController();
+        $authToken = Cache::get('authToken');
+        if($authToken == NULL) {
+            $dataToken = $api->authToken();
+            Cache::forever('authToken', $dataToken);
+        } else {
+            if($authToken['expiryDate'] < Carbon::now()) {
+                $dataToken = $api->authToken();
+                Cache::forever('authToken', $dataToken);
+            }
+        }
         // $redis = Redis::connection();
 
         // if(!$redis->get('authToken')) {

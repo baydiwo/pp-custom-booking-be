@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
@@ -14,8 +15,7 @@ class PropertyController {
 
     public function __construct(Request $request)
     {
-        // $this->authToken = Redis::get('authToken');
-        $this->authToken = "b9fe163e302a5884d4e8486d860437b3";
+        $this->authToken = Cache::get('authToken');
         $this->request = $request;
         $this->params  = $request->all();
     }
