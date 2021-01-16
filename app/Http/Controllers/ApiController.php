@@ -32,4 +32,24 @@ class ApiController {
 
         return $response->json();
     }
+
+    public function detailProperty($id, $token) 
+    {
+        $endpoint = 'properties/'.$id.'?modelType=full';
+        $response = Http::withHeaders([
+            'authtoken' => $token
+        ])->get(env('BASE_URL_RMS').$endpoint);
+        
+        return $response->json();
+    }
+
+    public function detailPropertySetting($id, $token) 
+    {
+        $endpoint = 'properties/'.$id.'/ibe/settings';
+        $response = Http::withHeaders([
+            'authtoken' => $token
+        ])->get(env('BASE_URL_RMS').$endpoint);
+        
+        return $response->json();
+    }
 }
