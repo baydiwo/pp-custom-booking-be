@@ -50,6 +50,7 @@ class Authenticate
                 Cache::forever('authToken', $dataToken);
             }
         }
+
         // $redis = Redis::connection();
 
         // if(!$redis->get('authToken')) {

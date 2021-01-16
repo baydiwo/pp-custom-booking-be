@@ -19,26 +19,31 @@ class CountryController
 
     public function __construct(Request $request)
     {
-        $this->authToken = Cache::get('authToken');
+        $this->authToken = Cache::get('authToken')['token'];
         $this->request = $request;
         $this->params  = $request->all();
     }
 
     public function list()
     {
-        $endpoint = 'countries';
+        $value = Cache::remember('countries', 10 * 60, function()
+        {
+            $endpoint = 'countries';
+            $response = Http::withHeaders([
+                'authtoken' => $this->authToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
+    
+            if(isset($response['Message'])) {
+                throw new Exception(ucwords($response['Message']));
+            }
+    
+            return $response->json();
+        });
 
-        $response = Http::withHeaders([
-            'authtoken' => $this->authToken
-        ])->get(env('BASE_URL_RMS') . $endpoint);
-
-        if(isset($response['Message'])) {
-            throw new Exception(ucwords($response['Message']));
-        }
         return [
-            'code' => 1,
+            'code'   => 1,
             'status' => 'success',
-            'data' => $response->json()
+            'data'   => $value
         ];
     }
 }

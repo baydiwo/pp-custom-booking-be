@@ -19,7 +19,7 @@ class BookingController
 
     public function __construct(Request $request)
     {
-        $this->authToken = Cache::get('authToken');
+        $this->authToken = Cache::get('authToken')['token'];
         $this->request = $request;
         $this->params  = $request->all();
     }
