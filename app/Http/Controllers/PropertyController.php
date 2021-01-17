@@ -76,10 +76,11 @@ class PropertyController
         $to   = Carbon::createFromFormat('Y-m-d H:s:i', $this->params['arrivalDate']);
         $from = Carbon::createFromFormat('Y-m-d H:s:i', $this->params['departureDate']);
 
-        $data                    = $detailProperty[0];
+        $data['propertyId']      = $id;
+        $data['propertyName']    = $detailProperty[0]['name'];
         $data['petAllowed']      = $detailSetting['petsAllowed'];
         $data['maxOccupants']    = $detailCategory['maxOccupantsPerCategory'];
-        $data['totalGuests']     = $this->params['adults'] . 'adults' . $this->params['children'] . 'children' . $this->params['infants'] . 'infants' . 
+        $data['totalGuests']     = $this->params['adults'] . ' adults, ' . $this->params['children'] . ' children, ' . $this->params['infants'] . ' infants';
         $data['totalRooms']      = $detailCategory['numberOfAreas'];
         $data['totalBedrooms']   = $areaConfiguration['numberOfBedrooms'];
         $data['totalBaths']      = $areaConfiguration['numberOfFullBaths'];
