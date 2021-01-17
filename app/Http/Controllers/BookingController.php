@@ -26,7 +26,7 @@ class BookingController
 
     public function create()
     {
-        $api = new ApiController();
+        $api = new ApiController($this->authToken, $this->request);
         $validator = Validator::make(
             $this->params,
             [
@@ -67,7 +67,7 @@ class BookingController
             'guestSurname' => $this->params['surname'],
             'mobile'       => $this->params['phone'],
         ];
-        $createGuest = $api->createGuest($this->authToken, $paramCreateGuest);
+        $createGuest = $api->createGuest($paramCreateGuest);
         if(isset($createGuest['Message'])) {
             throw new Exception(ucwords($createGuest['Message']));
         }

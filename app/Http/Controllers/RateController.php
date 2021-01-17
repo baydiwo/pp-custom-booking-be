@@ -24,24 +24,6 @@ class RateController
         $this->params  = $request->all();
     }
 
-    public function rateQuote()
-    {
-        $endpoint = 'rates/rateQuote';
-
-        $response = Http::withHeaders([
-            'authtoken' => $this->authToken
-        ])->post(env('BASE_URL_RMS') . $endpoint, $this->params);
-
-        if(isset($response['Message'])) {
-            throw new Exception(ucwords($response['Message']));
-        }
-        return [
-            'code' => 1,
-            'status' => 'success',
-            'data' => $response->json()
-        ];
-    }
-
     public function rateList()
     {
         $endpoint = 'rates';

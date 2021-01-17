@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Property;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
@@ -24,19 +26,68 @@ class PropertyController
 
     public function detail($id)
     {
-        $api = new ApiController();
-        $detailProperty = $api->detailProperty($id, $this->authToken);
+        $api = new ApiController($this->authToken, $this->request);
+        $validator = Validator::make(
+            $this->params,
+            Property::$rules
+        );
+
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+
+
+        $detailProperty = $api->detailProperty($id);
         if (count($detailProperty) == 0) {
             throw new Exception(ucwords('Detail Property Not Found'));
         }
 
-        $detailSetting = $api->detailPropertySetting($id, $this->authToken);
+        $detailSetting = $api->detailPropertySetting($id);
         if (isset($detailSetting['Message'])) {
             throw new Exception(ucwords($detailSetting['Message']));
         }
 
-        $data = $detailProperty[0];
-        $data['setting'] = $detailSetting;
+        $detailCategory = $api->detailCategory($id);
+        if (isset($detailCategory['Message'])) {
+            throw new Exception(ucwords($detailCategory['Message']));
+        }
+
+        $areaConfiguration = $api->areaConfiguration($id);
+        if (isset($areaConfiguration['Message'])) {
+            throw new Exception(ucwords($areaConfiguration['Message']));
+        }
+
+        $paramsRateQuote = [
+            'adults'        => $this->params['adults'],
+            'areaId'        => $this->params['areaId'],
+            'arrivalDate'   => $this->params['arrivalDate'],
+            'categoryId'    => $this->params['categoryId'],
+            'children'      => $this->params['children'],
+            'departureDate' => $this->params['departureDate'],
+            'infants'       => $this->params['infants'],
+            'propertyId'    => $id,
+            'rateTypeId'    => $this->params['rateTypeId'],
+        ];
+
+        $rateQuote = $api->rateQuote($paramsRateQuote);
+        if (isset($rateQuote['Message'])) {
+            throw new Exception(ucwords($rateQuote['Message']));
+        }
+
+        $to   = Carbon::createFromFormat('Y-m-d H:s:i', $this->params['arrivalDate']);
+        $from = Carbon::createFromFormat('Y-m-d H:s:i', $this->params['departureDate']);
+
+        $data                    = $detailProperty[0];
+        $data['petAllowed']      = $detailSetting['petsAllowed'];
+        $data['maxOccupants']    = $detailCategory['maxOccupantsPerCategory'];
+        $data['totalGuests']     = $this->params['adults'] . 'adults' . $this->params['children'] . 'children' . $this->params['infants'] . 'infants' . 
+        $data['totalRooms']      = $detailCategory['numberOfAreas'];
+        $data['totalBedrooms']   = $areaConfiguration['numberOfBedrooms'];
+        $data['totalBaths']      = $areaConfiguration['numberOfFullBaths'];
+        $data['nights']          = $to->diffInDays($from);
+        $data['accomodation']    = collect($rateQuote['rateBreakdown'])->sum('totalRate');
+        $data['petFee']          = $detailSetting['petsAllowed'] == false ? 0 : 150;
+        $data['totalAmount']     = $data['accomodation'] + $data['petFee'];
+        $data['dueToday']        = "??";
 
         return [
             'code' => 1,

@@ -1,10 +1,23 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
-class ApiController {
-    
+class ApiController
+{
+    private $authToken;
+    private $request;
+    private $params;
+
+    public function __construct($authToken = NULL, Request $request)
+    {
+        $this->authToken = $authToken;
+        $this->request = $request;
+        $this->params  = $request->all();
+    }
+
     public function authToken()
     {
         $endpoint = 'authToken';
@@ -18,38 +31,69 @@ class ApiController {
                 'Distribution'
             ]
         ];
-        $response = Http::post(env('BASE_URL_RMS').$endpoint, $param);
+        $response = Http::post(env('BASE_URL_RMS') . $endpoint, $param);
         return $response->json();
     }
 
-    public function createGuest($token, $param)
+    public function createGuest($param)
     {
         $endpoint = 'guests?ignoreMandatoryFieldWarnings=false';
-        
+
         $response = Http::withHeaders([
-            'authtoken' => $token
-        ])->post(env('BASE_URL_RMS').$endpoint, $param);
+            'authtoken' => $this->authToken
+        ])->post(env('BASE_URL_RMS') . $endpoint, $param);
 
         return $response->json();
     }
 
-    public function detailProperty($id, $token) 
+    public function detailProperty($id)
     {
-        $endpoint = 'properties/'.$id.'?modelType=full';
+        $endpoint = 'properties/' . $id . '?modelType=basic';
         $response = Http::withHeaders([
-            'authtoken' => $token
-        ])->get(env('BASE_URL_RMS').$endpoint);
-        
+            'authtoken' => $this->authToken
+        ])->get(env('BASE_URL_RMS') . $endpoint);
+
         return $response->json();
     }
 
-    public function detailPropertySetting($id, $token) 
+    public function detailPropertySetting($id)
     {
-        $endpoint = 'properties/'.$id.'/ibe/settings';
+        $endpoint = 'properties/' . $id . '/ibe/settings';
         $response = Http::withHeaders([
-            'authtoken' => $token
-        ])->get(env('BASE_URL_RMS').$endpoint);
-        
+            'authtoken' => $this->authToken
+        ])->get(env('BASE_URL_RMS') . $endpoint);
+
+        return $response->json();
+    }
+
+    public function detailCategory($id)
+    {
+        $endpoint = 'categories/' . $id;
+        $response = Http::withHeaders([
+            'authtoken' => $this->authToken
+        ])->get(env('BASE_URL_RMS') . $endpoint);
+
+        return $response->json();
+    }
+
+    public function areaConfiguration($id)
+    {
+        $endpoint = 'areas/' . $id . '/configuration';
+        $response = Http::withHeaders([
+            'authtoken' => $this->authToken
+        ])->get(env('BASE_URL_RMS') . $endpoint);
+
+        return $response->json();
+    }
+
+    public function rateQuote($params)
+    {
+        $endpoint = 'rates/rateQuote';
+
+        $response = Http::withHeaders([
+            'authtoken' => $this->authToken
+        ])->post(env('BASE_URL_RMS') . $endpoint, $params);
+
         return $response->json();
     }
 }
