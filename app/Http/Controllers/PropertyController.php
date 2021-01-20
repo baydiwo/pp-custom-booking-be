@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
+use phpDocumentor\Reflection\Types\This;
 
 class PropertyController
 {
@@ -51,6 +52,10 @@ class PropertyController
             throw new Exception(ucwords($detailCategory['Message']));
         }
 
+        if(($this->params['adults'] + $this->params['infants'] + $this->params['children']) > $detailCategory['maxOccupantsPerCategory']) {
+            throw new Exception(ucwords('Occupants over limit'));
+        }
+
         $areaConfiguration = $api->areaConfiguration($id);
         if (isset($areaConfiguration['Message'])) {
             throw new Exception(ucwords($areaConfiguration['Message']));
@@ -75,7 +80,6 @@ class PropertyController
 
         $to   = Carbon::createFromFormat('Y-m-d H:s:i', $this->params['arrivalDate']);
         $from = Carbon::createFromFormat('Y-m-d H:s:i', $this->params['departureDate']);
-
         $data['propertyId']      = $id;
         $data['propertyName']    = $detailProperty[0]['name'];
         $data['petAllowed']      = $detailSetting['petsAllowed'];
@@ -88,7 +92,7 @@ class PropertyController
         $data['accomodation']    = collect($rateQuote['rateBreakdown'])->sum('totalRate');
         $data['petFee']          = $detailSetting['petsAllowed'] == false ? 0 : 150;
         $data['totalAmount']     = $data['accomodation'] + $data['petFee'];
-        $data['dueToday']        = "??";
+        $data['dueToday']        = $rateQuote['firstNightRate'];
 
         return [
             'code' => 1,
