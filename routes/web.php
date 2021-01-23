@@ -29,8 +29,8 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
         $router->post('', 'BookingController@create');
     });
     $router->group(['prefix' => 'property'], function () use ($router) {
-        $router->get('{id}', 'PropertyController@detail');
     });
+    $router->post('payment/{reservationId}', 'PaymentController@payment');
     $router->get('countries', 'CountryController@list');
     $router->group(['prefix' => 'rate'], function () use ($router) {
         $router->get('', 'RateController@rateList');

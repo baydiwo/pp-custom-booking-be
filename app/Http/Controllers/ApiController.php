@@ -36,12 +36,23 @@ class ApiController
         return $response->json();
     }
 
+    public function detailReservation($id)
+    {
+        $endpoint = 'reservations/'.$id;
+
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->get(env('BASE_URL_RMS') . $endpoint);
+
+        return $response->json();
+    }
+
     public function createGuest($param)
     {
         $endpoint = 'guests?ignoreMandatoryFieldWarnings=false';
 
         $response = Http::withHeaders([
-            'authtoken' => $this->authToken
+            'authToken' => $this->authToken
         ])->post(env('BASE_URL_RMS') . $endpoint, $param);
 
         return $response->json();
@@ -52,7 +63,7 @@ class ApiController
         $value = Cache::remember('property_' . $id, 10 * 60, function () use ($id) {
             $endpoint = 'properties/' . $id . '?modelType=basic';
             $response = Http::withHeaders([
-                'authtoken' => $this->authToken
+                'authToken' => $this->authToken
             ])->get(env('BASE_URL_RMS') . $endpoint);
 
             return $response->json();
@@ -66,7 +77,7 @@ class ApiController
         $value = Cache::remember('property_setting_' . $id, 10 * 60, function () use ($id) {
             $endpoint = 'properties/' . $id . '/ibe/settings';
             $response = Http::withHeaders([
-                'authtoken' => $this->authToken
+                'authToken' => $this->authToken
             ])->get(env('BASE_URL_RMS') . $endpoint);
 
             return $response->json();
@@ -80,7 +91,7 @@ class ApiController
         $value = Cache::remember('category_' . $id, 10 * 60, function () use ($id) {
             $endpoint = 'categories/' . $id;
             $response = Http::withHeaders([
-                'authtoken' => $this->authToken
+                'authToken' => $this->authToken
             ])->get(env('BASE_URL_RMS') . $endpoint);
 
             return $response->json();
@@ -94,7 +105,7 @@ class ApiController
         $value = Cache::remember('category_areas_' . $id, 10 * 60, function () use ($id) {
             $endpoint = 'areas/' . $id . '/configuration';
             $response = Http::withHeaders([
-                'authtoken' => $this->authToken
+                'authToken' => $this->authToken
             ])->get(env('BASE_URL_RMS') . $endpoint);
 
             return $response->json();
@@ -111,12 +122,47 @@ class ApiController
             $endpoint = 'rates/rateQuote';
 
             $response = Http::withHeaders([
-                'authtoken' => $this->authToken
+                'authToken' => $this->authToken
             ])->post(env('BASE_URL_RMS') . $endpoint, $params);
 
             return $response->json();
         });
 
         return $value;
+    }
+
+    public function availabilityrategrid($params)
+    {
+        $value = Cache::remember(
+            'availabilityrategrid'. json_encode($params),
+            10 * 60, function () use ($params) {
+            $endpoint = 'availabilityrategrid';
+
+            $response = Http::withHeaders([
+                'authToken' => $this->authToken
+            ])->post(env('BASE_URL_RMS') . $endpoint, $params);
+
+            return $response->json();
+        });
+
+        return $value
+        ;
+    }
+
+    public function windCaveCreatePurchaseSessions($params)
+    {
+        $endpoint = 'sessions';
+        $auth = base64_encode(env('WINDCAVE_USERNAME').':'.env('WINDCAVE_API_KEY'));
+        $response = Http::withHeaders([
+            'Authorization' => 'Basic '.$auth
+        ])->post(env('BASE_URL_WINDCAVE') . $endpoint, $params);
+
+        return $response->json();
+    }
+
+    public function windCavePostCardData($url, $params)
+    {
+        $response = Http::post($url, $params);
+        return $response->json();
     }
 }

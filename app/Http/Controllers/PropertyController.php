@@ -36,6 +36,18 @@ class PropertyController
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 
+        $paramMinNight = [
+            'categoryIds' => [$this->params['categoryId']],
+            'dateFrom'    => $this->params['arrivalDate'],
+            'dateTo'      => $this->params['departureDate'],
+            'propertyId'  => $id,
+            'rateIds'     => [1418]
+        ];
+
+        $minNight = $api->availabilityrategrid($paramMinNight);
+        if (!$minNight) {
+            throw new Exception(ucwords('Detail Property Not Found'));
+        }
 
         $detailProperty = $api->detailProperty($id);
         if (count($detailProperty) == 0) {
@@ -77,7 +89,6 @@ class PropertyController
         if (isset($rateQuote['Message'])) {
             throw new Exception(ucwords($rateQuote['Message']));
         }
-
         $to   = Carbon::createFromFormat('Y-m-d H:s:i', $this->params['arrivalDate']);
         $from = Carbon::createFromFormat('Y-m-d H:s:i', $this->params['departureDate']);
         $data['propertyId']      = $id;
