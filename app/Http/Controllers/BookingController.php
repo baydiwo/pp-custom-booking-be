@@ -118,9 +118,10 @@ class BookingController
             throw new Exception('Data Guest Not Found');
         }
         $dataGuest = collect($detailGuest)->first();
-        if($dataGuest['propertyId'] == 0) {
-            throw new Exception('Property Guest Not Found');
-        }
+        $dataGuest['propertyId'] = 1;
+        // if($dataGuest['propertyId'] == 0) {
+        //     throw new Exception('Property Guest Not Found');
+        // }
 
         $detailSetting = $api->detailPropertySetting($dataGuest['propertyId']);
         if (isset($detailSetting['Message'])) {
