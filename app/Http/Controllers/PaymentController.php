@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Helpers\Constant;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
@@ -89,11 +90,41 @@ class PaymentController
                 'cvc2'              => $this->params['cvc'],
             ]
         ];
+
+        //get account property guest
+        $accountProperty = $api->guestAccountProperty($detailReservation['guestId']);
+        if ((isset($accountProperty['Message'])) || (count($accountProperty) == 0)) {
+            throw new Exception('Account Property Guest Not Found');
+        }
+
+        $accountPropertyId = $accountProperty[0]['id'];
+
+        //do payment
         $postCardData = $api->windCavePostCardData($ajaxPostUrl, $paramPostCardData);
+        $cardId = $postCardData['id'];
+        $windCaveDetail = $api->windCaveTransactionDetail($cardId);
+        if(isset($windCaveDetail['errors'])) {
+            throw new Exception('Wind Cave Transaction Detail Not Found');
+        }
+
+        if($windCaveDetail['transactions'][0]['responseText'] == 'APPROVED') {
+            $paramTransactionReceipt = [
+                'accountId'                          => $accountPropertyId,
+                'amount'                             => $this->params['amount'],
+                'cardId'                             => $windCaveDetail['transactions'][0]['id'],
+                'dateOfTransaction'                  => Carbon::now(),
+                'receiptType'                        => "CreditCard",
+                'source'                             => "Standard",
+                'useRmsAccountingDateForPostingDate' => "true",
+            ];
+            $api->transactionReceipt($paramTransactionReceipt);
+        }
+
         return [
-            'code' => 1,
-            'status' => 'success',
-            'data' => $postCardData['links'][0]['href']
+            'code'    => 1,
+            'status'  => 'success',
+            'data'    => $postCardData['links'][0]['href'],
+            'message' => "Data Has Been ". $windCaveDetail['transactions'][0]['responseText']
         ];
     }
 }

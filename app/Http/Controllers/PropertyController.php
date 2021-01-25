@@ -45,12 +45,12 @@ class PropertyController
         ];
 
         $minNight = $api->availabilityrategrid($paramMinNight);
-        if (!$minNight) {
+        if (!$minNight || isset($minNight['Message'])) {
             throw new Exception(ucwords('Detail Property Not Found'));
         }
 
         $detailProperty = $api->detailProperty($id);
-        if (count($detailProperty) == 0) {
+        if ((count($detailProperty) == 0) || isset($detailProperty['Message'])) {
             throw new Exception(ucwords('Detail Property Not Found'));
         }
 

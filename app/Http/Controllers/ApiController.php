@@ -58,6 +58,50 @@ class ApiController
         return $response->json();
     }
 
+    public function guestAccountProperty($id)
+    {
+        $endpoint = 'guests/'.$id.'/accounts';
+
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->get(env('BASE_URL_RMS') . $endpoint);
+
+        return $response->json();
+    }
+
+    public function guestDetail($id)
+    {
+        $endpoint = 'guests/'.$id;
+
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->get(env('BASE_URL_RMS') . $endpoint);
+
+        return $response->json();
+    }
+
+    public function guestSearch($param)
+    {
+        $endpoint = 'guests/search';
+
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->post(env('BASE_URL_RMS') . $endpoint, $param);
+
+        return $response->json();
+    }
+
+    public function transactionReceipt($param)
+    {
+        $endpoint = 'transaction/receipt    ';
+
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->post(env('BASE_URL_RMS') . $endpoint, $param);
+
+        return $response->json();
+    }
+
     public function detailProperty($id)
     {
         $value = Cache::remember('property_' . $id, 10 * 60, function () use ($id) {
@@ -163,6 +207,17 @@ class ApiController
     public function windCavePostCardData($url, $params)
     {
         $response = Http::post($url, $params);
+        return $response->json();
+    }
+    
+    public function windCaveTransactionDetail($cardId)
+    {
+        $endpoint = 'sessions/'.$cardId;
+        $auth = base64_encode(env('WINDCAVE_USERNAME').':'.env('WINDCAVE_API_KEY'));
+        $response = Http::withHeaders([
+            'Authorization' => 'Basic '.$auth
+        ])->get(env('BASE_URL_WINDCAVE') . $endpoint);
+
         return $response->json();
     }
 }
