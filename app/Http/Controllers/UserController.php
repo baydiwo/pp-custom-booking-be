@@ -25,4 +25,15 @@ class UserController extends Controller
             echo "<li>{$q->name}</li>";
         }
     }
+
+    public function test()
+    {
+        $data = [
+            'data' => [],
+            "code" => "200",
+            "messsage" => "Testing Only"
+        ];
+
+        return json_encode($data);
+    }
 }
