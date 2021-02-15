@@ -12,5 +12,5 @@ return [
         'card_cvc_invalid' => ':attribute Is Invalid',
     ],
     'required' => ':attribute must be required',
-    'after' => ':attribute must be after greater than arrival date',
+    'after' => ':attribute must be greater than arrival date',
 ];

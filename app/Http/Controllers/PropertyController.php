@@ -25,33 +25,49 @@ class PropertyController
         $this->params  = $request->all();
     }
 
+    public function list()
+    {
+        $api = new ApiController($this->authToken, $this->request);
+        $data = $api->listProperty();
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => $data
+        ];
+    }
     public function detail($id)
     {
         $api = new ApiController($this->authToken, $this->request);
         $validator = Validator::make(
             $this->params,
-            Property::$rules
+            Property::$rules['detail']
         );
 
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 
+        $detailProperty = $api->detailProperty($id);
+
+        if ((count($detailProperty) == 0) || isset($detailProperty['Message'])) {
+            throw new Exception(ucwords('Detail Property Not Found'));
+        }
+        
         $paramMinNight = [
             'categoryIds' => [$this->params['categoryId']],
             'dateFrom'    => $this->params['arrivalDate'],
             'dateTo'      => $this->params['departureDate'],
             'propertyId'  => $id,
-            'rateIds'     => [1418]
+            'rateIds'     => [$this->params['rateTypeId']]
         ];
 
         $minNight = $api->availabilityrategrid($paramMinNight);
-        if (!$minNight || isset($minNight['Message'])) {
-            throw new Exception(ucwords('Detail Property Not Found'));
+        if (!$minNight) {
+            throw new Exception(ucwords('Minimum Night Not Found'));
+        } elseif(isset($minNight['Message'])) {
+            throw new Exception(ucwords($minNight['Message']));
         }
-
-        $detailProperty = $api->detailProperty($id);
-        if ((count($detailProperty) == 0) || isset($detailProperty['Message'])) {
-            throw new Exception(ucwords('Detail Property Not Found'));
+        if (empty($minNight['categories'][0]['rates'])) {
+            throw new Exception(ucwords('Rate Not Found'));
         }
 
         $detailSetting = $api->detailPropertySetting($id);
@@ -86,6 +102,7 @@ class PropertyController
         ];
 
         $rateQuote = $api->rateQuote($paramsRateQuote);
+
         if (isset($rateQuote['Message'])) {
             throw new Exception(ucwords($rateQuote['Message']));
         }
@@ -110,5 +127,44 @@ class PropertyController
             'status' => 'success',
             'data' => $data
         ];
+    }
+
+    public function availabilityGrid()
+    {
+        $validator = Validator::make(
+            $this->params,
+            Property::$rules['availability-grid']
+        );
+
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+        
+        $this->checkAvailability();
+
+    }
+
+    public function checkAvailability()
+    {
+        $api = new ApiController($this->authToken, $this->request);
+        $listProperty = $api->listProperty();
+
+        $paramMinNight = [
+            'categoryIds' => [$this->params['categoryId']],
+            'dateFrom'    => $this->params['dateFrom'],
+            'dateTo'      => $this->params['dateTo'],
+            'propertyId'  => $this->params['propertyId'],
+            'rateIds'     => [$this->params['rateIds']]
+        ];
+
+        $minNight = $api->availabilityrategrid($paramMinNight);
+        die(json_encode($minNight));
+
+        if($listProperty) {
+            die(json_encode($listProperty));
+            foreach ($listProperty as $key => $value) {
+            }
+        }
+        die(json_encode($listProperty));
+
     }
 }

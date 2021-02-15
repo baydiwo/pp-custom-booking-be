@@ -116,6 +116,20 @@ class ApiController
         return $value;
     }
 
+    public function listProperty()
+    {
+        $value = Cache::remember('list_property', 10 * 60, function () {
+            $endpoint = 'properties/';
+            $response = Http::withHeaders([
+                'authToken' => $this->authToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
+
+            return $response->json();
+        });
+
+        return $value;
+    }
+
     public function detailPropertySetting($id)
     {
         $value = Cache::remember('property_setting_' . $id, 10 * 60, function () use ($id) {

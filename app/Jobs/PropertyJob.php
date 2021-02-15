@@ -2,9 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Models\Property;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
-class ExampleJob extends Job
+class PropertyJob extends Job
 {
     /**
      * Create a new job instance.
@@ -23,7 +26,9 @@ class ExampleJob extends Job
      */
     public function handle()
     {
-        echo "ssss";
-        //
+        $model = new Property();
+        $model->payload = "Gas".Carbon::now();
+        $model->created_at = Carbon::now();
+        $model->save();
     }
 }

@@ -2,8 +2,11 @@
 
 namespace App\Console;
 
+use App\Http\Controllers\ApiController;
+use App\Jobs\PropertyJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
+use phpDocumentor\Reflection\Types\Null_;
 
 class Kernel extends ConsoleKernel
 {
@@ -24,6 +27,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        //
+        $schedule->job(new PropertyJob)->everyMinute();
     }
 }
