@@ -27,7 +27,7 @@ class PropertyJob extends Job
     public function handle()
     {
         $model = new Property();
-        $model->payload = "Gas".Carbon::now();
+        $model->payload = "Gas coba".Carbon::now();
         $model->created_at = Carbon::now();
         $model->save();
     }
