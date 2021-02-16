@@ -146,8 +146,15 @@ class PropertyController
 
     public function checkAvailability()
     {
+        Cache::flush();
         dispatch(new PropertyJob());
-        return "Data Has Been Saved in Cache";
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => [],
+            'message' => "Data Has Been Saved in Cache"
+        ];
+
 
         // $api = new ApiController($this->authToken, $this->request);
         // $listProperty = $api->listProperty();
