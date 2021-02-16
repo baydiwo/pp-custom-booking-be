@@ -6,11 +6,19 @@ use App\Http\Controllers\ApiController;
 use App\Http\Controllers\PropertyController;
 use App\Models\Property;
 use Carbon\Carbon;
+use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
-class PropertyJob extends Job
+class PropertyJob implements ShouldQueue
 {
+
+    use InteractsWithQueue, Queueable, SerializesModels;
+
     /**
      * Create a new job instance.
      *
@@ -64,7 +72,7 @@ class PropertyJob extends Job
                         'rateIds'     => [1418]
                     ];    
                     
-                    Cache::remember('min_night_prop'.$valueProp['id']."from {$valueNew['first']} - to {$valueNew['last']}"
+                    Cache::remember('min_night_prop_'.$valueProp['id']."from_{$valueNew['first']}_to_{$valueNew['last']}"
                     , 10 * 60, function () use ($api, $paramMinNight) {
                         return $api->availabilityrategrid($paramMinNight);
                     });
@@ -72,7 +80,12 @@ class PropertyJob extends Job
             }
         }
 
-        echo "Data Has Been Saved in Cache";
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => [],
+            'message' => "Data Has Been Saved in Cache"
+        ];
     }
     
     private function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d' )

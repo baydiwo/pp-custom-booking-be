@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
 use phpDocumentor\Reflection\Types\This;
@@ -140,13 +141,11 @@ class PropertyController
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
         
-        $this->checkAvailability();
+        // Cache::flush();
+        // Queue::pushOn(
+        // 'import-talent-queue',new PropertyJob()
+        // );
 
-    }
-
-    public function checkAvailability()
-    {
-        Cache::flush();
         dispatch(new PropertyJob());
         return [
             'code' => 1,
@@ -154,6 +153,11 @@ class PropertyController
             'data' => [],
             'message' => "Data Has Been Saved in Cache"
         ];
+
+    }
+
+    public function checkAvailability()
+    {
 
 
         // $api = new ApiController($this->authToken, $this->request);
