@@ -146,6 +146,7 @@ class PropertyController
 
     public function checkAvailability()
     {
+        Cache::flush();
         $api = new ApiController($this->authToken, $this->request);
         $listProperty = $api->listProperty();
 
