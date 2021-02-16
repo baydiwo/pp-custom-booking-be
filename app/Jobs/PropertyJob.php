@@ -72,7 +72,7 @@ class PropertyJob extends Job
             }
         }
 
-        echo "done";
+        return "Data Has Been Saved in Cache";
     }
     
     private function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d' )

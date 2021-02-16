@@ -146,49 +146,51 @@ class PropertyController
 
     public function checkAvailability()
     {
-        Cache::flush();
-        $api = new ApiController($this->authToken, $this->request);
-        $listProperty = $api->listProperty();
-
-        $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-12-31");
-        $chunck = array_chunk($dateInYear, 14);
-        $push = [];
-        $temp = "";
-        for ($i=0; $i <= count($chunck[0]) ; $i++) { 
-            for ($j=0; $j < $i; $j++) { 
-                $push[$i][$j] = $chunck[0][$j];
-            }
-        }
-
-        $push2 = [];
-        foreach ($push as $key => $value) {
-            if($key != 1) {
-                $push2[$key]['first']= reset($value);
-                $push2[$key]['last']= end($value);
-            }
-        }
-
-        $newArrayValue = array_values($push2);
-        if($listProperty) {
-            foreach ($listProperty as $keyProp => $valueProp) {
-                foreach ($newArrayValue as $keyNew => $valueNew) {
-                    $paramMinNight = [
-                        'categoryIds' => [$this->params['categoryId']],
-                        'dateFrom'    => $valueNew['first'],
-                        'dateTo'      => $valueNew['last'],
-                        'propertyId'  => $valueProp['id'],
-                        'rateIds'     => [$this->params['rateIds']]
-                    ];    
-        
-                    Cache::remember('min_night_prop'.$valueProp['id']."from {$valueNew['first']} - to {$valueNew['last']}"
-                    , 10 * 60, function () use ($api, $paramMinNight) {
-                        return $api->availabilityrategrid($paramMinNight);
-                    });
-                }
-            }
-        }
-
+        dispatch(new PropertyJob());
         return "Data Has Been Saved in Cache";
+
+        // $api = new ApiController($this->authToken, $this->request);
+        // $listProperty = $api->listProperty();
+
+        // $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-12-31");
+        // $chunck = array_chunk($dateInYear, 14);
+        // $push = [];
+        // $temp = "";
+        // for ($i=0; $i <= count($chunck[0]) ; $i++) { 
+        //     for ($j=0; $j < $i; $j++) { 
+        //         $push[$i][$j] = $chunck[0][$j];
+        //     }
+        // }
+
+        // $push2 = [];
+        // foreach ($push as $key => $value) {
+        //     if($key != 1) {
+        //         $push2[$key]['first']= reset($value);
+        //         $push2[$key]['last']= end($value);
+        //     }
+        // }
+
+        // $newArrayValue = array_values($push2);
+        // if($listProperty) {
+        //     foreach ($listProperty as $keyProp => $valueProp) {
+        //         foreach ($newArrayValue as $keyNew => $valueNew) {
+        //             $paramMinNight = [
+        //                 'categoryIds' => [$this->params['categoryId']],
+        //                 'dateFrom'    => $valueNew['first'],
+        //                 'dateTo'      => $valueNew['last'],
+        //                 'propertyId'  => $valueProp['id'],
+        //                 'rateIds'     => [$this->params['rateIds']]
+        //             ];    
+        
+        //             Cache::remember('min_night_prop'.$valueProp['id']."from {$valueNew['first']} - to {$valueNew['last']}"
+        //             , 10 * 60, function () use ($api, $paramMinNight) {
+        //                 return $api->availabilityrategrid($paramMinNight);
+        //             });
+        //         }
+        //     }
+        // }
+
+        // return "Data Has Been Saved in Cache";
     }
 
     public function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d' )
