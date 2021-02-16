@@ -34,59 +34,59 @@ class PropertyJob implements ShouldQueue
 
     public function handle()
     {
-        $model = new Property();
-        $model->payload= "Gas". Carbon::now();
-        $model->save();
-        // Cache::flush();
-        // $request = new Request();
-        // $token = new ApiController(NULL, $request);
-        // $dataToken = $token->authToken();
-        // $api = new ApiController($dataToken['token'], $request);
-        // $listProperty = $api->listProperty();
+        // $model = new Property();
+        // $model->payload= "Gas". Carbon::now();
+        // $model->save();
+        Cache::flush();
+        $request = new Request();
+        $token = new ApiController(NULL, $request);
+        $dataToken = $token->authToken();
+        $api = new ApiController($dataToken['token'], $request);
+        $listProperty = $api->listProperty();
 
-        // $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-12-31");
-        // $chunck = array_chunk($dateInYear, 14);
-        // $push = [];
-        // for ($i=0; $i <= count($chunck[0]) ; $i++) { 
-        //     for ($j=0; $j < $i; $j++) { 
-        //         $push[$i][$j] = $chunck[0][$j];
-        //     }
-        // }
+        $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-12-31");
+        $chunck = array_chunk($dateInYear, 14);
+        $push = [];
+        for ($i=0; $i <= count($chunck[0]) ; $i++) { 
+            for ($j=0; $j < $i; $j++) { 
+                $push[$i][$j] = $chunck[0][$j];
+            }
+        }
 
-        // $push2 = [];
-        // foreach ($push as $key => $value) {
-        //     if($key != 1) {
-        //         $push2[$key]['first']= reset($value);
-        //         $push2[$key]['last']= end($value);
-        //     }
-        // }
+        $push2 = [];
+        foreach ($push as $key => $value) {
+            if($key != 1) {
+                $push2[$key]['first']= reset($value);
+                $push2[$key]['last']= end($value);
+            }
+        }
 
-        // $newArrayValue = array_values($push2);
-        // if($listProperty) {
-        //     foreach ($listProperty as $keyProp => $valueProp) {
-        //         foreach ($newArrayValue as $keyNew => $valueNew) {
-        //             $paramMinNight = [
-        //                 'categoryIds' => [4],
-        //                 // 'categoryIds' => [$this->params['categoryId']],
-        //                 'dateFrom'    => $valueNew['first'],
-        //                 'dateTo'      => $valueNew['last'],
-        //                 'propertyId'  => $valueProp['id'],
-        //                 // 'rateIds'     => [$this->params['rateIds']]
-        //                 'rateIds'     => [1418]
-        //             ];    
-        //             $cacheName = [
-        //                 'propertyId'=>$valueProp['id'],
-        //                 'from'=>$valueNew['first'],
-        //                 'to'=>$valueNew['last'],
-        //             ];
+        $newArrayValue = array_values($push2);
+        if($listProperty) {
+            foreach ($listProperty as $keyProp => $valueProp) {
+                foreach ($newArrayValue as $keyNew => $valueNew) {
+                    $paramMinNight = [
+                        'categoryIds' => [4],
+                        // 'categoryIds' => [$this->params['categoryId']],
+                        'dateFrom'    => $valueNew['first'],
+                        'dateTo'      => $valueNew['last'],
+                        'propertyId'  => $valueProp['id'],
+                        // 'rateIds'     => [$this->params['rateIds']]
+                        'rateIds'     => [1418]
+                    ];    
+                    $cacheName = [
+                        'propertyId'=>$valueProp['id'],
+                        'from'=>$valueNew['first'],
+                        'to'=>$valueNew['last'],
+                    ];
 
-        //             Cache::remember(json_encode($cacheName)
-        //             , 10 * 60, function () use ($api, $paramMinNight) {
-        //                 return $api->availabilityrategrid($paramMinNight);
-        //             });
-        //         }
-        //     }
-        // }
+                    Cache::remember(json_encode($cacheName)
+                    , 10 * 60, function () use ($api, $paramMinNight) {
+                        return $api->availabilityrategrid($paramMinNight);
+                    });
+                }
+            }
+        }
 
         return [
             'code' => 1,
