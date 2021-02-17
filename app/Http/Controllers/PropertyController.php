@@ -158,7 +158,29 @@ class PropertyController
 
     public function checkAvailability()
     {
+        $redis = Cache::getRedis();
+        $keys = $redis->keys("*prop1_*");
+        $count = 0;
+        $result = [];
 
+        foreach ($keys as $key) {
+            $result[] = $redis->get($key);
+
+        }      
+
+        $newResult  = [];
+        foreach ($result as $value) {
+            $newResult[] = unserialize($value);
+        }
+        
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => $newResult,
+        ];
+
+
+        return $result;
 
         // $api = new ApiController($this->authToken, $this->request);
         // $listProperty = $api->listProperty();

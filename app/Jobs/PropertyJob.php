@@ -80,10 +80,14 @@ class PropertyJob implements ShouldQueue
                         'to'=>$valueNew['last'],
                     ];
 
-                    Cache::remember(json_encode($cacheName)
+                    Cache::remember("prop1_".$keyNew
                     , 10 * 60, function () use ($api, $paramMinNight) {
                         return $api->availabilityrategrid($paramMinNight);
                     });
+                    // Cache::remember("get_min_night_prop_{$valueProp['id']}".json_encode($cacheName)
+                    // , 10 * 60, function () use ($api, $paramMinNight) {
+                    //     return $api->availabilityrategrid($paramMinNight);
+                    // });
                 }
             }
         }
