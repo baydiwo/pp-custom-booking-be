@@ -58,7 +58,7 @@ class PropertyJob implements ShouldQueue
 
         $dateInYearFeb = $this->getDateInYear(date("Y")."-02-01", date("Y")."-02-{$dateLeap}");
         $currentData = [];
-        $currentIndex = 0;
+        // $currentIndex = 0;
         $temp = [];
         foreach ($dateInYearJan as $key => $value) {
             if($currentData){
