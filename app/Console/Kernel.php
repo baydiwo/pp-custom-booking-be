@@ -27,6 +27,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->job(new PropertyJob)->everyMinute();
+        $schedule->job(new PropertyJob(env('PROPERTY_ID')))->everyMinute();
     }
 }

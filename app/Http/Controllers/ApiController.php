@@ -172,6 +172,20 @@ class ApiController
         return $value;
     }
 
+    public function listArea($propertyId)
+    {
+        $value = Cache::remember('list_areas' . $propertyId, 10 * 60, function () use ($propertyId) {
+            $endpoint = 'areas?propertyId=' . $propertyId . '&limit=300';
+            $response = Http::withHeaders([
+                'authToken' => $this->authToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
+
+            return $response->json();
+        });
+
+        return $value;
+    }
+
     public function rateQuote($params)
     {
         $value = Cache::remember(
@@ -182,6 +196,23 @@ class ApiController
             $response = Http::withHeaders([
                 'authToken' => $this->authToken
             ])->post(env('BASE_URL_RMS') . $endpoint, $params);
+
+            return $response->json();
+        });
+
+        return $value;
+    }
+
+    public function listRates()
+    {
+        $value = Cache::remember(
+            'rates',
+            10 * 60, function () {
+            $endpoint = 'rates';
+
+            $response = Http::withHeaders([
+                'authToken' => $this->authToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
 
             return $response->json();
         });

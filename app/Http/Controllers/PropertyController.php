@@ -146,7 +146,7 @@ class PropertyController
         // 'import-talent-queue',new PropertyJob()
         // );
 
-        dispatch(new PropertyJob());
+        dispatch(new PropertyJob($this->params['propertyId']));
         return [
             'code' => 1,
             'status' => 'success',
@@ -159,7 +159,7 @@ class PropertyController
     public function checkAvailability()
     {
         $redis = Cache::getRedis();
-        $keys = $redis->keys("*prop1_*");
+        $keys = $redis->keys("*prop1_area*");
         // $count = 0;
         $result = [];
 

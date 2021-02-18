@@ -21,11 +21,11 @@ class Property extends Model
             'departureDate'   => 'required|date_format:Y-m-d H:i:s|after:arrivalDate',
         ],
         'availability-grid' => [
-            'categoryId' => 'required|integer',
-            'dateFrom'   => 'required|date_format:Y-m-d H:i:s',
-            'dateTo'     => 'required|date_format:Y-m-d H:i:s|after:dateFrom',
+            // 'categoryId' => 'required|integer',
+            // 'dateFrom'   => 'required|date_format:Y-m-d H:i:s',
+            // 'dateTo'     => 'required|date_format:Y-m-d H:i:s|after:dateFrom',
             'propertyId' => 'required|integer',
-            'rateIds'    => 'required|integer',
+            // 'rateIds'    => 'required|integer',
         ]
     ];
 }
