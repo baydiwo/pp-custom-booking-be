@@ -160,7 +160,7 @@ class PropertyController
     {
         $redis = Cache::getRedis();
         $keys = $redis->keys("*prop1_*");
-        $count = 0;
+        // $count = 0;
         $result = [];
 
         foreach ($keys as $key) {
