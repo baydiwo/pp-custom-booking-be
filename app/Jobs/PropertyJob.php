@@ -83,7 +83,7 @@ class PropertyJob implements ShouldQueue
 
                 Cache::remember("prop1_area_".$listArea['id']."_from_".$keyNew.
                 "_to_". $valueIn->format('Y-m-d')
-                , 30 * 60, function () use ($api, $paramMinNight) {
+                , 100 * 60, function () use ($api, $paramMinNight) {
                     return $api->availabilityrategrid($paramMinNight);
                 });
             }
