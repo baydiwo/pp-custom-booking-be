@@ -38,36 +38,50 @@ class PropertyJob implements ShouldQueue
 
     public function handle()
     {
+        
         //todo
         //just 1 month, day by day
         Cache::flush();
-        $request = new Request();
-        $token = new ApiController(NULL, $request);
-        $dataToken = $token->authToken();
-        $api = new ApiController($dataToken['token'], $request);
+        $request       = new Request();
+        $token         = new ApiController(NULL, $request);
+        $dataToken     = $token->authToken();
+        $api           = new ApiController($dataToken['token'], $request);
         $listAreasData = $api->listArea($this->propertyId);
-        $listRates = $api->listRates();
-        $listArea = collect($listAreasData)->where('inactive', false)->all();
-        $leap = $this->is_leap_year(date("Y"));
-        $dateLeap = "28";
-        if($leap){
-            $dateLeap =  "29";
-        } 
+        $listArea      = collect($listAreasData)->where('inactive', false)->all();
+        $listRatesData = collect($api->listRates());
+        $name='Night Direct';
+        $filtered = $listRatesData->filter(function ($item) use($name){
+            return false !== stripos($item['name'], $name);
+        })->all();
 
+        $listRates = array_values($filtered);
+
+        $leap          = $this->is_leap_year(date("Y"));
+        // $dateLeap = "28";
+        // if($leap){
+        //     $dateLeap =  "29";
+        // } 
+
+        $tempJan = [];
         $dateInYearJan = $this->getDateInYear(date("Y")."-01-01", date("Y")."-01-31");
-
-        $dateInYearFeb = $this->getDateInYear(date("Y")."-02-01", date("Y")."-02-{$dateLeap}");
-        $currentData = [];
-        $currentIndex = 0;
-        $temp = [];
-        foreach ($dateInYearJan as $key => $value) {
-            if($currentData){
-                $temp[$key][] = $currentData;
-                $temp[$key][] = $value;
-                // $currentIndex = $key;
-            }
-            $currentData = $value;
+        $result=$this->array_combinations($dateInYearJan);
+        foreach ($result as $keyresult => $valueresult) {
+            $tempJan[$keyresult][] = reset($valueresult);
+            $tempJan[$keyresult][] = end($valueresult);
         }
+
+        // $dateInYearJan = $this->getDateInYear(date("Y")."-02-01", date("Y")."-02-{$dateLeap}");
+        // $currentData = [];
+        // $currentIndex = 0;
+        // $temp = [];
+        // foreach ($dateInYearJan as $key => $value) {
+        //     if($currentData){
+        //         $temp[$key][] = $currentData;
+        //         $temp[$key][] = $value;
+        //         // $currentIndex = $key;
+        //     }
+        //     $currentData = $value;
+        // }
 
         // $chunck = array_chunk($dateInYearJan, 4);
         // $push = [];
@@ -84,7 +98,7 @@ class PropertyJob implements ShouldQueue
         //         $push2[$key][]= end($value);
         //     }
         // }
-        $newArrayValue = array_values($temp);
+        $newArrayValue = array_values(collect($tempJan)->unique()->all());
 
         //testing array combination
         // $arrays =array(
@@ -102,32 +116,36 @@ class PropertyJob implements ShouldQueue
         //     }
         //     $result = $tmp;
         // }
-        if($listArea) {
-            foreach ($listArea as $keyProp => $valueProp) {
-                foreach ($newArrayValue as $keyNew => $valueNew) {
-                    foreach ($listRates as $keyListRates => $valueListRates) {
-                        $paramMinNight = [
-                            // 'agentId'     => env("AGENT_ID"),
-                            'categoryIds' => [$valueProp['categoryId']],
-                            'dateFrom'    => $valueNew[0],
-                            'dateTo'      => $valueNew[1],
-                            'propertyId'  => $valueProp['propertyId'],
-                            'rateIds'     => [$valueListRates['id']]
-                        ];    
-                        // $cacheName = [
-                        //     'propertyId'=>$valueProp['id'],
-                        //     'from'=>$valueNew['first'],
-                        //     'to'=>$valueNew['last'],
-                        // ];
-                        Cache::remember("prop1_area".$keyProp
-                        , 20 * 60, function () use ($api, $paramMinNight) {
-                            return $api->availabilityrategrid($paramMinNight);
-                        });
-                    }
-                    // Cache::remember("get_min_night_prop_{$valueProp['id']}".json_encode($cacheName)
-                    // , 10 * 60, function () use ($api, $paramMinNight) {
-                    //     return $api->availabilityrategrid($paramMinNight);
-                    // });
+        foreach ($newArrayValue as $keyNew => $valueNew) {
+            $from = Carbon::parse($valueNew[0]);
+            $to = Carbon::parse($valueNew[1]);
+            $diff = $from->diffInDays($to);
+            if($diff <= 7) {
+                foreach ($listArea as $keyArea => $valueArea) {
+                    $getRate = $this->rateByDate($valueNew[0], $valueNew[1], $listRates);
+                    $paramMinNight = [
+                        // 'agentId'     => env("AGENT_ID"),
+                        'categoryIds' => [$valueArea['categoryId']],
+                        'dateFrom'    => $valueNew[0],
+                        'dateTo'      => $valueNew[1],
+                        'propertyId'  => $valueArea['propertyId'],
+                        'rateIds'     => [$getRate]
+                    ];    
+    
+                    // $cacheName = [
+                    //     'propertyId'=>$valueArea['id'],
+                    //     'from'=>$valueNew['first'],
+                    //     'to'=>$valueNew['last'],
+                    // ];
+                    Cache::remember("prop1_area_".$valueArea['id']."_from_".$valueNew[0].
+                    "_to_". $valueNew[1]
+                    , 30 * 60, function () use ($api, $paramMinNight) {
+                        return $api->availabilityrategrid($paramMinNight);
+                    });
+                // Cache::remember("get_min_night_prop_{$valueArea['id']}".json_encode($cacheName)
+                // , 10 * 60, function () use ($api, $paramMinNight) {
+                //     return $api->availabilityrategrid($paramMinNight);
+                // });
                 }
             }
         }
@@ -135,7 +153,6 @@ class PropertyJob implements ShouldQueue
         return [
             'code' => 1,
             'status' => 'success',
-            'data' => [],
             'message' => "Data Has Been Saved in Cache"
         ];
     }
@@ -211,6 +228,67 @@ class PropertyJob implements ShouldQueue
         } 
     } 
 
+    function array_combinations($array){
+    
+        $result=[];
+        for ($i=0;$i<count($array)-1;$i++) {
+            $result=array_merge($result,$this->combinations(array_slice($array,$i)));    
+        }
+        
+        return $result;
+    }
+    
+    function combinations($array){
+        //get all the possible combinations no dublicates
+        $combinations=[];
+        $combinations[]=$array;
+        for($i=1;$i<count($array);$i++){
 
+            $tmp=$array;            
+            unset($tmp[$i]);
 
+            $tmp=array_values($tmp);//fix the indexes after unset
+
+            if(count($tmp)<2){
+                break;
+            }
+            $combinations[]=$tmp;
+        }
+        
+        return $combinations;
+    }
+
+    public function rateByDate($dateFrom, $dateTo, $listRates)
+    {
+        $listRates = collect($listRates);
+        $from = Carbon::parse($dateFrom);
+        $to = Carbon::parse($dateTo);
+        $diff = $from->diffInDays($to);
+
+        if($diff == 1 || $diff == 2){
+            $rateId = $listRates->where('id', 12)->first();
+        }
+
+        if($diff == 3){
+            $rateId = $listRates->where('id', 2)->first();
+        }
+
+        if($diff == 4){
+            $rateId = $listRates->where('id', 3)->first();
+        }
+
+        if($diff == 5){
+            $rateId = $listRates->where('id', 4)->first();
+        }
+
+        if($diff == 6){
+            $rateId = $listRates->where('id', 5)->first();
+        }
+
+        if($diff >= 7){
+            $rateId = $listRates->where('id', 6)->first();
+        }
+
+        return $rateId['id'];
+    }
 }
