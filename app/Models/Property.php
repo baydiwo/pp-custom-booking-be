@@ -26,6 +26,12 @@ class Property extends Model
             // 'dateTo'     => 'required|date_format:Y-m-d H:i:s|after:dateFrom',
             'propertyId' => 'required|integer',
             // 'rateIds'    => 'required|integer',
+        ],
+        'check-availability' => [
+            'dateFrom'   => 'required|date_format:Y-m-d',
+            'dateTo'     => 'required|date_format:Y-m-d|after:dateFrom',
+            'propertyId' => 'required|integer',
+            'areaId'     => 'required|integer',
         ]
     ];
 }

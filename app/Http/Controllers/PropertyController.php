@@ -158,8 +158,27 @@ class PropertyController
 
     public function checkAvailability()
     {
+
+        $validator = Validator::make(
+            $this->params,
+            Property::$rules['check-availability']
+        );
+
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+
+        $from = Carbon::parse($this->params['dateFrom']);
+        $to = Carbon::parse($this->params['dateTo']);
+        $diff = $from->diffInDays($to);    
+        if($diff >14){
+            throw new Exception("Different Days Cannot Greater Than 14 Days");
+            
+        }
+        $name = "prop1_area_".$this->params['areaId']."_from_".$this->params['dateFrom'].
+        "_to_". $this->params['dateTo'];
+
         $redis = Cache::getRedis();
-        $keys = $redis->keys("*prop1_area*");
+        $keys = $redis->keys("*{$name}*");
         // $count = 0;
         $result = [];
 
