@@ -38,16 +38,29 @@ class PropertyJob implements ShouldQueue
 
     public function handle()
     {
+        $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-12-31");
+        $allGroupDate  = [];
+        foreach ($dateInYear as $valueDate) {
+            if($valueDate != "2021-12-31") {
+                $thisDay = Carbon::parse($valueDate);
+                $groupDate = [];
+                for ($i=1; $i <= 14; $i++) {
+                    $thisDay->addDays($i);
+                    array_push($groupDate, $thisDay);
+                    $thisDay = Carbon::parse($valueDate);
+                }
+                
+                $allGroupDate[$valueDate] =  $groupDate;
+            }
+        }
         
-        //todo
-        //just 1 month, day by day
         Cache::flush();
         $request       = new Request();
         $token         = new ApiController(NULL, $request);
         $dataToken     = $token->authToken();
         $api           = new ApiController($dataToken['token'], $request);
         $listAreasData = $api->listArea($this->propertyId);
-        $listArea      = collect($listAreasData)->where('inactive', false)->all();
+        $listArea      = collect($listAreasData)->where('inactive', false)->first();
         $listRatesData = collect($api->listRates());
         $name='Night Direct';
         $filtered = $listRatesData->filter(function ($item) use($name){
@@ -56,97 +69,23 @@ class PropertyJob implements ShouldQueue
 
         $listRates = array_values($filtered);
 
-        $leap          = $this->is_leap_year(date("Y"));
-        // $dateLeap = "28";
-        // if($leap){
-        //     $dateLeap =  "29";
-        // } 
 
-        $tempJan = [];
-        $dateInYearJan = $this->getDateInYear(date("Y")."-01-01", date("Y")."-01-31");
-        $result=$this->array_combinations($dateInYearJan);
-        foreach ($result as $keyresult => $valueresult) {
-            $tempJan[$keyresult][] = reset($valueresult);
-            $tempJan[$keyresult][] = end($valueresult);
-        }
+        foreach ($allGroupDate as $keyNew => $valueNew) {
+            foreach ($valueNew as $valueIn) {
+                $getRate = $this->rateByDate($keyNew, $valueIn, $listRates);
+                $paramMinNight = [
+                    'categoryIds' => [$listArea['categoryId']],
+                    'dateFrom'    => $keyNew,
+                    'dateTo'      => $valueIn,
+                    'propertyId'  => $listArea['propertyId'],
+                    'rateIds'     => [$getRate]
+                ];    
 
-        // $dateInYearJan = $this->getDateInYear(date("Y")."-02-01", date("Y")."-02-{$dateLeap}");
-        // $currentData = [];
-        // $currentIndex = 0;
-        // $temp = [];
-        // foreach ($dateInYearJan as $key => $value) {
-        //     if($currentData){
-        //         $temp[$key][] = $currentData;
-        //         $temp[$key][] = $value;
-        //         // $currentIndex = $key;
-        //     }
-        //     $currentData = $value;
-        // }
-
-        // $chunck = array_chunk($dateInYearJan, 4);
-        // $push = [];
-        // for ($i=0; $i <= count($dateInYearJan) ; $i++) { 
-        //     for ($j=0; $j < $i; $j++) { 
-        //         $push[$i][$j] = $dateInYearJan[$j];
-        //     }
-        // }
-
-        // $push2 = [];
-        // foreach ($push as $key => $value) {
-        //     if($key != 1) {
-        //         $push2[$key][]= reset($value);
-        //         $push2[$key][]= end($value);
-        //     }
-        // }
-        $newArrayValue = array_values(collect($tempJan)->unique()->all());
-
-        //testing array combination
-        // $arrays =array(
-        //     'item1' => array('A', 'B'),
-        //     'item2' => array('C', 'D'),
-        //     'item3' => array('E', 'F'),
-        // );
-        // $result = array(array());
-        // foreach ($arrays as $property => $property_values) {
-        //     $tmp = array();
-        //     foreach ($result as $result_item) {
-        //         foreach ($property_values as $property_value) {
-        //             $tmp[] = array_merge($result_item, array($property => $property_value));
-        //         }
-        //     }
-        //     $result = $tmp;
-        // }
-        foreach ($newArrayValue as $keyNew => $valueNew) {
-            $from = Carbon::parse($valueNew[0]);
-            $to = Carbon::parse($valueNew[1]);
-            $diff = $from->diffInDays($to);
-            if($diff <= 7) {
-                foreach ($listArea as $keyArea => $valueArea) {
-                    $getRate = $this->rateByDate($valueNew[0], $valueNew[1], $listRates);
-                    $paramMinNight = [
-                        // 'agentId'     => env("AGENT_ID"),
-                        'categoryIds' => [$valueArea['categoryId']],
-                        'dateFrom'    => $valueNew[0],
-                        'dateTo'      => $valueNew[1],
-                        'propertyId'  => $valueArea['propertyId'],
-                        'rateIds'     => [$getRate]
-                    ];    
-    
-                    // $cacheName = [
-                    //     'propertyId'=>$valueArea['id'],
-                    //     'from'=>$valueNew['first'],
-                    //     'to'=>$valueNew['last'],
-                    // ];
-                    Cache::remember("prop1_area_".$valueArea['id']."_from_".$valueNew[0].
-                    "_to_". $valueNew[1]
-                    , 30 * 60, function () use ($api, $paramMinNight) {
-                        return $api->availabilityrategrid($paramMinNight);
-                    });
-                // Cache::remember("get_min_night_prop_{$valueArea['id']}".json_encode($cacheName)
-                // , 10 * 60, function () use ($api, $paramMinNight) {
-                //     return $api->availabilityrategrid($paramMinNight);
-                // });
-                }
+                Cache::remember("prop1_area_".$listArea['id']."_from_".$keyNew.
+                "_to_". $valueIn->format('Y-m-d')
+                , 30 * 60, function () use ($api, $paramMinNight) {
+                    return $api->availabilityrategrid($paramMinNight);
+                });
             }
         }
 
@@ -262,8 +201,7 @@ class PropertyJob implements ShouldQueue
     {
         $listRates = collect($listRates);
         $from = Carbon::parse($dateFrom);
-        $to = Carbon::parse($dateTo);
-        $diff = $from->diffInDays($to);
+        $diff = $from->diffInDays($dateTo);
 
         if($diff == 1 || $diff == 2){
             $rateId = $listRates->where('id', 12)->first();
