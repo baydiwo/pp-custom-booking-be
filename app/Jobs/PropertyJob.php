@@ -69,7 +69,7 @@ class PropertyJob implements ShouldQueue
 
         $listRates = array_values($filtered);
 
-        //comment
+        
         foreach ($allGroupDate as $keyNew => $valueNew) {
             foreach ($valueNew as $valueIn) {
                 $getRate = $this->rateByDate($keyNew, $valueIn, $listRates);
