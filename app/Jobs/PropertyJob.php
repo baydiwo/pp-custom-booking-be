@@ -76,7 +76,7 @@ class PropertyJob implements ShouldQueue
                 $paramMinNight = [
                     'categoryIds' => [$listArea['categoryId']],
                     'dateFrom'    => $keyNew,
-                    'dateTo'      => $valueIn,
+                    'dateTo'      => $valueIn->format('Y-m-d'),
                     'propertyId'  => $listArea['propertyId'],
                     'rateIds'     => [$getRate]
                 ];    
