@@ -69,26 +69,26 @@ class PropertyJob implements ShouldQueue
 
         $listRates = array_values($filtered);
 
-        foreach ($listArea as $keys => $listAreas) {
-            foreach ($allGroupDate as $keyNew => $valueNew) {
-                foreach ($valueNew as $valueIn) {
-                    $getRate = $this->rateByDate($keyNew, $valueIn, $listRates);
-                    $paramMinNight = [
-                        'categoryIds' => [$listAreas['categoryId']],
-                        'dateFrom'    => $keyNew,
-                        'dateTo'      => $valueIn->format('Y-m-d'),
-                        'propertyId'  => $listAreas['propertyId'],
-                        'rateIds'     => [$getRate]
-                    ];    
+        // foreach ($listArea as $keys => $listAreas) {
+        //     foreach ($allGroupDate as $keyNew => $valueNew) {
+        //         foreach ($valueNew as $valueIn) {
+        //             $getRate = $this->rateByDate($keyNew, $valueIn, $listRates);
+        //             $paramMinNight = [
+        //                 'categoryIds' => [$listAreas['categoryId']],
+        //                 'dateFrom'    => $keyNew,
+        //                 'dateTo'      => $valueIn->format('Y-m-d'),
+        //                 'propertyId'  => $listAreas['propertyId'],
+        //                 'rateIds'     => [$getRate]
+        //             ];    
     
-                    Cache::rememberForever("prop1_area_".$listAreas['id']."_from_".$keyNew.
-                    "_to_". $valueIn->format('Y-m-d')
-                    , function () use ($api, $paramMinNight) {
-                        return $api->availabilityrategrid($paramMinNight);
-                    });
-                }
-            }
-        }        
+        //             Cache::rememberForever("prop1_area_".$listAreas['id']."_from_".$keyNew.
+        //             "_to_". $valueIn->format('Y-m-d')
+        //             , function () use ($api, $paramMinNight) {
+        //                 return $api->availabilityrategrid($paramMinNight);
+        //             });
+        //         }
+        //     }
+        // }        
 
         return [
             'code' => 1,
