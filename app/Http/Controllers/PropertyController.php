@@ -157,7 +157,7 @@ class PropertyController
     }
 
     public function checkAvailability()
-    {
+            {
         $validator = Validator::make(
             $this->params,
             Property::$rules['check-availability']

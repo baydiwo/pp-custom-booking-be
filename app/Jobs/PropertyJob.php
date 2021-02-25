@@ -56,7 +56,7 @@ class PropertyJob implements ShouldQueue
         
         Cache::flush();
         $model = new Property();
-        $model->payload = "Testing";
+        $model->payload = "Testidsng";
         $model->save();
         // $request       = new Request();
         // $token         = new ApiController(NULL, $request);
