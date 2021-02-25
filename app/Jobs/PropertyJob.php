@@ -55,40 +55,43 @@ class PropertyJob implements ShouldQueue
         }
         
         Cache::flush();
-        $request       = new Request();
-        $token         = new ApiController(NULL, $request);
-        $dataToken     = $token->authToken();
-        $api           = new ApiController($dataToken['token'], $request);
-        $listAreasData = $api->listArea($this->propertyId);
-        $listArea      = collect($listAreasData)->where('inactive', false)->all();
-        $listRatesData = collect($api->listRates());
-        $name='Night Direct';
-        $filtered = $listRatesData->filter(function ($item) use($name){
-            return false !== stripos($item['name'], $name);
-        })->all();
+        $model = new Property();
+        $model->payload = "Testing";
+        $model->save();
+        // $request       = new Request();
+        // $token         = new ApiController(NULL, $request);
+        // $dataToken     = $token->authToken();
+        // $api           = new ApiController($dataToken['token'], $request);
+        // $listAreasData = $api->listArea($this->propertyId);
+        // $listArea      = collect($listAreasData)->where('inactive', false)->all();
+        // $listRatesData = collect($api->listRates());
+        // $name='Night Direct';
+        // $filtered = $listRatesData->filter(function ($item) use($name){
+        //     return false !== stripos($item['name'], $name);
+        // })->all();
 
-        $listRates = array_values($filtered);
+        // $listRates = array_values($filtered);
 
-        foreach ($listArea as $keys => $listAreas) {
-            foreach ($allGroupDate as $keyNew => $valueNew) {
-                foreach ($valueNew as $valueIn) {
-                    $getRate = $this->rateByDate($keyNew, $valueIn, $listRates);
-                    $paramMinNight = [
-                        'categoryIds' => [$listAreas['categoryId']],
-                        'dateFrom'    => $keyNew,
-                        'dateTo'      => $valueIn->format('Y-m-d'),
-                        'propertyId'  => $listAreas['propertyId'],
-                        'rateIds'     => [$getRate]
-                    ];    
+        // foreach ($listArea as $keys => $listAreas) {
+        //     foreach ($allGroupDate as $keyNew => $valueNew) {
+        //         foreach ($valueNew as $valueIn) {
+        //             $getRate = $this->rateByDate($keyNew, $valueIn, $listRates);
+        //             $paramMinNight = [
+        //                 'categoryIds' => [$listAreas['categoryId']],
+        //                 'dateFrom'    => $keyNew,
+        //                 'dateTo'      => $valueIn->format('Y-m-d'),
+        //                 'propertyId'  => $listAreas['propertyId'],
+        //                 'rateIds'     => [$getRate]
+        //             ];    
     
-                    Cache::forever("prop1_area_".$listAreas['id']."_from_".$keyNew.
-                    "_to_". $valueIn->format('Y-m-d')
-                    , function () use ($api, $paramMinNight) {
-                        return $api->availabilityrategrid($paramMinNight);
-                    });
-                }
-            }
-        }        
+        //             Cache::forever("prop1_area_".$listAreas['id']."_from_".$keyNew.
+        //             "_to_". $valueIn->format('Y-m-d')
+        //             , function () use ($api, $paramMinNight) {
+        //                 return $api->availabilityrategrid($paramMinNight);
+        //             });
+        //         }
+        //     }
+        // }        
 
         return [
             'code' => 1,
