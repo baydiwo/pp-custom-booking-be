@@ -174,7 +174,7 @@ class ApiController
 
     public function listArea($propertyId)
     {
-        $value = Cache::remember('list_areas_' . $propertyId, 10 * 60, function () use ($propertyId) {
+        $value = Cache::remem('list_areas_' . $propertyId, function () use ($propertyId) {
             $endpoint = 'areas?propertyId=' . $propertyId . '&limit=300';
             $response = Http::withHeaders([
                 'authToken' => $this->authToken

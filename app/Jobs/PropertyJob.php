@@ -38,7 +38,7 @@ class PropertyJob implements ShouldQueue
 
     public function handle()
     {
-        $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-12-31");
+        $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-01-02");
         $allGroupDate  = [];
         foreach ($dateInYear as $valueDate) {
             if($valueDate != "2021-12-31") {
@@ -54,13 +54,13 @@ class PropertyJob implements ShouldQueue
             }
         }
         
-        Cache::flush();
+        // Cache::flush();
         $request       = new Request();
         $token         = new ApiController(NULL, $request);
         $dataToken     = $token->authToken();
         $api           = new ApiController($dataToken['token'], $request);
         $listAreasData = $api->listArea($this->propertyId);
-        $listArea      = collect($listAreasData)->where('inactive', false)->all();
+        $listAreas      = collect($listAreasData)->where('inactive', false)->first();
         $listRatesData = collect($api->listRates());
         $name='Night Direct';
         $filtered = $listRatesData->filter(function ($item) use($name){
@@ -81,7 +81,7 @@ class PropertyJob implements ShouldQueue
                         'rateIds'     => [$getRate]
                     ];    
     
-                    Cache::forever("prop1_area_".$listAreas['id']."_from_".$keyNew.
+                    Cache::rememberForever("prop1_area_".$listAreas['id']."_from_".$keyNew.
                     "_to_". $valueIn->format('Y-m-d')
                     , function () use ($api, $paramMinNight) {
                         return $api->availabilityrategrid($paramMinNight);
