@@ -54,7 +54,7 @@ class PropertyJob implements ShouldQueue
             }
         }
         
-        Cache::flush();
+        // Cache::flush();
         $request       = new Request();
         $token         = new ApiController(NULL, $request);
         $dataToken     = $token->authToken();
