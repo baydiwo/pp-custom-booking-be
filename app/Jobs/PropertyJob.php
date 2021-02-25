@@ -60,7 +60,7 @@ class PropertyJob implements ShouldQueue
         $dataToken     = $token->authToken();
         $api           = new ApiController($dataToken['token'], $request);
         $listAreasData = $api->listArea($this->propertyId);
-        $listArea      = collect($listAreasData)->where('inactive', false)->first();
+        $listArea      = collect($listAreasData)->where('inactive', false)->all();
         $listRatesData = collect($api->listRates());
         $name='Night Direct';
         $filtered = $listRatesData->filter(function ($item) use($name){
@@ -69,25 +69,26 @@ class PropertyJob implements ShouldQueue
 
         $listRates = array_values($filtered);
 
-        
-        foreach ($allGroupDate as $keyNew => $valueNew) {
-            foreach ($valueNew as $valueIn) {
-                $getRate = $this->rateByDate($keyNew, $valueIn, $listRates);
-                $paramMinNight = [
-                    'categoryIds' => [$listArea['categoryId']],
-                    'dateFrom'    => $keyNew,
-                    'dateTo'      => $valueIn->format('Y-m-d'),
-                    'propertyId'  => $listArea['propertyId'],
-                    'rateIds'     => [$getRate]
-                ];    
-
-                Cache::remember("prop1_area_".$listArea['id']."_from_".$keyNew.
-                "_to_". $valueIn->format('Y-m-d')
-                , 100 * 60, function () use ($api, $paramMinNight) {
-                    return $api->availabilityrategrid($paramMinNight);
-                });
+        foreach ($listArea as $keys => $listAreas) {
+            foreach ($allGroupDate as $keyNew => $valueNew) {
+                foreach ($valueNew as $valueIn) {
+                    $getRate = $this->rateByDate($keyNew, $valueIn, $listRates);
+                    $paramMinNight = [
+                        'categoryIds' => [$listAreas['categoryId']],
+                        'dateFrom'    => $keyNew,
+                        'dateTo'      => $valueIn->format('Y-m-d'),
+                        'propertyId'  => $listAreas['propertyId'],
+                        'rateIds'     => [$getRate]
+                    ];    
+    
+                    Cache::forever("prop1_area_".$listAreas['id']."_from_".$keyNew.
+                    "_to_". $valueIn->format('Y-m-d')
+                    , function () use ($api, $paramMinNight) {
+                        return $api->availabilityrategrid($paramMinNight);
+                    });
+                }
             }
-        }
+        }        
 
         return [
             'code' => 1,
