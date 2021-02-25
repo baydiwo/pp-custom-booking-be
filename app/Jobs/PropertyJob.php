@@ -38,7 +38,7 @@ class PropertyJob implements ShouldQueue
 
     public function handle()
     {
-        $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-01-02");
+        $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-12-31");
         $allGroupDate  = [];
         foreach ($dateInYear as $valueDate) {
             if($valueDate != "2021-12-31") {
