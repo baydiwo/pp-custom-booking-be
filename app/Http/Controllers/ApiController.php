@@ -222,20 +222,14 @@ class ApiController
 
     public function availabilityrategrid($params)
     {
-        $value = Cache::remember(
-            'availabilityrategrid'. json_encode($params),
-            10 * 60, function () use ($params) {
-            $endpoint = 'availabilityrategrid';
+        $endpoint = 'availabilityrategrid';
 
-            $response = Http::withHeaders([
-                'authToken' => $this->authToken
-            ])->post(env('BASE_URL_RMS') . $endpoint, $params);
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->post(env('BASE_URL_RMS') . $endpoint, $params);
 
-            return $response->json();
-        });
-
-        return $value
-        ;
+           
+        return $response->json();
     }
 
     public function windCaveCreatePurchaseSessions($params)

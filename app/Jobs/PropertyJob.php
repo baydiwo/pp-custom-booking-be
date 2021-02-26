@@ -82,11 +82,16 @@ class PropertyJob implements ShouldQueue
                         'rateIds'     => [$getRate]
                     ];    
     
-                    Cache::rememberForever("prop1_area_".$listAreas['id']."_from_".$keyNew.
-                    "_to_". $valueIn->format('Y-m-d')
-                    , function () use ($api, $paramMinNight) {
-                        return $api->availabilityrategrid($paramMinNight);
-                    });
+                    $availGrid = $api->availabilityrategrid($paramMinNight);
+
+                    $model = new Property();
+                    $model->property_id = $listAreas['propertyId'];
+                    $model->area_id     = $listAreas['id'];
+                    $model->date_from   = $keyNew;
+                    $model->date_to     = $valueIn->format('Y-m-d');
+                    $model->response    = serialize($availGrid);
+                    $model->state       = 1; 
+                    $model->save();
                 }
             }
         }        
