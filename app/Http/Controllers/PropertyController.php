@@ -173,23 +173,32 @@ class PropertyController
             throw new Exception("Different Days Cannot Greater Than 14 Days");
             
         }
-        $name = "prop1_area_".$this->params['areaId']."_from_".$this->params['dateFrom'].
-        "_to_". $this->params['dateTo'];
 
-        $redis = Cache::getRedis();
-        $keys = $redis->keys("*{$name}*");
-        // $count = 0;
-        $result = [];
+        $result = Property::select('payload')
+            ->where('property_id', $this->params['propertyId'])
+            ->where('area_id', $this->params['areaId'])
+            ->where('date_from',$this->params['dateFrom'])
+            ->where('date_to',$this->params['dateTo'])
+            ->first();
 
-        foreach ($keys as $key) {
-            $result[] = $redis->get($key);
+        $newResult = unserialize($result['payload']);
+        // $name = "prop1_area_".$this->params['areaId']."_from_".$this->params['dateFrom'].
+        // "_to_". $this->params['dateTo'];
 
-        }      
+        // $redis = Cache::getRedis();
+        // $keys = $redis->keys("*{$name}*");
+        // // $count = 0;
+        // $result = [];
 
-        $newResult  = [];
-        foreach ($result as $value) {
-            $newResult[] = unserialize($value);
-        }
+        // foreach ($keys as $key) {
+        //     $result[] = $redis->get($key);
+
+        // }      
+
+        // $newResult  = [];
+        // foreach ($result as $value) {
+        //     $newResult[] = unserialize($value);
+        // }
         
         return [
             'code' => 1,

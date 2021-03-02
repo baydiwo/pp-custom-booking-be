@@ -38,22 +38,35 @@ class PropertyJob implements ShouldQueue
 
     public function handle()
     {
-        $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-12-31");
+        $dateInYear = $this->getDateInYear(date("Y") . "-01-01", date("Y") . "-12-31");
         $allGroupDate  = [];
+        // foreach ($dateInYear as $valueDate) {
+        //     if($valueDate != "2021-12-31") {
+        //         $thisDay = Carbon::parse($valueDate);
+        //         $groupDate = [];
+        //         for ($i=1; $i <= 14; $i++) {
+        //             $thisDay->addDays($i);
+        //             array_push($groupDate, $thisDay);
+        //             $thisDay = Carbon::parse($valueDate);
+        //         }
+
+        //         $allGroupDate[$valueDate] =  $groupDate;
+        //     }
+        // }
+
+        $thisDay = "";
         foreach ($dateInYear as $valueDate) {
-            if($valueDate != "2021-12-31") {
-                $thisDay = Carbon::parse($valueDate);
-                $groupDate = [];
-                for ($i=1; $i <= 14; $i++) {
-                    $thisDay->addDays($i);
-                    array_push($groupDate, $thisDay);
-                    $thisDay = Carbon::parse($valueDate);
+            if ($valueDate != "2021-12-31") {
+                if ($valueDate == $thisDay || $thisDay == "") {
+
+                    $prevDay = Carbon::parse($valueDate);
+                    $thisDay = $prevDay->addDays(14)->format('Y-m-d');
+                    $allGroupDate[$valueDate] = $thisDay;
                 }
-                
-                $allGroupDate[$valueDate] =  $groupDate;
             }
         }
-        
+
+
         // Cache::flush();
         //com
         $request       = new Request();
@@ -63,38 +76,42 @@ class PropertyJob implements ShouldQueue
         $listAreasData = $api->listArea($this->propertyId);
         $listArea      = collect($listAreasData)->where('inactive', false)->all();
         $listRatesData = collect($api->listRates());
-        $name='Night Direct';
-        $filtered = $listRatesData->filter(function ($item) use($name){
+
+        $name = 'Night Direct';
+        $filtered = $listRatesData->filter(function ($item) use ($name) {
             return false !== stripos($item['name'], $name);
         })->all();
 
-        $listRates = array_values($filtered);
-
+        $listRates = collect($filtered)->pluck('id');
         foreach ($listArea as $keys => $listAreas) {
             foreach ($allGroupDate as $keyNew => $valueNew) {
-                foreach ($valueNew as $valueIn) {
-                    $getRate = $this->rateByDate($keyNew, $valueIn, $listRates);
-                    $paramMinNight = [
-                        'categoryIds' => [$listAreas['categoryId']],
-                        'dateFrom'    => $keyNew,
-                        'dateTo'      => $valueIn->format('Y-m-d'),
-                        'propertyId'  => $listAreas['propertyId'],
-                        'rateIds'     => [$getRate]
-                    ];    
-    
-                    $availGrid = $api->availabilityrategrid($paramMinNight);
+                // $getRate = $this->rateByDate($keyNew, $valueIn, $listRates);
+                $paramMinNight = [
+                    'categoryIds' => [$listAreas['categoryId']],
+                    'dateFrom'    => $keyNew,
+                    'dateTo'      => $valueNew,
+                    'propertyId'  => $listAreas['propertyId'],
+                    'rateIds'     => $listRates
+                ];
+
+                $availGrid = $api->availabilityrategrid($paramMinNight);
+                if (isset($availGrid['Message'])) {
+                    if ($availGrid['Message'] == "Auth Token Has Expired") {
+                        $api  = new ApiController($dataToken['token'], $request);
+                        $availGrid = $api->availabilityrategrid($paramMinNight);
+                    }
 
                     $model = new Property();
                     $model->property_id = $listAreas['propertyId'];
                     $model->area_id     = $listAreas['id'];
                     $model->date_from   = $keyNew;
-                    $model->date_to     = $valueIn->format('Y-m-d');
+                    $model->date_to     = $valueNew;
                     $model->response    = serialize($availGrid);
-                    $model->state       = 1; 
+                    $model->state       = 1;
                     $model->save();
                 }
             }
-        }        
+        }
 
         return [
             'code' => 1,
@@ -102,15 +119,15 @@ class PropertyJob implements ShouldQueue
             'message' => "Data Has Been Saved in Cache"
         ];
     }
-    
-    private function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d' )
+
+    private function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d')
     {
         $dates = array();
         $current = strtotime($first);
         $last = strtotime($last);
-    
-        while( $current <= $last ) {
-            $dates[] = date($output_format , $current);
+
+        while ($current <= $last) {
+            $dates[] = date($output_format, $current);
             $current = strtotime($step, $current);
         }
         return $dates;
@@ -118,21 +135,29 @@ class PropertyJob implements ShouldQueue
 
     public function is_leap_year($year)
     {
-        return ((($year % 4) == 0) && ((($year % 100) != 0) || (($year %400) == 0)));
+        return ((($year % 4) == 0) && ((($year % 100) != 0) || (($year % 400) == 0)));
     }
-    function printCombination($arr, 
-                            $n, $r) 
-    { 
+    function printCombination(
+        $arr,
+        $n,
+        $r
+    ) {
         // A temporary array to 
         // store all combination 
         // one by one 
-        $data = array(); 
+        $data = array();
 
         // Print all combination 
         // using temprary array 'data[]' 
-        $this->combinationUtil($arr, $data, 0, 
-                        $n - 1, 0, $r); 
-    } 
+        $this->combinationUtil(
+            $arr,
+            $data,
+            0,
+            $n - 1,
+            0,
+            $r
+        );
+    }
 
     /* arr[] ---> Input Array 
     data[] ---> Temporary array to 
@@ -142,19 +167,22 @@ class PropertyJob implements ShouldQueue
     index ---> Current index in data[] 
     r ---> Size of a combination 
         to be printed */
-    function combinationUtil($arr, $data, $start, 
-                            $end, $index, $r) 
-                    
-    { 
+    function combinationUtil(
+        $arr,
+        $data,
+        $start,
+        $end,
+        $index,
+        $r
+    ) {
         // Current combination is ready 
         // to be printed, print it 
-        if ($index == $r) 
-        { 
-            for ($j = 0; $j < $r; $j++) 
-                echo $data[$j]; 
-            echo "\n"; 
-            return; 
-        } 
+        if ($index == $r) {
+            for ($j = 0; $j < $r; $j++)
+                echo $data[$j];
+            echo "\n";
+            return;
+        }
 
         // replace index with all 
         // possible elements. The 
@@ -164,43 +192,53 @@ class PropertyJob implements ShouldQueue
         // index will make a combination 
         // with remaining elements at 
         // remaining positions 
-        for ($i = $start; 
-            $i <= $end && 
-            $end - $i + 1 >= $r - $index; $i++) 
-        { 
-            $data[$index] = $arr[$i]; 
-            $this->combinationUtil($arr, $data, $i + 1, 
-                            $end, $index + 1, $r); 
-        } 
-    } 
-
-    function array_combinations($array){
-    
-        $result=[];
-        for ($i=0;$i<count($array)-1;$i++) {
-            $result=array_merge($result,$this->combinations(array_slice($array,$i)));    
+        for (
+            $i = $start;
+            $i <= $end &&
+                $end - $i + 1 >= $r - $index;
+            $i++
+        ) {
+            $data[$index] = $arr[$i];
+            $this->combinationUtil(
+                $arr,
+                $data,
+                $i + 1,
+                $end,
+                $index + 1,
+                $r
+            );
         }
-        
+    }
+
+    function array_combinations($array)
+    {
+
+        $result = [];
+        for ($i = 0; $i < count($array) - 1; $i++) {
+            $result = array_merge($result, $this->combinations(array_slice($array, $i)));
+        }
+
         return $result;
     }
-    
-    function combinations($array){
-        //get all the possible combinations no dublicates
-        $combinations=[];
-        $combinations[]=$array;
-        for($i=1;$i<count($array);$i++){
 
-            $tmp=$array;            
+    function combinations($array)
+    {
+        //get all the possible combinations no dublicates
+        $combinations = [];
+        $combinations[] = $array;
+        for ($i = 1; $i < count($array); $i++) {
+
+            $tmp = $array;
             unset($tmp[$i]);
 
-            $tmp=array_values($tmp);//fix the indexes after unset
+            $tmp = array_values($tmp); //fix the indexes after unset
 
-            if(count($tmp)<2){
+            if (count($tmp) < 2) {
                 break;
             }
-            $combinations[]=$tmp;
+            $combinations[] = $tmp;
         }
-        
+
         return $combinations;
     }
 
@@ -210,27 +248,27 @@ class PropertyJob implements ShouldQueue
         $from = Carbon::parse($dateFrom);
         $diff = $from->diffInDays($dateTo);
 
-        if($diff == 1 || $diff == 2){
+        if ($diff == 1 || $diff == 2) {
             $rateId = $listRates->where('id', 12)->first();
         }
 
-        if($diff == 3){
+        if ($diff == 3) {
             $rateId = $listRates->where('id', 2)->first();
         }
 
-        if($diff == 4){
+        if ($diff == 4) {
             $rateId = $listRates->where('id', 3)->first();
         }
 
-        if($diff == 5){
+        if ($diff == 5) {
             $rateId = $listRates->where('id', 4)->first();
         }
 
-        if($diff == 6){
+        if ($diff == 6) {
             $rateId = $listRates->where('id', 5)->first();
         }
 
-        if($diff >= 7){
+        if ($diff >= 7) {
             $rateId = $listRates->where('id', 6)->first();
         }
 
