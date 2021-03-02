@@ -100,16 +100,16 @@ class PropertyJob implements ShouldQueue
                         $api  = new ApiController($dataToken['token'], $request);
                         $availGrid = $api->availabilityrategrid($paramMinNight);
                     }
-
-                    $model = new Property();
-                    $model->property_id = $listAreas['propertyId'];
-                    $model->area_id     = $listAreas['id'];
-                    $model->date_from   = $keyNew;
-                    $model->date_to     = $valueNew;
-                    $model->response    = serialize($availGrid);
-                    $model->state       = 1;
-                    $model->save();
                 }
+                
+                $model = new Property();
+                $model->property_id = $listAreas['propertyId'];
+                $model->area_id     = $listAreas['id'];
+                $model->date_from   = $keyNew;
+                $model->date_to     = $valueNew;
+                $model->response    = serialize($availGrid);
+                $model->state       = 1;
+                $model->save();
             }
         }
 
