@@ -53,7 +53,7 @@ class PropertyController
         if ((count($detailProperty) == 0) || isset($detailProperty['Message'])) {
             throw new Exception(ucwords('Detail Property Not Found'));
         }
-        
+
         $paramMinNight = [
             'categoryIds' => [$this->params['categoryId']],
             'dateFrom'    => $this->params['arrivalDate'],
@@ -65,7 +65,7 @@ class PropertyController
         $minNight = $api->availabilityrategrid($paramMinNight);
         if (!$minNight) {
             throw new Exception(ucwords('Minimum Night Not Found'));
-        } elseif(isset($minNight['Message'])) {
+        } elseif (isset($minNight['Message'])) {
             throw new Exception(ucwords($minNight['Message']));
         }
         if (empty($minNight['categories'][0]['rates'])) {
@@ -82,7 +82,7 @@ class PropertyController
             throw new Exception(ucwords($detailCategory['Message']));
         }
 
-        if(($this->params['adults'] + $this->params['infants'] + $this->params['children']) > $detailCategory['maxOccupantsPerCategory']) {
+        if (($this->params['adults'] + $this->params['infants'] + $this->params['children']) > $detailCategory['maxOccupantsPerCategory']) {
             throw new Exception(ucwords('Occupants over limit'));
         }
 
@@ -140,7 +140,7 @@ class PropertyController
 
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
-        
+
         // Cache::flush();
         // Queue::pushOn(
         // 'import-talent-queue',new PropertyJob()
@@ -153,7 +153,37 @@ class PropertyController
             'data' => [],
             'message' => "Data Has Been Saved in Cache"
         ];
+    }
 
+    public function rateByDate($dateFrom, $dateTo)
+    {
+        $diff = $dateFrom->diffInDays($dateTo);
+
+        if ($diff == 1 || $diff == 2) {
+            $rateId = 12;
+        }
+
+        if ($diff == 3) {
+            $rateId = 2;
+        }
+
+        if ($diff == 4) {
+            $rateId = 3;
+        }
+
+        if ($diff == 5) {
+            $rateId = 4;
+        }
+
+        if ($diff == 6) {
+            $rateId = 5;
+        }
+
+        if ($diff >= 7) {
+            $rateId = 6;
+        }
+
+        return $rateId;
     }
 
     public function checkAvailability()
@@ -168,23 +198,25 @@ class PropertyController
 
         $from = Carbon::parse($this->params['dateFrom']);
         $to = Carbon::parse($this->params['dateTo']);
-        $diff = $from->diffInDays($to);    
-        if($diff >14){
+        $diff = $from->diffInDays($to);
+        if ($diff > 14) {
             throw new Exception("Different Days Cannot Greater Than 14 Days");
-            
         }
 
-        $getMonth = $from->month;
+        $getRate = $this->rateByDate($from, $to);
+
 
         $result = Property::select('response')
             ->where('property_id', $this->params['propertyId'])
             ->where('area_id', $this->params['areaId'])
-            ->whereMonth('date_from', $getMonth)
-            // ->where('date_from',$this->params['dateFrom'])
-            // ->where('date_to',$this->params['dateTo'])
+            ->where('date_from', '<=', $from)
+            ->orderBy('date_from', 'DESC')
             ->first();
-
-        $newResult = json_decode($result);
+        $new = json_decode($result->response);
+        $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
+        $dayBreakDown = collect($collect->dayBreakdown)
+            ->whereBetween('theDate',[$from, $to] )->all();
+        $collect->dayBreakdown = $dayBreakDown;
         // $name = "prop1_area_".$this->params['areaId']."_from_".$this->params['dateFrom'].
         // "_to_". $this->params['dateTo'];
 
@@ -202,11 +234,17 @@ class PropertyController
         // foreach ($result as $value) {
         //     $newResult[] = unserialize($value);
         // }
-        
+
         return [
             'code' => 1,
             'status' => 'success',
-            'data' => $newResult,
+            'data' => [
+                "categories" => [
+                    "categoryId" => $new->categories[0]->categoryId,
+                    "name" => $new->categories[0]->name,
+                    "rates" => $collect,
+                ]
+            ]
         ];
 
 
@@ -244,7 +282,7 @@ class PropertyController
         //                 'propertyId'  => $valueProp['id'],
         //                 'rateIds'     => [$this->params['rateIds']]
         //             ];    
-        
+
         //             Cache::remember('min_night_prop'.$valueProp['id']."from {$valueNew['first']} - to {$valueNew['last']}"
         //             , 10 * 60, function () use ($api, $paramMinNight) {
         //                 return $api->availabilityrategrid($paramMinNight);
@@ -256,14 +294,14 @@ class PropertyController
         // return "Data Has Been Saved in Cache";
     }
 
-    public function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d' )
+    public function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d')
     {
         $dates = array();
         $current = strtotime($first);
         $last = strtotime($last);
-    
-        while( $current <= $last ) {
-            $dates[] = date($output_format , $current);
+
+        while ($current <= $last) {
+            $dates[] = date($output_format, $current);
             $current = strtotime($step, $current);
         }
         return $dates;
