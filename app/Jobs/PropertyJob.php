@@ -102,7 +102,7 @@ class PropertyJob implements ShouldQueue
                         $availGrid = $api->availabilityrategrid($paramMinNight);
                     }
                 }
-
+                //comment
                 $model = new Property();
                 $model->property_id = $listAreas['propertyId'];
                 $model->area_id     = $listAreas['id'];
