@@ -83,6 +83,7 @@ class PropertyJob implements ShouldQueue
         })->all();
 
         $listRates = collect($filtered)->pluck('id');
+
         foreach ($listArea as $keys => $listAreas) {
             foreach ($allGroupDate as $keyNew => $valueNew) {
                 // $getRate = $this->rateByDate($keyNew, $valueIn, $listRates);
@@ -101,13 +102,14 @@ class PropertyJob implements ShouldQueue
                         $availGrid = $api->availabilityrategrid($paramMinNight);
                     }
                 }
-                
+
                 $model = new Property();
                 $model->property_id = $listAreas['propertyId'];
                 $model->area_id     = $listAreas['id'];
+                $model->category_id = $listAreas['categoryId'];
                 $model->date_from   = $keyNew;
                 $model->date_to     = $valueNew;
-                $model->response    = serialize($availGrid);
+                $model->response    = json_encode($availGrid);
                 $model->state       = 1;
                 $model->save();
             }

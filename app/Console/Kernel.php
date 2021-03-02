@@ -32,4 +32,4 @@ class Kernel extends ConsoleKernel
         //     echo "a";    
         // })->everyMinute();
     }
-}
+}   

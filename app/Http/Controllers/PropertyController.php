@@ -174,14 +174,17 @@ class PropertyController
             
         }
 
-        $result = Property::select('payload')
+        $getMonth = $from->month;
+
+        $result = Property::select('response')
             ->where('property_id', $this->params['propertyId'])
             ->where('area_id', $this->params['areaId'])
-            ->where('date_from',$this->params['dateFrom'])
-            ->where('date_to',$this->params['dateTo'])
+            ->whereMonth('date_from', $getMonth)
+            // ->where('date_from',$this->params['dateFrom'])
+            // ->where('date_to',$this->params['dateTo'])
             ->first();
 
-        $newResult = unserialize($result['payload']);
+        $newResult = json_decode($result);
         // $name = "prop1_area_".$this->params['areaId']."_from_".$this->params['dateFrom'].
         // "_to_". $this->params['dateTo'];
 
