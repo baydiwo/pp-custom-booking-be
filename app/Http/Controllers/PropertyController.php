@@ -215,7 +215,7 @@ class PropertyController
         $new = json_decode($result->response);
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
         $dayBreakDown = collect($collect->dayBreakdown)
-            ->whereBetween('theDate',[$from, $to] )->all();
+            ->whereBetween('theDate',[$this->params['dateFrom'], $this->params['dateTo']] )->all();
         $collect->dayBreakdown = $dayBreakDown;
         // $name = "prop1_area_".$this->params['areaId']."_from_".$this->params['dateFrom'].
         // "_to_". $this->params['dateTo'];
@@ -226,7 +226,7 @@ class PropertyController
         // $result = [];
 
         // foreach ($keys as $key) {
-        //     $result[] = $redis->get($key);
+        //     $result[] = $red
 
         // }      
 
