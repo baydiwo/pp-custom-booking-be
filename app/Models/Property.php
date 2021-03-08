@@ -27,6 +27,10 @@ class Property extends Model
             'propertyId' => 'required|integer',
             // 'rateIds'    => 'required|integer',
         ],
+        'area-by-year' => [
+            'areaId' => 'required|integer',
+            'year'   => 'required|date_format:Y',
+        ],
         'check-availability' => [
             'dateFrom'   => 'required|date_format:Y-m-d',
             'dateTo'     => 'required|date_format:Y-m-d|after:dateFrom',

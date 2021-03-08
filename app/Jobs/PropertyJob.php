@@ -74,7 +74,8 @@ class PropertyJob implements ShouldQueue
         $dataToken     = $token->authToken();
         $api           = new ApiController($dataToken['token'], $request);
         $listAreasData = $api->listArea($this->propertyId);
-        $listArea      = collect($listAreasData)->where('inactive', false)->all();
+        $listArea      = collect($listAreasData)->where('inactive', false);
+        die(json_encode($listArea->pluck('categoryId')));
         $listRatesData = collect($api->listRates());
 
         $name = 'Night Direct';

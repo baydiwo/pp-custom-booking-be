@@ -34,6 +34,7 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
         $router->get('', 'PropertyController@list');
         $router->get('availability-grid', 'PropertyController@availabilityGrid');
         $router->get('check-availabilty', 'PropertyController@checkAvailability');
+        $router->get('area-by-year', 'PropertyController@areaByYear');
     });
     $router->post('payment/{reservationId}', 'PaymentController@payment');
     $router->get('countries', 'CountryController@list');

@@ -306,4 +306,48 @@ class PropertyController
         }
         return $dates;
     }
+
+    public function areaByYear()
+    {
+        $validator = Validator::make(
+            $this->params,
+            Property::$rules['area-by-year']
+        );
+
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+
+        $data = Property::select('response')->where("area_id", $this->params['areaId'])->get();
+        if(count($data) == 0) {
+            throw new Exception(ucwords('Data Not Found'));
+        }
+        $newResponse = collect($data)->map(function($data){
+            return json_decode($data->response);
+        })->pluck('categories')->all();
+        
+        $response = [];
+        foreach ($newResponse as $key => $value) {
+            $valueCollect = collect($value[0]->rates)->pluck('dayBreakdown')->last();
+            foreach ($valueCollect as $keys => $valueDataTemp) {
+                $response[$keys][$valueDataTemp->theDate] = $valueDataTemp->availableAreas;
+            }
+        }
+
+        $return = collect($response)->all();
+
+        $temp = [];
+        foreach ($return as $returnkey => $valuereturn) {
+            foreach ($valuereturn as $keyreturn => $valueDataReturn) {
+                $temp[$keyreturn] = $valueDataReturn;
+            }
+        }
+
+        $dataReturn = collect($temp)->sort()->all();
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => $dataReturn
+        ];
+
+    }
 }
