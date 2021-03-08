@@ -329,24 +329,26 @@ class PropertyController
         foreach ($newResponse as $key => $value) {
             $valueCollect = collect($value[0]->rates)->pluck('dayBreakdown')->last();
             foreach ($valueCollect as $keys => $valueDataTemp) {
-                $response[$keys][$valueDataTemp->theDate] = $valueDataTemp->availableAreas;
+                $date = Carbon::parse($valueDataTemp->theDate)->format('Y-m-d');
+                $response[$keys][$date]['date'] = $date;
+                $response[$keys][$date]['availableAreas'] = $valueDataTemp->availableAreas;
             }
         }
 
-        $return = collect($response)->all();
 
         $temp = [];
-        foreach ($return as $returnkey => $valuereturn) {
+        foreach ($response as $returnkey => $valuereturn) {
             foreach ($valuereturn as $keyreturn => $valueDataReturn) {
-                $temp[$keyreturn] = $valueDataReturn;
+                $temp[$keyreturn]['date'] = $valueDataReturn['date'];
+                $temp[$keyreturn]['availableAreas'] = $valueDataReturn['availableAreas'];
             }
-        }
+        }   
 
-        $dataReturn = collect($temp)->sort()->all();
+        $dateReturn = collect($temp)->sortBy("date", SORT_NATURAL)->values()->all();
         return [
             'code' => 1,
             'status' => 'success',
-            'data' => $dataReturn
+            'data' =>$dateReturn
         ];
 
     }
