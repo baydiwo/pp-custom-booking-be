@@ -5,6 +5,12 @@ namespace App\Http\Controllers;
 use App\Jobs\PropertyJob;
 use App\Models\Property;
 use Exception;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Promise;
+use GuzzleHttp\Psr7\Request as Psr7Request;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -155,6 +161,76 @@ class PropertyController
         ];
     }
 
+    public function availabilityGridConcurrent()
+    {
+        $validator = Validator::make(
+            $this->params,
+            Property::$rules['availability-grid']
+        );
+
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+        $client = new Client([
+            'http_errors'     => false,
+            'connect_timeout' => 1.50, //////////////// 0.50
+            'timeout'         => 2.00, //////////////// 1.00
+            'headers' => [
+                'User-Agent' => 'Test/1.0'
+            ]
+        ]);
+        $responses = collect();
+        $endpoint = 'availabilityRateGrid';
+        $requests = function ($total) use ($endpoint) {
+            $uris = env('BASE_URL_RMS') . $endpoint;
+            $paramMinNight = [
+                'categoryIds' => [3],
+                'dateFrom'    =>  "2021-01-01",
+                'dateTo'      => "2021-01-15",
+                'propertyId'  => 1,
+                'rateIds'     => [2, 3, 4, 5, 6, 12]
+            ];
+
+            for ($i = 0; $i < 10; $i++) {
+                yield new Psr7Request('POST', $uris, [
+                    'headers' => [
+                        'authToken' => $this->authToken,
+                    ],
+                    "content-type" => 'application/json'
+
+                ], json_encode($paramMinNight));
+            }
+        };
+        // wait on all of the requests to complete. Throws a ConnectException if any
+        $pool = new Pool($client, $requests(5), [
+            'concurrency' => 5,
+            'fulfilled' => function ($response, $index) use ($responses) {
+                // $body = $response->getBody();
+
+                $remainingBytes = $response->getReasonPhrase();
+                $responses[$index] = $remainingBytes;
+            },
+            'rejected' => function (ConnectException $reason, $index) use ($responses) {
+                $body = $reason->getMessage();
+
+                $responses[$index] = $body;
+            },
+        ]);
+        // Initiate the transfers and create a promise
+        $promise = $pool->promise();
+        // Force the pool of requests to complete.
+        $promise->wait();
+
+        // foreach ($promise as $key => $value) {
+        echo json_encode($responses);
+        // }
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => [],
+            'message' => "Data Has Been Saved in Cache"
+        ];
+    }
+
     public function rateByDate($dateFrom, $dateTo)
     {
         $diff = $dateFrom->diffInDays($dateTo);
@@ -205,18 +281,20 @@ class PropertyController
 
         $getRate = $this->rateByDate($from, $to);
 
-
         $result = Property::select('response')
             ->where('property_id', $this->params['propertyId'])
             ->where('area_id', $this->params['areaId'])
             ->where('date_from', '<=', $from)
             ->orderBy('date_from', 'DESC')
             ->first();
+            
         $new = json_decode($result->response);
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
-        $dayBreakDown = collect($collect->dayBreakdown)
-            ->whereBetween('theDate',[$this->params['dateFrom'], $this->params['dateTo']] )->all();
-        $collect->dayBreakdown = $dayBreakDown;
+        if($collect) {
+            $dayBreakDown = collect($collect->dayBreakdown)
+                ->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']])->all();
+            $collect->dayBreakdown = $dayBreakDown;
+        }
         // $name = "prop1_area_".$this->params['areaId']."_from_".$this->params['dateFrom'].
         // "_to_". $this->params['dateTo'];
 
@@ -242,7 +320,7 @@ class PropertyController
                 "categories" => [
                     "categoryId" => $new->categories[0]->categoryId,
                     "name" => $new->categories[0]->name,
-                    "rates" => $collect,
+                    "rates" => $collect == NULL ? [] : $collect,
                 ]
             ]
         ];
@@ -318,13 +396,13 @@ class PropertyController
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 
         $data = Property::select('response')->where("area_id", $this->params['areaId'])->get();
-        if(count($data) == 0) {
+        if (count($data) == 0) {
             throw new Exception(ucwords('Data Not Found'));
         }
-        $newResponse = collect($data)->map(function($data){
+        $newResponse = collect($data)->map(function ($data) {
             return json_decode($data->response);
         })->pluck('categories')->all();
-        
+
         $response = [];
         foreach ($newResponse as $key => $value) {
             $valueCollect = collect($value[0]->rates)->pluck('dayBreakdown')->last();
@@ -334,20 +412,18 @@ class PropertyController
             }
         }
 
-
         $temp = [];
         foreach ($response as $returnkey => $valuereturn) {
             foreach ($valuereturn as $keyreturn => $valueDataReturn) {
                 $temp[$keyreturn] = $valueDataReturn;
             }
-        }   
+        }
         $dateReturn = collect($temp)->sortBy("theDate", SORT_NATURAL)->values()->all();
 
         return [
             'code' => 1,
             'status' => 'success',
-            'data' =>$dateReturn
+            'data' => $dateReturn
         ];
-
     }
 }

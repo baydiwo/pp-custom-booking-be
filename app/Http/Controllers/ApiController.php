@@ -222,7 +222,7 @@ class ApiController
 
     public function availabilityrategrid($params)
     {
-        $endpoint = 'availabilityrategrid';
+        $endpoint = 'availabilityRateGrid';
 
         $response = Http::withHeaders([
             'authToken' => $this->authToken

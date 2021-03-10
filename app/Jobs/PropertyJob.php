@@ -75,7 +75,6 @@ class PropertyJob implements ShouldQueue
         $api           = new ApiController($dataToken['token'], $request);
         $listAreasData = $api->listArea($this->propertyId);
         $listArea      = collect($listAreasData)->where('inactive', false);
-        die(json_encode($listArea->pluck('categoryId')));
         $listRatesData = collect($api->listRates());
 
         $name = 'Night Direct';
@@ -97,6 +96,7 @@ class PropertyJob implements ShouldQueue
                 ];
 
                 $availGrid = $api->availabilityrategrid($paramMinNight);
+
                 if (isset($availGrid['Message'])) {
                     if ($availGrid['Message'] == "Auth Token Has Expired") {
                         $api  = new ApiController($dataToken['token'], $request);

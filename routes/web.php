@@ -33,6 +33,7 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
         $router->get('{id}', 'PropertyController@detail');
         $router->get('', 'PropertyController@list');
         $router->get('availability-grid', 'PropertyController@availabilityGrid');
+        $router->get('availability-grid-concurrent', 'PropertyController@availabilityGridConcurrent');
         $router->get('check-availabilty', 'PropertyController@checkAvailability');
         $router->get('area-by-year', 'PropertyController@areaByYear');
     });
