@@ -163,6 +163,7 @@ class PropertyController
 
     public function availabilityGridConcurrent()
     {
+        $concurrent = 10;
         $validator = Validator::make(
             $this->params,
             Property::$rules['availability-grid']
@@ -172,15 +173,17 @@ class PropertyController
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
         $client = new Client([
             'http_errors'     => false,
-            'connect_timeout' => 1.50, //////////////// 0.50
-            'timeout'         => 2.00, //////////////// 1.00
+            // 'connect_timeout' => 1.50, //////////////// 0.50
+            // 'timeout'         => 2.00, //////////////// 1.00
             'headers' => [
-                'User-Agent' => 'Test/1.0'
-            ]
+                'User-Agent' => 'Test/1.0',
+                'authToken' => $this->authToken,
+            ],
+            "content-type" => 'application/json'
         ]);
         $responses = collect();
         $endpoint = 'availabilityRateGrid';
-        $requests = function ($total) use ($endpoint) {
+        $requests = function ($total) use ($endpoint, $concurrent) {
             $uris = env('BASE_URL_RMS') . $endpoint;
             $paramMinNight = [
                 'categoryIds' => [3],
@@ -190,24 +193,26 @@ class PropertyController
                 'rateIds'     => [2, 3, 4, 5, 6, 12]
             ];
 
-            for ($i = 0; $i < 10; $i++) {
+            for ($i = 0; $i < $concurrent; $i++) {
                 yield new Psr7Request('POST', $uris, [
                     'headers' => [
                         'authToken' => $this->authToken,
                     ],
                     "content-type" => 'application/json'
 
+
                 ], json_encode($paramMinNight));
             }
         };
         // wait on all of the requests to complete. Throws a ConnectException if any
-        $pool = new Pool($client, $requests(5), [
-            'concurrency' => 5,
+        $pool = new Pool($client, $requests($concurrent), [
+            'concurrency' => $concurrent,
             'fulfilled' => function ($response, $index) use ($responses) {
                 // $body = $response->getBody();
 
-                $remainingBytes = $response->getReasonPhrase();
-                $responses[$index] = $remainingBytes;
+                $content = $response->getReasonPhrase();
+                // $content = $body->getContents();
+                $responses[$index] = $content;
             },
             'rejected' => function (ConnectException $reason, $index) use ($responses) {
                 $body = $reason->getMessage();
@@ -221,7 +226,7 @@ class PropertyController
         $promise->wait();
 
         // foreach ($promise as $key => $value) {
-        echo json_encode($responses);
+        die(json_encode($responses));
         // }
         return [
             'code' => 1,
@@ -264,6 +269,7 @@ class PropertyController
 
     public function checkAvailability()
     {
+
         $validator = Validator::make(
             $this->params,
             Property::$rules['check-availability']
@@ -287,7 +293,6 @@ class PropertyController
             ->where('date_from', '<=', $from)
             ->orderBy('date_from', 'DESC')
             ->first();
-            
         $new = json_decode($result->response);
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
         if($collect) {
