@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\PropertyConcurrentJob;
 use App\Jobs\PropertyJob;
 use App\Models\Property;
 use Exception;
@@ -161,6 +162,31 @@ class PropertyController
         ];
     }
 
+    public function availabilityGridTestConcurrent()
+    {
+        die("sdfs");
+        $validator = Validator::make(
+            $this->params,
+            Property::$rules['availability-grid']
+        );
+
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+
+        // Cache::flush();
+        // Queue::pushOn(
+        // 'import-talent-queue',new PropertyJob()
+        // );
+
+        dispatch(new PropertyConcurrentJob($this->params['propertyId']));
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => [],
+            'message' => "Data Has Been Saved in Cache"
+        ];
+    }
+
     public function availabilityGridConcurrent()
     {
         $concurrent = 10;
@@ -187,7 +213,7 @@ class PropertyController
             $uris = env('BASE_URL_RMS') . $endpoint;
             $paramMinNight = [
                 'categoryIds' => [3],
-                'dateFrom'    =>  "2021-01-01",
+                'dateFrom'    => "2021-01-01",
                 'dateTo'      => "2021-01-15",
                 'propertyId'  => 1,
                 'rateIds'     => [2, 3, 4, 5, 6, 12]
@@ -226,7 +252,7 @@ class PropertyController
         $promise->wait();
 
         // foreach ($promise as $key => $value) {
-        die(json_encode($responses));
+        // die(json_encode($responses));
         // }
         return [
             'code' => 1,
@@ -286,19 +312,44 @@ class PropertyController
         }
 
         $getRate = $this->rateByDate($from, $to);
-
         $result = Property::select('response')
             ->where('property_id', $this->params['propertyId'])
             ->where('area_id', $this->params['areaId'])
+            // ->whereBetween('date_from', [$from, $to])
             ->where('date_from', '<=', $from)
             ->orderBy('date_from', 'DESC')
             ->first();
+
         $new = json_decode($result->response);
+
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
+        $dayBreakDown2 = collect();
+        $dayBreakDown = collect();
         if($collect) {
             $dayBreakDown = collect($collect->dayBreakdown)
-                ->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']])->all();
-            $collect->dayBreakdown = $dayBreakDown;
+                ->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']]);
+
+            if($dayBreakDown){
+                //check another date to
+                $checkAnotherDate = $dayBreakDown->where('theDate', $to)->all();
+                if(!$checkAnotherDate) {
+                    $result2 = Property::select('response')
+                    ->where('property_id', $this->params['propertyId'])
+                    ->where('area_id', $this->params['areaId'])
+                    // ->whereBetween('date_from', [$from, $to])
+                    ->where('date_from', '<=', $to)
+                    ->orderBy('date_from', 'DESC')
+                    ->first();        
+                }
+                $new2 = json_decode($result2->response);
+
+                $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
+                $dayBreakDown2 = collect($collect2->dayBreakdown)
+                        ->where('theDate', '<=', $this->params['dateTo']);
+        
+            }
+            $merge = $dayBreakDown->merge($dayBreakDown2)->all();
+            $collect->dayBreakdown = $merge;
         }
         // $name = "prop1_area_".$this->params['areaId']."_from_".$this->params['dateFrom'].
         // "_to_". $this->params['dateTo'];
