@@ -76,7 +76,6 @@ class PropertyJob implements ShouldQueue
         $listAreasData = $api->listArea($this->propertyId);
         $listArea      = collect($listAreasData)->where('inactive', false);
         $listRatesData = collect($api->listRates());
-
         $name = 'Night Direct';
         $filtered = $listRatesData->filter(function ($item) use ($name) {
             return false !== stripos($item['name'], $name);

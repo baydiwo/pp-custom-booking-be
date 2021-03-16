@@ -47,6 +47,17 @@ class ApiController
         return $response->json();
     }
 
+    public function detailArea($id)
+    {
+        $endpoint = 'areas/'.$id;
+
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->get(env('BASE_URL_RMS') . $endpoint);
+
+        return $response->json();
+    }
+
     public function createGuest($param)
     {
         $endpoint = 'guests?ignoreMandatoryFieldWarnings=false';
