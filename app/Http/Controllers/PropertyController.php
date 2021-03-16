@@ -482,7 +482,7 @@ class PropertyController
         // }
 
         return [
-            'code' => 1,
+            'code' => $collect == NULL ? 0 : 1,
             'status' => 'success',
             'data' => [
                 "categories" => [
