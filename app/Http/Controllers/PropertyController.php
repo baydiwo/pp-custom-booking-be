@@ -431,7 +431,6 @@ class PropertyController
             ->where('date_from', '<=', $from)
             ->orderBy('date_from', 'DESC')
             ->first();
-
         $new = json_decode($result->response);
 
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
@@ -570,15 +569,19 @@ class PropertyController
         $new = json_decode($result->response);
 
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
+
         $dayBreakDown2 = collect();
         $dayBreakDown = collect();
         if($collect) {
             $dayBreakDown = collect($collect->dayBreakdown)
                 ->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']]);
 
-            if($dayBreakDown){
+        if($dayBreakDown){
                 //check another date to
-                $checkAnotherDate = $dayBreakDown->where('theDate', $to)->all();
+                //kurangi satu hari
+                $dateMin1 = Carbon::parse($to)->subDays(1);
+
+                $checkAnotherDate = $dayBreakDown->where('theDate', $dateMin1)->all();
                 if(!$checkAnotherDate) {
                     $result2 = Property::select('response')
                     ->where('property_id', $this->params['propertyId'])
@@ -586,13 +589,14 @@ class PropertyController
                     // ->whereBetween('date_from', [$from, $to])
                     ->where('date_from', '<=', $to)
                     ->orderBy('date_from', 'DESC')
-                    ->first();        
+                    ->first();     
+    
+                    $new2 = json_decode($result2->response);
+                    $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
+                    $dayBreakDown2 = collect($collect2->dayBreakdown)
+                            ->where('theDate', '<=', $this->params['dateTo']);
                 }
-                $new2 = json_decode($result2->response);
 
-                $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
-                $dayBreakDown2 = collect($collect2->dayBreakdown)
-                        ->where('theDate', '<=', $this->params['dateTo']);
         
             }
             $merge = $dayBreakDown->merge($dayBreakDown2)->all();
