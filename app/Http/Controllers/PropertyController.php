@@ -552,9 +552,18 @@ class PropertyController
 
         $from = Carbon::parse($this->params['dateFrom']);
         $to = Carbon::parse($this->params['dateTo']);
-        $diff = $from->diffInDays($to);
-        if ($diff > 14) {
-            throw new Exception("Different Days Cannot Greater Than 14 Days");
+        $fromYear = $from->year;
+        $fromTo = $to->year;
+        // $diff = $from->diffInDays($to);
+        // if ($diff > 14) {
+        //     throw new Exception("Different Days Cannot Greater Than 14 Days");
+        // }
+        if ($fromYear != date('Y')) {
+            throw new Exception("Date from  Cannot Greater From This Year");
+        }
+
+        if ($fromTo != date('Y')) {
+            throw new Exception("Date to  Cannot Greater From This Year");
         }
 
         $getRate = $this->rateByDate($from, $to);
@@ -572,6 +581,7 @@ class PropertyController
         $dayBreakDown = collect();
         if($collect) {
             $collBreakDown = collect($collect->dayBreakdown);
+
             //check date from
             $dayFrom = $collBreakDown->where('theDate', $from);
 
@@ -591,33 +601,45 @@ class PropertyController
                 $dateMin1 = Carbon::parse($to)->subDays(1);
 
                 $checkAnotherDate = $dayBreakDown->where('theDate', $dateMin1)->all();
+
                 if(!$checkAnotherDate) {
                     $result2 = Property::select('response')
                     ->where('property_id', $this->params['propertyId'])
                     ->where('area_id', $this->params['areaId'])
                     // ->whereBetween('date_from', [$from, $to])
                     ->where('date_from', '<=', $to)
-                    ->orderBy('date_from', 'DESC')
-                    ->first();     
-    
-                    $new2 = json_decode($result2->response);
-                    $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
+                    ->where('date_to', '>', $from)
+                    ->groupBy('date_from')
+                    ->orderBy('date_from', 'ASC')
+                    ->get();   
 
-                    $dayBreakDown2 = collect($collect2->dayBreakdown)
-                            ->where('theDate', '<=', $this->params['dateTo']);
-                    if(count($dayBreakDown) > 1) {
-                        $dayBreakDown2[0]->dailyRate = $dayBreakDown->last()->dailyRate;
-                    } else {
-                        if($dayBreakDown2->last()->dailyRate) {
-                            $dayBreakDown2[0]->dailyRate = $dayBreakDown2->last()->dailyRate;
+
+                    $rest = [];
+                    $result2 = collect($result2)->values()->all();
+                    array_shift($result2);
+                    foreach ($result2 as $key2 => $value2) {
+                        $new2 = json_decode($value2->response);
+        
+                        $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
+    
+                        $dayBreakDown2 = collect($collect2->dayBreakdown)
+                                ->where('theDate', '<=', $this->params['dateTo']);
+
+                        if(count($dayBreakDown) > 1) {
+                            $dayBreakDown2[0]->dailyRate = $dayBreakDown->last()->dailyRate;
+                        } else {
+                            if($dayBreakDown2->last()->dailyRate) {
+                                $dayBreakDown2[0]->dailyRate = $dayBreakDown2->last()->dailyRate;
+                            }
                         }
+
+                        array_push($rest,$dayBreakDown2 );
                     }
 
                 }
 
-        
             }
-            $merge = $dayBreakDown->merge($dayBreakDown2)->all();
+            $merge = $dayBreakDown->merge(collect($rest)->flatten())->all();
             $collect->dayBreakdown = $merge;
 
         }
