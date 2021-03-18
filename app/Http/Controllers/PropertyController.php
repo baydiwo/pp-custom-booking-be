@@ -579,6 +579,8 @@ class PropertyController
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
         $dayBreakDown2 = collect();
         $dayBreakDown = collect();
+        $rest = [];
+
         if($collect) {
             $collBreakDown = collect($collect->dayBreakdown);
 
@@ -614,7 +616,6 @@ class PropertyController
                     ->get();   
 
 
-                    $rest = [];
                     $result2 = collect($result2)->values()->all();
                     array_shift($result2);
                     foreach ($result2 as $key2 => $value2) {
