@@ -617,20 +617,23 @@ class PropertyController
 
 
                     $result2 = collect($result2)->values()->all();
-                    array_shift($result2);
+
+                    // array_shift($result2);
                     foreach ($result2 as $key2 => $value2) {
                         $new2 = json_decode($value2->response);
-        
+
                         $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
     
                         $dayBreakDown2 = collect($collect2->dayBreakdown)
                                 ->where('theDate', '<=', $this->params['dateTo']);
 
-                        if(count($dayBreakDown) > 1) {
-                            $dayBreakDown2[0]->dailyRate = $dayBreakDown->last()->dailyRate;
-                        } else {
-                            if($dayBreakDown2->last()->dailyRate) {
-                                $dayBreakDown2[0]->dailyRate = $dayBreakDown2->last()->dailyRate;
+                        if(count($dayBreakDown2) > 0){
+                            if(count($dayBreakDown) > 1) {
+                                    $dayBreakDown2[0]->dailyRate = $dayBreakDown->last()->dailyRate;
+                            } else {
+                                if($dayBreakDown2->last()->dailyRate) {
+                                    $dayBreakDown2[0]->dailyRate = $dayBreakDown2->last()->dailyRate;
+                                }
                             }
                         }
 
@@ -640,6 +643,7 @@ class PropertyController
                 }
 
             }
+            
             $merge = $dayBreakDown->merge(collect($rest)->flatten())->all();
             $collect->dayBreakdown = $merge;
 
