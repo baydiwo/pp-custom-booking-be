@@ -568,7 +568,6 @@ class PropertyController
 
         $new = json_decode($result->response);
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
-
         $dayBreakDown2 = collect();
         $dayBreakDown = collect();
         if($collect) {
@@ -606,7 +605,13 @@ class PropertyController
 
                     $dayBreakDown2 = collect($collect2->dayBreakdown)
                             ->where('theDate', '<=', $this->params['dateTo']);
-                    $dayBreakDown2[0]->dailyRate = $dayBreakDown->last()->dailyRate;
+                    if(count($dayBreakDown) > 1) {
+                        $dayBreakDown2[0]->dailyRate = $dayBreakDown->last()->dailyRate;
+                    } else {
+                        if($dayBreakDown2->last()->dailyRate) {
+                            $dayBreakDown2[0]->dailyRate = $dayBreakDown2->last()->dailyRate;
+                        }
+                    }
 
                 }
 
@@ -614,25 +619,8 @@ class PropertyController
             }
             $merge = $dayBreakDown->merge($dayBreakDown2)->all();
             $collect->dayBreakdown = $merge;
+
         }
-        // $name = "prop1_area_".$this->params['areaId']."_from_".$this->params['dateFrom'].
-        // "_to_". $this->params['dateTo'];
-
-        // $redis = Cache::getRedis();
-        // $keys = $redis->keys("*{$name}*");
-        // // $count = 0;
-        // $result = [];
-
-        // foreach ($keys as $key) {
-        //     $result[] = $red
-
-        // }      
-
-        // $newResult  = [];
-        // foreach ($result as $value) {
-        //     $newResult[] = unserialize($value);
-        // }
-
         return [
             'code' => $collect == NULL ? 0 : 1,
             'status' => 'success',
@@ -648,48 +636,6 @@ class PropertyController
 
         return $result;
 
-        // $api = new ApiController($this->authToken, $this->request);
-        // $listProperty = $api->listProperty();
-
-        // $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-12-31");
-        // $chunck = array_chunk($dateInYear, 14);
-        // $push = [];
-        // $temp = "";
-        // for ($i=0; $i <= count($chunck[0]) ; $i++) { 
-        //     for ($j=0; $j < $i; $j++) { 
-        //         $push[$i][$j] = $chunck[0][$j];
-        //     }
-        // }
-
-        // $push2 = [];
-        // foreach ($push as $key => $value) {
-        //     if($key != 1) {
-        //         $push2[$key]['first']= reset($value);
-        //         $push2[$key]['last']= end($value);
-        //     }
-        // }
-
-        // $newArrayValue = array_values($push2);
-        // if($listProperty) {
-        //     foreach ($listProperty as $keyProp => $valueProp) {
-        //         foreach ($newArrayValue as $keyNew => $valueNew) {
-        //             $paramMinNight = [
-        //                 'categoryIds' => [$this->params['categoryId']],
-        //                 'dateFrom'    => $valueNew['first'],
-        //                 'dateTo'      => $valueNew['last'],
-        //                 'propertyId'  => $valueProp['id'],
-        //                 'rateIds'     => [$this->params['rateIds']]
-        //             ];    
-
-        //             Cache::remember('min_night_prop'.$valueProp['id']."from {$valueNew['first']} - to {$valueNew['last']}"
-        //             , 10 * 60, function () use ($api, $paramMinNight) {
-        //                 return $api->availabilityrategrid($paramMinNight);
-        //             });
-        //         }
-        //     }
-        // }
-
-        // return "Data Has Been Saved in Cache";
     }
 
     public function checkAvailabilityConcurrentOld()
