@@ -541,7 +541,7 @@ class PropertyController
 
     public function checkAvailabilityConcurrent()
     {
-
+        $feePackage = 66;
         $validator = Validator::make(
             $this->params,
             Property::$rules['check-availability']
@@ -551,20 +551,23 @@ class PropertyController
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 
         $from = Carbon::parse($this->params['dateFrom']);
+        $now = Carbon::now();
         $to = Carbon::parse($this->params['dateTo']);
-        $fromYear = $from->year;
-        $fromTo = $to->year;
-        // $diff = $from->diffInDays($to);
+        $nowYear = $now->modify('next year');
+        if($to > $nowYear){
+            throw new Exception("Date from Cannot Greater From One Year");
+        }
+        $diff = $from->diffInDays($to);
         // if ($diff > 14) {
         //     throw new Exception("Different Days Cannot Greater Than 14 Days");
         // }
-        if ($fromYear != date('Y')) {
-            throw new Exception("Date from  Cannot Greater From This Year");
-        }
+        // if ($fromYear != date('Y')) {
+        //     throw new Exception("Date from  Cannot Greater From This Year");
+        // }
 
-        if ($fromTo != date('Y')) {
-            throw new Exception("Date to  Cannot Greater From This Year");
-        }
+        // if ($fromTo != date('Y')) {
+        //     throw new Exception("Date to  Cannot Greater From This Year");
+        // }
 
         $getRate = $this->rateByDate($from, $to);
         $result = Property::select('response')
@@ -574,12 +577,36 @@ class PropertyController
             ->where('date_from', '<=', $from)
             ->orderBy('date_from', 'DESC')
             ->first();
-
         $new = json_decode($result->response);
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
+
+        if ($diff <= 14) {
+           $return =  self::lowerWeek($collect, $to, $from, $getRate, $feePackage);
+        } else {
+           $return =  self::greaterWeek($collect, $to, $from, $getRate, $feePackage);
+        }
+
+        return [
+            'code' => $return == NULL ? 0 : 1,
+            'status' => 'success',
+            'data' => [
+                "categories" => [
+                    "categoryId" => $new->categories[0]->categoryId,
+                    "name" => $new->categories[0]->name,
+                    "rates" => $return == NULL ? [] : $return,
+                ]
+            ]
+        ];
+
+
+        return $result;
+
+    }
+
+    public function lowerWeek($collect, $to, $from, $getRate, $feePackage){
+
         $dayBreakDown2 = collect();
         $dayBreakDown = collect();
-        $rest = [];
 
         if($collect) {
             $collBreakDown = collect($collect->dayBreakdown);
@@ -596,10 +623,9 @@ class PropertyController
 
                 $dayBreakDown = collect($dayBreakDown);
             }
-
+            
         if($dayBreakDown){
                 //check another date to
-                //kurangi satu hari
                 $dateMin1 = Carbon::parse($to)->subDays(1);
 
                 $checkAnotherDate = $dayBreakDown->where('theDate', $dateMin1)->all();
@@ -610,61 +636,127 @@ class PropertyController
                     ->where('area_id', $this->params['areaId'])
                     // ->whereBetween('date_from', [$from, $to])
                     ->where('date_from', '<=', $to)
-                    ->where('date_to', '>', $from)
-                    ->groupBy('date_from')
-                    ->orderBy('date_from', 'ASC')
-                    ->get();   
+                    ->orderBy('date_from', 'DESC')
+                    ->first();   
 
+                    $new2 = json_decode($result2->response);
+                    $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
 
-                    $result2 = collect($result2)->values()->all();
+                    $dayBreakDown2 = collect($collect2->dayBreakdown)
+                            ->where('theDate', '<=', $this->params['dateTo']);
 
-                    // array_shift($result2);
-                    foreach ($result2 as $key2 => $value2) {
-                        $new2 = json_decode($value2->response);
-
-                        $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
-    
-                        $dayBreakDown2 = collect($collect2->dayBreakdown)
-                                ->where('theDate', '<=', $this->params['dateTo']);
-
-                        if(count($dayBreakDown2) > 0){
-                            if(count($dayBreakDown) > 1) {
-                                    $dayBreakDown2[0]->dailyRate = $dayBreakDown->last()->dailyRate;
-                            } else {
-                                if($dayBreakDown2->last()->dailyRate) {
-                                    $dayBreakDown2[0]->dailyRate = $dayBreakDown2->last()->dailyRate;
-                                }
-                            }
+                    if(count($dayBreakDown2) > 0){
+                        if(count($dayBreakDown) > 1) {
+                            $last = $dayBreakDown2->last()->dailyRate;
+                            $dayBreakDown2->map(function($value) use ($last){
+                                $value->dailyRate = $last;
+                                return $value;
+                            });
                         }
-
-                        array_push($rest,$dayBreakDown2 );
                     }
 
                 }
-
             }
-            
-            $merge = $dayBreakDown->merge(collect($rest)->flatten())->all();
+
+            $merge = $dayBreakDown->merge($dayBreakDown2)->all();
+            if(count($dayBreakDown2) > 0){
+                $merge[0]->dailyRate = $dayBreakDown2->last()->dailyRate + $feePackage;
+            }
             $collect->dayBreakdown = $merge;
 
+            return $collect;    
+
         }
-        return [
-            'code' => $collect == NULL ? 0 : 1,
-            'status' => 'success',
-            'data' => [
-                "categories" => [
-                    "categoryId" => $new->categories[0]->categoryId,
-                    "name" => $new->categories[0]->name,
-                    "rates" => $collect == NULL ? [] : $collect,
-                ]
-            ]
-        ];
-
-
-        return $result;
 
     }
 
+    public function greaterWeek($collect, $to, $from, $getRate, $feePackage){
+
+        $dayBreakDown2 = collect();
+        $dayBreakDown = collect();
+
+        if($collect) {
+            $collBreakDown = collect($collect->dayBreakdown);
+
+            //check date from
+            $dayFrom = $collBreakDown->where('theDate', $from);
+
+            $dayBreakDown = $collBreakDown->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']]);
+
+            if(array_key_exists(1, $dayFrom->all()) == FALSE)
+            {
+                $dayBreakDown = $dayBreakDown->values()->all();
+
+                $dayBreakDown[0]->dailyRate = $collBreakDown->first()->dailyRate;
+
+                $dayBreakDown = collect($dayBreakDown);
+            }
+
+            $rest = [];
+        if($dayBreakDown){
+                //check another date to
+                $dateMin1 = Carbon::parse($to)->subDays(1);
+
+                $checkAnotherDate = $dayBreakDown->where('theDate', $dateMin1)->all();
+                if(!$checkAnotherDate) {
+                    $result2 = Property::select('response')
+                    ->where('property_id', $this->params['propertyId'])
+                    ->where('area_id', $this->params['areaId'])
+                    // ->whereBetween('date_from', [$from, $to])
+                    ->where('date_to', '>=', $from)
+                    ->where('date_to', '<=', $to)
+                    ->orderBy('date_from', 'ASC')
+                    ->groupBy('date_from')
+                    ->get();   
+
+                    if($result2) {
+                        foreach ($result2 as $keyresult2 => $valueresult2) {
+                            $new2 = json_decode($valueresult2->response);
+
+                            $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
+
+                            if($collect2){
+                                $checkFirstCollect = collect($collect2->dayBreakdown)->where('theDate', '<', $from)->values()->all();
+
+                                $checkFirst = collect($collect2->dayBreakdown)->forget(array_keys($checkFirstCollect));
+
+                                if(count($checkFirst) == 0) {
+                                    $dayBreakDown2 = collect($collect2->dayBreakdown)
+                                        ->where('theDate', '<=', $this->params['dateTo'])->values();
+                                } else {
+                                    $except = collect($checkFirst)->where('theDate', $from);
+                                    if(count($except) == 0){
+                                        $dayBreakDown2 = collect($checkFirst)
+                                            ->where('theDate', '<=', $this->params['dateTo'])->values();
+                                    }
+                                }
+                                array_push($rest, $dayBreakDown2);
+                            }
+                        }
+                    }
+                }
+            }
+
+            $flatten = collect($rest)->flatten();
+            $merge = $dayBreakDown->merge($flatten)->all();
+            $return = collect($merge)->map(function($value, $key) use ($dayBreakDown2, $feePackage) {
+                if(count($dayBreakDown2) > 0) {
+                    if($key == 0) {
+                        $value->dailyRate =$dayBreakDown2->last()->dailyRate + $feePackage;
+                    } else {
+                        $value->dailyRate =$dayBreakDown2->last()->dailyRate;
+                    }
+
+                    return $value;
+                }
+            });
+            $collect->dayBreakdown = $return;
+
+            return $collect;    
+
+        }
+
+    }
     public function checkAvailabilityConcurrentOld()
     {
         $api = new ApiController($this->authToken, $this->request);

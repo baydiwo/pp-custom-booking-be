@@ -50,16 +50,26 @@ class PropertyConcurrentJob implements ShouldQueue
         $allGroupDate  = [];
 
         $thisDay = "";
-        foreach ($dateInYear as $valueDate) {
-            if ($valueDate != "2021-12-31") {
-                if ($valueDate == $thisDay || $thisDay == "") {
+        // foreach ($dateInYear as $valueDate) {
+        //     if ($valueDate != "2021-12-31") {
+        //         if ($valueDate == $thisDay || $thisDay == "") {
 
-                    $prevDay = Carbon::parse($valueDate);
-                    $thisDay = $prevDay->addDays(14)->format('Y-m-d');
-                    $allGroupDate[$valueDate] = $thisDay;
-                }
+        //             $prevDay = Carbon::parse($valueDate);
+        //             $thisDay = $prevDay->addDays(14)->format('Y-m-d');
+        //             $allGroupDate[$valueDate] = $thisDay;
+        //         }
+        //     }
+        // }
+        foreach ($dateInYear as $dateInYearvalue) {
+            $tempDateInYear= [];
+            for ($i=0; $i <= 6; $i++) { 
+                $dateInYearFrom = Carbon::parse($dateInYearvalue)->addDays($i);
+                array_push($tempDateInYear, $dateInYearFrom);
             }
+            array_push($allGroupDate, $tempDateInYear);
+
         }
+
 
         $request       = new Request();
         $token         = new ApiController(NULL, $request);
@@ -68,6 +78,7 @@ class PropertyConcurrentJob implements ShouldQueue
         $listAreasData = $api->listArea($this->propertyId);
         $listCategory      = collect($listAreasData)->where('inactive', false)->pluck('categoryId');
         $listRatesData = collect($api->listRates());
+
         $name = 'Night Direct';
         $filtered = $listRatesData->filter(function ($item) use ($name) {
             return false !== stripos($item['name'], $name);
@@ -76,6 +87,7 @@ class PropertyConcurrentJob implements ShouldQueue
         $listRates = collect($filtered)->pluck('id');
 
         $dateCollect = collect($allGroupDate)->take(10);
+
         $saveData = self::requestConcurrent(
             $listCategory,
             $listRates,
