@@ -567,14 +567,24 @@ class PropertyController
             ->first();
 
         $new = json_decode($result->response);
-
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
 
         $dayBreakDown2 = collect();
         $dayBreakDown = collect();
         if($collect) {
-            $dayBreakDown = collect($collect->dayBreakdown)
-                ->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']]);
+            $collBreakDown = collect($collect->dayBreakdown);
+            //check date from
+            $dayFrom = $collBreakDown->where('theDate', $from);
+
+            $dayBreakDown = $collBreakDown->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']]);
+            if(array_key_exists(1, $dayFrom->all()) == FALSE)
+            {
+                $dayBreakDown = $dayBreakDown->values()->all();
+
+                $dayBreakDown[0]->dailyRate = $collBreakDown->first()->dailyRate;
+
+                $dayBreakDown = collect($dayBreakDown);
+            }
 
         if($dayBreakDown){
                 //check another date to
@@ -593,8 +603,11 @@ class PropertyController
     
                     $new2 = json_decode($result2->response);
                     $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
+
                     $dayBreakDown2 = collect($collect2->dayBreakdown)
                             ->where('theDate', '<=', $this->params['dateTo']);
+                    $dayBreakDown2[0]->dailyRate = $dayBreakDown->last()->dailyRate;
+
                 }
 
         
