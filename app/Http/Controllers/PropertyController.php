@@ -615,17 +615,15 @@ class PropertyController
             $dayFrom = $collBreakDown->where('theDate', $from);
 
             $dayBreakDown = $collBreakDown->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']]);
-
-            // if(array_key_exists(1, $dayFrom->all()) == FALSE)
-            // {
-
+            if(array_key_exists(1, $dayFrom->all()) == FALSE)
+            {
                 $dayBreakDown = $dayBreakDown->values()->all();
 
                 $dayBreakDown[0]->dailyRate = $collBreakDown->first()->dailyRate;
 
                 $dayBreakDown = collect($dayBreakDown);
-            // }
-
+            }
+            
         if($dayBreakDown){
                 //check another date to
                 $dateMin1 = Carbon::parse($to)->subDays(1);
@@ -661,9 +659,9 @@ class PropertyController
             }
 
             $merge = $dayBreakDown->merge($dayBreakDown2)->all();
-            // if(count($dayBreakDown2) > 0){
-            //     $merge[0]->dailyRate = $dayBreakDown2->last()->dailyRate + $feePackage;
-            // }
+            if(count($dayBreakDown2) > 0){
+                $merge[0]->dailyRate = $dayBreakDown2->last()->dailyRate + $feePackage;
+            }
             $collect->dayBreakdown = $merge;
 
             return $collect;    
@@ -693,6 +691,7 @@ class PropertyController
 
                 $dayBreakDown = collect($dayBreakDown);
             }
+
             $rest = [];
         if($dayBreakDown){
                 //check another date to
@@ -709,7 +708,6 @@ class PropertyController
                     ->orderBy('date_from', 'ASC')
                     ->groupBy('date_from')
                     ->get();   
-
                     if($result2) {
                         foreach ($result2 as $keyresult2 => $valueresult2) {
                             $new2 = json_decode($valueresult2->response);
@@ -740,16 +738,13 @@ class PropertyController
 
             $flatten = collect($rest)->flatten();
             $merge = $dayBreakDown->merge($flatten)->all();
-            $return = collect($merge)->map(function($value, $key) use ($dayBreakDown, $feePackage) {
-                if(count($dayBreakDown) > 1) {
-                    if($key != 0) {
-                        $value->dailyRate = $dayBreakDown[1]->dailyRate;
+            $return = collect($merge)->map(function($value, $key) use ($dayBreakDown2, $feePackage) {
+                if(count($dayBreakDown2) > 0) {
+                    if($key == 0) {
+                        $value->dailyRate =$dayBreakDown2->last()->dailyRate + $feePackage;
+                    } else {
+                        $value->dailyRate =$dayBreakDown2->last()->dailyRate;
                     }
-                    // if($key == 0) {
-                    //     $value->dailyRate =$dayBreakDown2->last()->dailyRate + $feePackage;
-                    // } else {
-                    //     $value->dailyRate =$dayBreakDown2->last()->dailyRate;
-                    // }
 
                     return $value;
                 }
