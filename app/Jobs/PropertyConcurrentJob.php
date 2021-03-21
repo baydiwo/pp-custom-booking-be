@@ -63,15 +63,15 @@ class PropertyConcurrentJob implements ShouldQueue
             }
         }
 
-        $check = ModelPropertyJob::where('date_from', "2021-01-01")
-        ->where('property_id', env("PROPERTY_ID"))
-        ->first();
-        $new = json_decode($check->response);
+        // $check = ModelPropertyJob::where('date_from', "2021-01-01")
+        // ->where('property_id', env("PROPERTY_ID"))
+        // ->first();
+        // $new = json_decode($check->response);
         // $json = preg_replace('/[[:cntrl:]]/', '', $check->response);
         // $json = json_decode($json, true);
         // echo json_last_error_msg();
         // echo $data;
-// die($new)
+// die(json_encode($new));
         // foreach ($new as $key => $value) {
         //     echo ($value);
         // } 
@@ -128,7 +128,7 @@ class PropertyConcurrentJob implements ShouldQueue
                 }
 
             // }
-            
+            // die;
         sleep(120);
         // die;
     }
@@ -155,44 +155,44 @@ class PropertyConcurrentJob implements ShouldQueue
 
         // sleep(120);
 
-        // $dateCollect3 = collect($allGroupDate)->skip(20);
-        // $saveData3 = self::requestConcurrent(
-        //     $listCategory,
-        //     $listRates,
-        //     $dateCollect3,
-        //     $dataToken['token']
-        // );
+            // $dateCollect3 = collect($allGroupDate)->skip(20);
+            // $saveData3 = self::requestConcurrent(
+            //     $listCategory,
+            //     $listRates,
+            //     $dateCollect3,
+            //     $dataToken['token']
+            // );
 
-        // foreach ($saveData3 as $valuejob) {
-        //     $model = new ModelPropertyJob();
-        //     $model->response = $valuejob;
-        //     $model->save();
-        // }
+            // foreach ($saveData3 as $valuejob) {
+            //     $model = new ModelPropertyJob();
+            //     $model->response = $valuejob;
+            //     $model->save();
+            // }
 
-        return [
-            'code' => 1,
-            'status' => 'success',
-            'message' => "Data Has Been Saved"
-        ];
-    }
+            return [
+                'code' => 1,
+                'status' => 'success',
+                'message' => "Data Has Been Saved"
+            ];
+        }
 
-    public static function requestConcurrent($listCategory, $listArea, $to, $from, $dataToken)
-    {
-        $concurrent = 8;
-        $client = new Client([
-            'http_errors'     => false,
-            // 'connect_timeout' => 1.50, //////////////// 0.50
-            // 'timeout'         => 2.00, //////////////// 1.00
-            'headers' => [
-                'User-Agent' => 'Test/1.0',
-                'authToken' => $dataToken,
-            ],
-            "content-type" => 'application/json'
-        ]);
-        $responses = collect();
-        $endpoint = 'availabilityRateGrid';
-        $requests = function ($total) use ($dataToken, $listCategory, $listArea, $endpoint, $to, $from) {
-            $uris = env('BASE_URL_RMS') . $endpoint;
+        public static function requestConcurrent($listCategory, $listArea, $to, $from, $dataToken)
+        {
+            $concurrent = 8;
+            $client = new Client([
+                'http_errors'     => false,
+                // 'connect_timeout' => 1.50, //////////////// 0.50
+                // 'timeout'         => 2.00, //////////////// 1.00
+                'headers' => [
+                    'User-Agent' => 'Test/1.0',
+                    'authToken' => $dataToken,
+                ],
+                "content-type" => 'application/json'
+            ]);
+            $responses = collect();
+            $endpoint = 'availabilityRateGrid';
+            $requests = function ($total) use ($dataToken, $listCategory, $listArea, $endpoint, $to, $from) {
+                $uris = env('BASE_URL_RMS') . $endpoint;
             foreach ($to as $key => $value) {
                 $paramMinNight = [
                     'categoryIds' => $listCategory,
