@@ -63,12 +63,17 @@ class PropertyConcurrentJob implements ShouldQueue
             }
         }
 
-        // $check = ModelPropertyJob::where('date_from', "2021-01-01")
-        // ->where('property_id', env("PROPERTY_ID"))
-        // ->first();
-        // $new = json_decode($check->response);
+        $check = ModelPropertyJob::where('date_from', "2021-01-01")
+        ->where('property_id', env("PROPERTY_ID"))
+        ->first();
+        $new = json_decode($check->response);
+        // $json = preg_replace('/[[:cntrl:]]/', '', $check->response);
+        // $json = json_decode($json, true);
+        // echo json_last_error_msg();
+        // echo $data;
+// die($new)
         // foreach ($new as $key => $value) {
-        //     echo $value;
+        //     echo ($value);
         // } 
         // die;
         // foreach ($dateInYear as $dateInYearvalue) {
@@ -188,10 +193,9 @@ class PropertyConcurrentJob implements ShouldQueue
         $endpoint = 'availabilityRateGrid';
         $requests = function ($total) use ($dataToken, $listCategory, $listArea, $endpoint, $to, $from) {
             $uris = env('BASE_URL_RMS') . $endpoint;
-
             foreach ($to as $key => $value) {
                 $paramMinNight = [
-                    'categoryIds' => [3],
+                    'categoryIds' => $listCategory,
                     'dateFrom'    => $from,
                     'dateTo'      => $value,
                     'propertyId'  => 1,
@@ -228,7 +232,7 @@ class PropertyConcurrentJob implements ShouldQueue
         // Force the pool of requests to complete.
         $promise->wait();
 
-        return $responses;
+        return json_encode($responses);
     }
     private function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d')
     {
