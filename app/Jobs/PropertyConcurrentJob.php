@@ -45,30 +45,41 @@ class PropertyConcurrentJob implements ShouldQueue
 
     public function handle()
     {
-        ModelPropertyJob::truncate();
+        // ModelPropertyJob::truncate();
         $dateInYear = $this->getDateInYear(date("Y") . "-01-01", date("Y") . "-12-31");
         $allGroupDate  = [];
-
         $thisDay = "";
-        // foreach ($dateInYear as $valueDate) {
-        //     if ($valueDate != "2021-12-31") {
-        //         if ($valueDate == $thisDay || $thisDay == "") {
+        foreach ($dateInYear as $valueDate) {
+            if($valueDate != "2021-12-31") {
+                $thisDay = Carbon::parse($valueDate);
+                $groupDate = [];
+                for ($i=1; $i <= 7; $i++) {
+                    $thisDay->addDays($i);
+                    array_push($groupDate, $thisDay);
+                    $thisDay = Carbon::parse($valueDate);
+                }
 
-        //             $prevDay = Carbon::parse($valueDate);
-        //             $thisDay = $prevDay->addDays(14)->format('Y-m-d');
-        //             $allGroupDate[$valueDate] = $thisDay;
-        //         }
-        //     }
-        // }
-        foreach ($dateInYear as $dateInYearvalue) {
-            $tempDateInYear= [];
-            for ($i=0; $i <= 6; $i++) { 
-                $dateInYearFrom = Carbon::parse($dateInYearvalue)->addDays($i);
-                array_push($tempDateInYear, $dateInYearFrom);
+                $allGroupDate[$valueDate] =  $groupDate;
             }
-            array_push($allGroupDate, $tempDateInYear);
-
         }
+
+        // $check = ModelPropertyJob::where('date_from', "2021-01-01")
+        // ->where('property_id', env("PROPERTY_ID"))
+        // ->first();
+        // $new = json_decode($check->response);
+        // foreach ($new as $key => $value) {
+        //     echo $value;
+        // } 
+        // die;
+        // foreach ($dateInYear as $dateInYearvalue) {
+        //     $tempDateInYear= [];
+        //     for ($i=0; $i <= 6; $i++) { 
+        //         $dateInYearFrom = Carbon::parse($dateInYearvalue)->addDays($i);
+        //         array_push($tempDateInYear, $dateInYearFrom);
+        //     }
+        //     array_push($allGroupDate, $tempDateInYear);
+
+        // }
 
 
         $request       = new Request();
@@ -76,7 +87,7 @@ class PropertyConcurrentJob implements ShouldQueue
         $dataToken     = $token->authToken();
         $api           = new ApiController($dataToken['token'], $request);
         $listAreasData = $api->listArea($this->propertyId);
-        $listCategory      = collect($listAreasData)->where('inactive', false)->pluck('categoryId');
+        $listCategory  = collect($listAreasData)->where('inactive', false)->pluck('categoryId');
         $listRatesData = collect($api->listRates());
 
         $name = 'Night Direct';
@@ -86,50 +97,72 @@ class PropertyConcurrentJob implements ShouldQueue
 
         $listRates = collect($filtered)->pluck('id');
 
-        $dateCollect = collect($allGroupDate)->take(10);
 
-        $saveData = self::requestConcurrent(
-            $listCategory,
-            $listRates,
-            $dateCollect,
-            $dataToken['token']
-        );
+        foreach ($allGroupDate as $keyallGroupDate => $valueallGroupDate) {
+            // foreach ($valueallGroupDate as $keyvalueallGroupDate1 => $valuevalueallGroupDate1) {
+                $save = self::requestConcurrent(
+                    $listCategory,
+                    $listRates,
+                    $valueallGroupDate,
+                    $keyallGroupDate,
+                    $dataToken['token']
+                );
 
-        foreach ($saveData as $valuejob) {
-            $model = new ModelPropertyJob();
-            $model->response = $valuejob;
-            $model->save();
-        }
+                $check = ModelPropertyJob::where('date_from', $keyallGroupDate)
+                    ->where('property_id', env("PROPERTY_ID"))
+                    ->first();
+
+                if(!$check) {
+                    $model = new ModelPropertyJob();
+                    $model->property_id = env("PROPERTY_ID");
+                    $model->date_from = $keyallGroupDate;
+                    $model->response = $save;
+                    $model->save();
+                } else {
+                    $check->response = $save;
+                }
+
+            // }
+            
         sleep(120);
-        $dateCollect2 = collect($allGroupDate)->skip(10)->take(10);
-        $saveData2 = self::requestConcurrent(
-            $listCategory,
-            $listRates,
-            $dateCollect2,
-            $dataToken['token']
-        );
+        // die;
+    }
 
-        foreach ($saveData2 as $valuejob) {
-            $model = new ModelPropertyJob();
-            $model->response = $valuejob;
-            $model->save();
-        }
+        // foreach ($saveData as $valuejob) {
+        //     $model = new ModelPropertyJob();
+        //     $model->response = $valuejob;
+        //     $model->save();
+        // }
+        // sleep(120);
+        // $dateCollect2 = collect($allGroupDate)->skip(10)->take(10);
+        // $saveData2 = self::requestConcurrent(
+        //     $listCategory,
+        //     $listRates,
+        //     $dateCollect2,
+        //     $dataToken['token']
+        // );
 
-        sleep(120);
+        // foreach ($saveData2 as $valuejob) {
+        //     $model = new ModelPropertyJob();
+        //     $model->response = $valuejob;
+        //     $model->save();
+        // }
 
-        $dateCollect3 = collect($allGroupDate)->skip(20);
-        $saveData3 = self::requestConcurrent(
-            $listCategory,
-            $listRates,
-            $dateCollect3,
-            $dataToken['token']
-        );
+        // sleep(120);
 
-        foreach ($saveData3 as $valuejob) {
-            $model = new ModelPropertyJob();
-            $model->response = $valuejob;
-            $model->save();
-        }
+        // $dateCollect3 = collect($allGroupDate)->skip(20);
+        // $saveData3 = self::requestConcurrent(
+        //     $listCategory,
+        //     $listRates,
+        //     $dateCollect3,
+        //     $dataToken['token']
+        // );
+
+        // foreach ($saveData3 as $valuejob) {
+        //     $model = new ModelPropertyJob();
+        //     $model->response = $valuejob;
+        //     $model->save();
+        // }
 
         return [
             'code' => 1,
@@ -138,9 +171,9 @@ class PropertyConcurrentJob implements ShouldQueue
         ];
     }
 
-    public static function requestConcurrent($listCategory, $listArea, $listDate, $dataToken)
+    public static function requestConcurrent($listCategory, $listArea, $to, $from, $dataToken)
     {
-        $concurrent = count($listDate);
+        $concurrent = 10;
         $client = new Client([
             'http_errors'     => false,
             // 'connect_timeout' => 1.50, //////////////// 0.50
@@ -153,18 +186,17 @@ class PropertyConcurrentJob implements ShouldQueue
         ]);
         $responses = collect();
         $endpoint = 'availabilityRateGrid';
-        $requests = function ($total) use ($dataToken, $listCategory, $listArea, $endpoint, $listDate, $concurrent) {
+        $requests = function ($total) use ($dataToken, $listCategory, $listArea, $endpoint, $to, $from) {
             $uris = env('BASE_URL_RMS') . $endpoint;
 
-            foreach ($listDate as $key => $value) {
+            foreach ($to as $key => $value) {
                 $paramMinNight = [
-                    'categoryIds' => $listCategory,
-                    'dateFrom'    => $key,
+                    'categoryIds' => [3],
+                    'dateFrom'    => $from,
                     'dateTo'      => $value,
                     'propertyId'  => 1,
                     'rateIds'     => $listArea
                 ];
-    
                 yield new Psr7Request('POST', $uris, [
                     'headers' => [
                         'authToken' => $dataToken,
@@ -173,6 +205,7 @@ class PropertyConcurrentJob implements ShouldQueue
                 ], json_encode($paramMinNight));
             }
         };
+
         // wait on all of the requests to complete. Throws a ConnectException if any
         $pool = new Pool($client, $requests($concurrent), [
             'concurrency' => $concurrent,
@@ -189,10 +222,12 @@ class PropertyConcurrentJob implements ShouldQueue
                 $responses[$index] = $body;
             },
         ]);
+
         // Initiate the transfers and create a promise
         $promise = $pool->promise();
         // Force the pool of requests to complete.
         $promise->wait();
+
         return $responses;
     }
     private function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d')
