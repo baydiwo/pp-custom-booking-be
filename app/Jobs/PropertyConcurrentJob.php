@@ -50,26 +50,19 @@ class PropertyConcurrentJob implements ShouldQueue
         $allGroupDate  = [];
 
         $thisDay = "";
-        // foreach ($dateInYear as $valueDate) {
-        //     if ($valueDate != "2021-12-31") {
-        //         if ($valueDate == $thisDay || $thisDay == "") {
-
-        //             $prevDay = Carbon::parse($valueDate);
-        //             $thisDay = $prevDay->addDays(14)->format('Y-m-d');
-        //             $allGroupDate[$valueDate] = $thisDay;
-        //         }
-        //     }
-        // }
+		$days = 0;
         foreach ($dateInYear as $dateInYearvalue) {
-            $tempDateInYear= [];
-            for ($i=0; $i <= 6; $i++) { 
-                $dateInYearFrom = Carbon::parse($dateInYearvalue)->addDays($i);
-                array_push($tempDateInYear, $dateInYearFrom);
-            }
-            array_push($allGroupDate, $tempDateInYear);
-
+			if($days%7 == 0){
+				$tempDateInYear= [];
+				for ($i=0; $i <= 6; $i++) { 
+					$dateInYearFrom = Carbon::parse($dateInYearvalue)->addDays($i);
+					array_push($tempDateInYear, $dateInYearFrom);
+				}
+				array_push($allGroupDate, $tempDateInYear);
+			}
+			$days++;
         }
-
+		$datasetCount = ceil(count($allGroupDate)/10);
 
         $request       = new Request();
         $token         = new ApiController(NULL, $request);
@@ -85,22 +78,33 @@ class PropertyConcurrentJob implements ShouldQueue
         })->all();
 
         $listRates = collect($filtered)->pluck('id');
-
-        $dateCollect = collect($allGroupDate)->take(10);
-
-        $saveData = self::requestConcurrent(
-            $listCategory,
-            $listRates,
-            $dateCollect,
-            $dataToken['token']
-        );
-
-        foreach ($saveData as $valuejob) {
-            $model = new ModelPropertyJob();
-            $model->response = $valuejob;
-            $model->save();
-        }
-        sleep(120);
+		
+		for($list = 1; $list <= $datasetCount; $list++)
+		{
+			if($list > 1){
+				$skip = 10*($list-1);
+				$dateCollect = collect($allGroupDate)->skip($skip)->take(10);
+			}
+			else{
+				$dateCollect = collect($allGroupDate)->take(10);
+			}
+	
+			$saveData = self::requestConcurrent(
+				$listCategory,
+				$listRates,
+				$dateCollect,
+				$dataToken['token']
+			);
+	
+			foreach ($saveData as $valuejob) {
+				$model = new ModelPropertyJob();
+				$model->response = $valuejob;
+				$model->save();
+			}
+			sleep(120);		
+		}
+		
+		/*
         $dateCollect2 = collect($allGroupDate)->skip(10)->take(10);
         $saveData2 = self::requestConcurrent(
             $listCategory,
@@ -129,7 +133,7 @@ class PropertyConcurrentJob implements ShouldQueue
             $model = new ModelPropertyJob();
             $model->response = $valuejob;
             $model->save();
-        }
+        }*/
 
         return [
             'code' => 1,
