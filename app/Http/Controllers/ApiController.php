@@ -47,6 +47,17 @@ class ApiController
         return $response->json();
     }
 
+    public function detailArea($id)
+    {
+        $endpoint = 'areas/'.$id;
+
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->get(env('BASE_URL_RMS') . $endpoint);
+
+        return $response->json();
+    }
+
     public function createGuest($param)
     {
         $endpoint = 'guests?ignoreMandatoryFieldWarnings=false';
@@ -116,6 +127,20 @@ class ApiController
         return $value;
     }
 
+    public function listProperty()
+    {
+        $value = Cache::remember('list_property', 10 * 60, function () {
+            $endpoint = 'properties/';
+            $response = Http::withHeaders([
+                'authToken' => $this->authToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
+
+            return $response->json();
+        });
+
+        return $value;
+    }
+
     public function detailPropertySetting($id)
     {
         $value = Cache::remember('property_setting_' . $id, 10 * 60, function () use ($id) {
@@ -158,6 +183,20 @@ class ApiController
         return $value;
     }
 
+    public function listArea($propertyId)
+    {
+        $value = Cache::remember('list_areas_' . $propertyId, 10 * 60, function () use ($propertyId) {
+            $endpoint = 'areas?propertyId=' . $propertyId . '&limit=300';
+            $response = Http::withHeaders([
+                'authToken' => $this->authToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
+
+            return $response->json();
+        });
+
+        return $value;
+    }
+
     public function rateQuote($params)
     {
         $value = Cache::remember(
@@ -175,22 +214,33 @@ class ApiController
         return $value;
     }
 
-    public function availabilityrategrid($params)
+    public function listRates()
     {
         $value = Cache::remember(
-            'availabilityrategrid'. json_encode($params),
-            10 * 60, function () use ($params) {
-            $endpoint = 'availabilityrategrid';
+            'rates',
+            10 * 60, function () {
+            $endpoint = 'rates';
 
             $response = Http::withHeaders([
                 'authToken' => $this->authToken
-            ])->post(env('BASE_URL_RMS') . $endpoint, $params);
+            ])->get(env('BASE_URL_RMS') . $endpoint);
 
             return $response->json();
         });
 
-        return $value
-        ;
+        return $value;
+    }
+
+    public function availabilityrategrid($params)
+    {
+        $endpoint = 'availabilityRateGrid';
+
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->post(env('BASE_URL_RMS') . $endpoint, $params);
+
+           
+        return $response->json();
     }
 
     public function windCaveCreatePurchaseSessions($params)

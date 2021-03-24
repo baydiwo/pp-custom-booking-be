@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use Illuminate\Http\Request;
+
 class ExampleJob extends Job
 {
     /**
@@ -21,6 +23,7 @@ class ExampleJob extends Job
      */
     public function handle()
     {
+        echo "ssss";
         //
     }
 }
