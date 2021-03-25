@@ -618,18 +618,21 @@ class PropertyController
                                         $dateValueRate = Carbon::parse($valuedateInYear);
                                         $dateValueRateNow = Carbon::parse($getLast['theDate']);
                                         if($dateValueRate->gt($dateValueRateNow)){
-                                            $parse = [
-                                                "availableAreas" => $getLast['availableAreas'],
-                                                "closedOnArrival" => $getLast['closedOnArrival'],
-                                                "closedOnDeparture" => $getLast['closedOnDeparture'],
-                                                "dailyRate" => $getLast['dailyRate'],
-                                                "theDate" => $dateValueRate->format('Y-m-d H:i:s'),
-                                                "minStay" => $getLast['minStay'],
-                                                "minStayOnArrival" => $getLast['minStayOnArrival'],
-                                                "stopSell" => false,
-                                            ];
+                                            if($dateValueRate != $to) {
 
-                                            array_push($valueDatatempRate['dayBreakdown'], $parse);
+                                                $parse = [
+                                                    "availableAreas" => $getLast['availableAreas'],
+                                                    "closedOnArrival" => $getLast['closedOnArrival'],
+                                                    "closedOnDeparture" => $getLast['closedOnDeparture'],
+                                                    "dailyRate" => $getLast['dailyRate'],
+                                                    "theDate" => $dateValueRate->format('Y-m-d H:i:s'),
+                                                    "minStay" => $getLast['minStay'],
+                                                    "minStayOnArrival" => $getLast['minStayOnArrival'],
+                                                    "stopSell" => false,
+                                                ];
+    
+                                                array_push($valueDatatempRate['dayBreakdown'], $parse);
+                                            }
                                         }
                                     }
 
