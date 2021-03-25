@@ -39,8 +39,10 @@ class Authenticate
      */
     public function handle($request, Closure $next, $guard = null)
     {
+
         $api = new ApiController(NULL, $request);
         $authToken = Cache::get('authToken');
+
         if($authToken == NULL) {
             $dataToken = $api->authToken();
             Cache::forever('authToken', $dataToken);
@@ -49,8 +51,7 @@ class Authenticate
                 $dataToken = $api->authToken();
                 Cache::forever('authToken', $dataToken);
             }
-        }
-                      
+        }                      
         // $redis = Redis::connection();
 
         // if(!$redis->get('authToken')) {

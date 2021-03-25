@@ -63,19 +63,15 @@ class PropertyConcurrentJob implements ShouldQueue
             }
         }
 
-        // $check = ModelPropertyJob::where('date_from', "2021-01-01")
-        // ->where('property_id', env("PROPERTY_ID"))
-        // ->first();
-        // $new = json_decode($check->response);
-        // $json = preg_replace('/[[:cntrl:]]/', '', $check->response);
-        // $json = json_decode($json, true);
-        // echo json_last_error_msg();
-        // echo $data;
-// die(json_encode($new));
-        // foreach ($new as $key => $value) {
+        // $check = ModelPropertyJob::where('date_from', )->first();
+        // $new = json_decode($check->response, true);
+        // // $json = preg_replace('/[[:cntrl:]]/', '', $check->response);
+        // echo json_encode(json_decode($new[0]), 0);
+        // die();
+        // foreach ($check->response as $key => $value) {
+        //     die($value);
         //     echo ($value);
         // } 
-        // die;
         // foreach ($dateInYear as $dateInYearvalue) {
         //     $tempDateInYear= [];
         //     for ($i=0; $i <= 6; $i++) { 
@@ -105,6 +101,7 @@ class PropertyConcurrentJob implements ShouldQueue
 
         foreach ($allGroupDate as $keyallGroupDate => $valueallGroupDate) {
             // foreach ($valueallGroupDate as $keyvalueallGroupDate1 => $valuevalueallGroupDate1) {
+
                 $save = self::requestConcurrent(
                     $listCategory,
                     $listRates,
@@ -112,7 +109,7 @@ class PropertyConcurrentJob implements ShouldQueue
                     $keyallGroupDate,
                     $dataToken['token']
                 );
-
+                
                 $check = ModelPropertyJob::where('date_from', $keyallGroupDate)
                     ->where('property_id', env("PROPERTY_ID"))
                     ->first();
@@ -128,8 +125,7 @@ class PropertyConcurrentJob implements ShouldQueue
                 }
 
             // }
-            // die;
-        sleep(120);
+        sleep(60);
         // die;
     }
 
@@ -196,11 +192,13 @@ class PropertyConcurrentJob implements ShouldQueue
             foreach ($to as $key => $value) {
                 $paramMinNight = [
                     'categoryIds' => $listCategory,
+                    // 'categoryIds' => [3],
+                    'dateTo'      => Carbon::parse($value)->format('Y-m-d'),
                     'dateFrom'    => $from,
-                    'dateTo'      => $value,
                     'propertyId'  => 1,
                     'rateIds'     => $listArea
                 ];
+
                 yield new Psr7Request('POST', $uris, [
                     'headers' => [
                         'authToken' => $dataToken,
@@ -209,7 +207,6 @@ class PropertyConcurrentJob implements ShouldQueue
                 ], json_encode($paramMinNight));
             }
         };
-
         // wait on all of the requests to complete. Throws a ConnectException if any
         $pool = new Pool($client, $requests($concurrent), [
             'concurrency' => $concurrent,

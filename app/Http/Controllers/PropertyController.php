@@ -363,6 +363,7 @@ class PropertyController
         $promise = $pool->promise();
         // Force the pool of requests to complete.
         $promise->wait();
+        die(json_encode($responses));
 
         // foreach ($promise as $key => $value) {
         // }
@@ -436,28 +437,27 @@ class PropertyController
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
         $dayBreakDown2 = collect();
         $dayBreakDown = collect();
-        if($collect) {
+        if ($collect) {
             $dayBreakDown = collect($collect->dayBreakdown)
                 ->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']]);
 
-            if($dayBreakDown){
+            if ($dayBreakDown) {
                 //check another date to
                 $checkAnotherDate = $dayBreakDown->where('theDate', $to)->all();
-                if(!$checkAnotherDate) {
+                if (!$checkAnotherDate) {
                     $result2 = Property::select('response')
-                    ->where('property_id', $this->params['propertyId'])
-                    ->where('area_id', $this->params['areaId'])
-                    // ->whereBetween('date_from', [$from, $to])
-                    ->where('date_from', '<=', $to)
-                    ->orderBy('date_from', 'DESC')
-                    ->first();        
+                        ->where('property_id', $this->params['propertyId'])
+                        ->where('area_id', $this->params['areaId'])
+                        // ->whereBetween('date_from', [$from, $to])
+                        ->where('date_from', '<=', $to)
+                        ->orderBy('date_from', 'DESC')
+                        ->first();
                 }
                 $new2 = json_decode($result2->response);
 
                 $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
                 $dayBreakDown2 = collect($collect2->dayBreakdown)
-                        ->where('theDate', '<=', $this->params['dateTo']);
-        
+                    ->where('theDate', '<=', $this->params['dateTo']);
             }
             $merge = $dayBreakDown->merge($dayBreakDown2)->all();
             $collect->dayBreakdown = $merge;
@@ -541,6 +541,8 @@ class PropertyController
 
     public function checkAvailabilityConcurrent()
     {
+
+        $nonFeePackageArea = [221, 124, 66, 67, 68, 70];
         $feePackage = 66;
         $validator = Validator::make(
             $this->params,
@@ -554,7 +556,7 @@ class PropertyController
         $now = Carbon::now();
         $to = Carbon::parse($this->params['dateTo']);
         $nowYear = $now->modify('next year');
-        if($to > $nowYear){
+        if ($to > $nowYear) {
             throw new Exception("Date from Cannot Greater From One Year");
         }
         $diff = $from->diffInDays($to);
@@ -570,112 +572,156 @@ class PropertyController
         // }
 
         $getRate = $this->rateByDate($from, $to);
-        $result = Property::select('response')
+
+        $result = ModelPropertyJob::select('response')
             ->where('property_id', $this->params['propertyId'])
-            ->where('area_id', $this->params['areaId'])
             // ->whereBetween('date_from', [$from, $to])
-            ->where('date_from', '<=', $from)
-            ->orderBy('date_from', 'DESC')
+            ->where('date_from', '=', $from)
+            // ->where('date_from', '<=', $to)
             ->first();
+        $api           = new ApiController($this->authToken, $this->request);
+        $detailArea = $api->detailArea($this->params['areaId']);
+
         $new = json_decode($result->response);
-        $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
-
-        if ($diff <= 14) {
-           $return =  self::lowerWeek($collect, $to, $from, $getRate, $feePackage);
-        } else {
-           $return =  self::greaterWeek($collect, $to, $from, $getRate, $feePackage);
+        $return = [];
+        $tempRate = [];
+        foreach ($new as $keynew => $valuenew) {
+            $json = json_decode($valuenew, true);
+            $dataRate = collect($json['categories'])->where('categoryId', $detailArea['categoryId'])->values()->first();
+            array_push($tempRate, $dataRate);
         }
+            foreach ($tempRate as $valuetempRate) {
+                foreach ($valuetempRate['rates'] as $valueDatatempRate) {
+                    $countBreakDown = count($valueDatatempRate['dayBreakdown']);
+                    $getRate = $this->rateByDate($from, $to);
+                    if($diff <= 7) {
+                        if($diff == $countBreakDown) {
+                                if($getRate == $valueDatatempRate['rateId']) {  
+                                    return [
+                                        'code' => $return == NULL ? 0 : 1,
+                                        'status' => 'success',
+                                        'data' => [
+                                            "categories" => [
+                                                "categoryId" => $valuetempRate['categoryId'],
+                                                "name" => $valuetempRate['name'],
+                                                "rates" => $valueDatatempRate
+                                            ]
+                                        ]
+                                    ];
+                                } 
+                        }
+                    }else {
+                        return "on progress";
+                        $tempReturn = [];
+                        if($valueDatatempRate['rateId'] == 6) {  
+                            $dateInYear = $this->getDateInYear($from, $to);
+                            $breakdown = $valueDatatempRate['dayBreakdown'];
+                            foreach ($dateInYear as $keyDateRange => $valueDateRange) {
+                                // foreach ($breakdown as $keyBreak => $value) {
+                                //     if($keyBreak == 0){
+                                //         array_push($tempReturn, $value);
+                                //     } 
+                                // }
+                            }                            
+                        }
 
-        return [
-            'code' => $return == NULL ? 0 : 1,
-            'status' => 'success',
-            'data' => [
-                "categories" => [
-                    "categoryId" => $new->categories[0]->categoryId,
-                    "name" => $new->categories[0]->name,
-                    "rates" => $return == NULL ? [] : $return,
-                ]
-            ]
-        ];
+
+                    }
+                }
+            }
+        // if ($diff <= 14) {
+        //    $return =  self::lowerWeek($collect, $to, $from, $getRate, $feePackage);
+        // } else {
+        //    $return =  self::greaterWeek($collect, $to, $from, $getRate, $feePackage);
+        // }
+
+        // return [
+        //     'code' => $return == NULL ? 0 : 1,
+        //     'status' => 'success',
+        //     'data' => [
+        //         "categories" => [
+        //             "categoryId" => $new->categories[0]->categoryId,
+        //             "name" => $new->categories[0]->name,
+        //             "rates" => $return == NULL ? [] : $return,
+        //         ]
+        //     ]
+        // ];
 
 
-        return $result;
-
+        // return $result;
     }
 
-    public function lowerWeek($collect, $to, $from, $getRate, $feePackage){
+    public function lowerWeek($collect, $to, $from, $getRate, $feePackage)
+    {
 
         $dayBreakDown2 = collect();
         $dayBreakDown = collect();
 
-        if($collect) {
+        if ($collect) {
             $collBreakDown = collect($collect->dayBreakdown);
 
             //check date from
             $dayFrom = $collBreakDown->where('theDate', $from);
 
             $dayBreakDown = $collBreakDown->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']]);
-            if(array_key_exists(1, $dayFrom->all()) == FALSE)
-            {
+            if (array_key_exists(1, $dayFrom->all()) == FALSE) {
                 $dayBreakDown = $dayBreakDown->values()->all();
 
                 $dayBreakDown[0]->dailyRate = $collBreakDown->first()->dailyRate;
 
                 $dayBreakDown = collect($dayBreakDown);
             }
-            
-        if($dayBreakDown){
+
+            if ($dayBreakDown) {
                 //check another date to
                 $dateMin1 = Carbon::parse($to)->subDays(1);
 
                 $checkAnotherDate = $dayBreakDown->where('theDate', $dateMin1)->all();
 
-                if(!$checkAnotherDate) {
+                if (!$checkAnotherDate) {
                     $result2 = Property::select('response')
-                    ->where('property_id', $this->params['propertyId'])
-                    ->where('area_id', $this->params['areaId'])
-                    // ->whereBetween('date_from', [$from, $to])
-                    ->where('date_from', '<=', $to)
-                    ->orderBy('date_from', 'DESC')
-                    ->first();   
+                        ->where('property_id', $this->params['propertyId'])
+                        ->where('area_id', $this->params['areaId'])
+                        // ->whereBetween('date_from', [$from, $to])
+                        ->where('date_from', '<=', $to)
+                        ->orderBy('date_from', 'DESC')
+                        ->first();
 
                     $new2 = json_decode($result2->response);
                     $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
 
                     $dayBreakDown2 = collect($collect2->dayBreakdown)
-                            ->where('theDate', '<=', $this->params['dateTo']);
+                        ->where('theDate', '<=', $this->params['dateTo']);
 
-                    if(count($dayBreakDown2) > 0){
-                        if(count($dayBreakDown) > 1) {
+                    if (count($dayBreakDown2) > 0) {
+                        if (count($dayBreakDown) > 1) {
                             $last = $dayBreakDown2->last()->dailyRate;
-                            $dayBreakDown2->map(function($value) use ($last){
+                            $dayBreakDown2->map(function ($value) use ($last) {
                                 $value->dailyRate = $last;
                                 return $value;
                             });
                         }
                     }
-
                 }
             }
 
             $merge = $dayBreakDown->merge($dayBreakDown2)->all();
-            if(count($dayBreakDown2) > 0){
+            if (count($dayBreakDown2) > 0) {
                 $merge[0]->dailyRate = $dayBreakDown2->last()->dailyRate + $feePackage;
             }
             $collect->dayBreakdown = $merge;
 
-            return $collect;    
-
+            return $collect;
         }
-
     }
 
-    public function greaterWeek($collect, $to, $from, $getRate, $feePackage){
+    public function greaterWeek($collect, $to, $from, $getRate, $feePackage)
+    {
 
         $dayBreakDown2 = collect();
         $dayBreakDown = collect();
 
-        if($collect) {
+        if ($collect) {
             $collBreakDown = collect($collect->dayBreakdown);
 
             //check date from
@@ -683,8 +729,7 @@ class PropertyController
 
             $dayBreakDown = $collBreakDown->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']]);
 
-            if(array_key_exists(1, $dayFrom->all()) == FALSE)
-            {
+            if (array_key_exists(1, $dayFrom->all()) == FALSE) {
                 $dayBreakDown = $dayBreakDown->values()->all();
 
                 $dayBreakDown[0]->dailyRate = $collBreakDown->first()->dailyRate;
@@ -693,38 +738,38 @@ class PropertyController
             }
 
             $rest = [];
-        if($dayBreakDown){
+            if ($dayBreakDown) {
                 //check another date to
                 $dateMin1 = Carbon::parse($to)->subDays(1);
 
                 $checkAnotherDate = $dayBreakDown->where('theDate', $dateMin1)->all();
-                if(!$checkAnotherDate) {
+                if (!$checkAnotherDate) {
                     $result2 = Property::select('response')
-                    ->where('property_id', $this->params['propertyId'])
-                    ->where('area_id', $this->params['areaId'])
-                    // ->whereBetween('date_from', [$from, $to])
-                    ->where('date_to', '>=', $from)
-                    ->where('date_to', '<=', $to)
-                    ->orderBy('date_from', 'ASC')
-                    ->groupBy('date_from')
-                    ->get();   
-                    if($result2) {
+                        ->where('property_id', $this->params['propertyId'])
+                        ->where('area_id', $this->params['areaId'])
+                        // ->whereBetween('date_from', [$from, $to])
+                        ->where('date_to', '>=', $from)
+                        ->where('date_to', '<=', $to)
+                        ->orderBy('date_from', 'ASC')
+                        ->groupBy('date_from')
+                        ->get();
+                    if ($result2) {
                         foreach ($result2 as $keyresult2 => $valueresult2) {
                             $new2 = json_decode($valueresult2->response);
 
                             $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
 
-                            if($collect2){
+                            if ($collect2) {
                                 $checkFirstCollect = collect($collect2->dayBreakdown)->where('theDate', '<', $from)->values()->all();
 
                                 $checkFirst = collect($collect2->dayBreakdown)->forget(array_keys($checkFirstCollect));
 
-                                if(count($checkFirst) == 0) {
+                                if (count($checkFirst) == 0) {
                                     $dayBreakDown2 = collect($collect2->dayBreakdown)
                                         ->where('theDate', '<=', $this->params['dateTo'])->values();
                                 } else {
                                     $except = collect($checkFirst)->where('theDate', $from);
-                                    if(count($except) == 0){
+                                    if (count($except) == 0) {
                                         $dayBreakDown2 = collect($checkFirst)
                                             ->where('theDate', '<=', $this->params['dateTo'])->values();
                                     }
@@ -738,12 +783,12 @@ class PropertyController
 
             $flatten = collect($rest)->flatten();
             $merge = $dayBreakDown->merge($flatten)->all();
-            $return = collect($merge)->map(function($value, $key) use ($dayBreakDown2, $feePackage) {
-                if(count($dayBreakDown2) > 0) {
-                    if($key == 0) {
-                        $value->dailyRate =$dayBreakDown2->last()->dailyRate + $feePackage;
+            $return = collect($merge)->map(function ($value, $key) use ($dayBreakDown2, $feePackage) {
+                if (count($dayBreakDown2) > 0) {
+                    if ($key == 0) {
+                        $value->dailyRate = $dayBreakDown2->last()->dailyRate + $feePackage;
                     } else {
-                        $value->dailyRate =$dayBreakDown2->last()->dailyRate;
+                        $value->dailyRate = $dayBreakDown2->last()->dailyRate;
                     }
 
                     return $value;
@@ -751,10 +796,8 @@ class PropertyController
             });
             $collect->dayBreakdown = $return;
 
-            return $collect;    
-
+            return $collect;
         }
-
     }
     public function checkAvailabilityConcurrentOld()
     {
@@ -791,14 +834,14 @@ class PropertyController
         }
 
         $area = $api->detailArea($this->params['areaId']);
-        if(!$area) {
+        if (!$area) {
             throw new Exception("Area Not Found");
         }
 
         $getRate = $this->rateByDate($from, $to);
         $result = ModelPropertyJob::select('response')
             // ->where('response', 'LIKE', '%'. $from. '%')
-            ->where('response', 'LIKE', '%name":Lantana Studio - Albany%' )
+            ->where('response', 'LIKE', '%name":Lantana Studio - Albany%')
             ->get();
         die(json_encode($result));
         $new = json_decode($result->response);
@@ -806,28 +849,27 @@ class PropertyController
         $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
         $dayBreakDown2 = collect();
         $dayBreakDown = collect();
-        if($collect) {
+        if ($collect) {
             $dayBreakDown = collect($collect->dayBreakdown)
                 ->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']]);
 
-            if($dayBreakDown){
+            if ($dayBreakDown) {
                 //check another date to
                 $checkAnotherDate = $dayBreakDown->where('theDate', $to)->all();
-                if(!$checkAnotherDate) {
+                if (!$checkAnotherDate) {
                     $result2 = Property::select('response')
-                    ->where('property_id', $this->params['propertyId'])
-                    ->where('area_id', $this->params['areaId'])
-                    // ->whereBetween('date_from', [$from, $to])
-                    ->where('date_from', '<=', $to)
-                    ->orderBy('date_from', 'DESC')
-                    ->first();        
+                        ->where('property_id', $this->params['propertyId'])
+                        ->where('area_id', $this->params['areaId'])
+                        // ->whereBetween('date_from', [$from, $to])
+                        ->where('date_from', '<=', $to)
+                        ->orderBy('date_from', 'DESC')
+                        ->first();
                 }
                 $new2 = json_decode($result2->response);
 
                 $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
                 $dayBreakDown2 = collect($collect2->dayBreakdown)
-                        ->where('theDate', '<=', $this->params['dateTo']);
-        
+                    ->where('theDate', '<=', $this->params['dateTo']);
             }
             $merge = $dayBreakDown->merge($dayBreakDown2)->all();
             $collect->dayBreakdown = $merge;
@@ -963,4 +1005,5 @@ class PropertyController
             'data' => $dateReturn
         ];
     }
+    
 }
