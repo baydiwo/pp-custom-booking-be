@@ -84,7 +84,7 @@ class PropertyConcurrentJob implements ShouldQueue
 
 
         $request       = new Request();
-        $token         = new ApiController(NULL, $request);
+        $token         = new ApiController([], $request);
         $dataToken     = $token->authToken();
         $api           = new ApiController($dataToken['token'], $request);
         $listAreasData = $api->listArea($this->propertyId);
