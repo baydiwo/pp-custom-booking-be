@@ -583,7 +583,6 @@ class PropertyController
         $detailArea = $api->detailArea($this->params['areaId']);
 
         $new = json_decode($result->response);
-        $return = [];
         $tempRate = [];
         foreach ($new as $keynew => $valuenew) {
             $json = json_decode($valuenew, true);
@@ -594,11 +593,11 @@ class PropertyController
                 foreach ($valuetempRate['rates'] as $valueDatatempRate) {
                     $countBreakDown = count($valueDatatempRate['dayBreakdown']);
                     $getRate = $this->rateByDate($from, $to);
-                    if($diff <= 7) {
-                        if($diff == $countBreakDown) {
-                                if($getRate == $valueDatatempRate['rateId']) {  
+                        if($diff <= 7) {
+                            if($diff == $countBreakDown) {
+                                if($getRate == $valueDatatempRate['rateId']) { 
                                     return [
-                                        'code' => $return == NULL ? 0 : 1,
+                                        'code' => 1,
                                         'status' => 'success',
                                         'data' => [
                                             "categories" => [
@@ -609,46 +608,49 @@ class PropertyController
                                         ]
                                     ];
                                 } 
-                        }
-                    }else {
-                        return "on progress";
-                        $tempReturn = [];
-                        if($valueDatatempRate['rateId'] == 6) {  
-                            $dateInYear = $this->getDateInYear($from, $to);
-                            $breakdown = $valueDatatempRate['dayBreakdown'];
-                            foreach ($dateInYear as $keyDateRange => $valueDateRange) {
-                                // foreach ($breakdown as $keyBreak => $value) {
-                                //     if($keyBreak == 0){
-                                //         array_push($tempReturn, $value);
-                                //     } 
-                                // }
-                            }                            
-                        }
+                            } 
+                        } else {
+                            $return = [];
+                            if($valueDatatempRate['rateId'] == 6) {
+                                $dateInYear = $this->getDateInYear($from, $to);
+                                $getLast = collect($valueDatatempRate['dayBreakdown'])->last();
+                                foreach ($dateInYear as $keydateInYear => $valuedateInYear) {
+                                        $dateValueRate = Carbon::parse($valuedateInYear);
+                                        $dateValueRateNow = Carbon::parse($getLast['theDate']);
+                                        if($dateValueRate->gt($dateValueRateNow)){
+                                            $parse = [
+                                                "availableAreas" => $getLast['availableAreas'],
+                                                "closedOnArrival" => $getLast['closedOnArrival'],
+                                                "closedOnDeparture" => $getLast['closedOnDeparture'],
+                                                "dailyRate" => $getLast['dailyRate'],
+                                                "theDate" => $dateValueRate->format('Y-m-d H:i:s'),
+                                                "minStay" => $getLast['minStay'],
+                                                "minStayOnArrival" => $getLast['minStayOnArrival'],
+                                                "stopSell" => false,
+                                            ];
 
+                                            array_push($valueDatatempRate['dayBreakdown'], $parse);
+                                        }
+                                    }
 
+                                return [
+                                    'code' => 1,
+                                    'status' => 'success',
+                                    'data' => [
+                                        "categories" => [
+                                            "categoryId" => $valuetempRate['categoryId'],
+                                            "name" => $valuetempRate['name'],
+                                            "rates" => $valueDatatempRate
+                                        ]
+                                    ]
+                                ];
+
+                            }
                     }
+
+
                 }
             }
-        // if ($diff <= 14) {
-        //    $return =  self::lowerWeek($collect, $to, $from, $getRate, $feePackage);
-        // } else {
-        //    $return =  self::greaterWeek($collect, $to, $from, $getRate, $feePackage);
-        // }
-
-        // return [
-        //     'code' => $return == NULL ? 0 : 1,
-        //     'status' => 'success',
-        //     'data' => [
-        //         "categories" => [
-        //             "categoryId" => $new->categories[0]->categoryId,
-        //             "name" => $new->categories[0]->name,
-        //             "rates" => $return == NULL ? [] : $return,
-        //         ]
-        //     ]
-        // ];
-
-
-        // return $result;
     }
 
     public function lowerWeek($collect, $to, $from, $getRate, $feePackage)
