@@ -39,10 +39,9 @@ class Authenticate
      */
     public function handle($request, Closure $next, $guard = null)
     {
-
-        $api = new ApiController(NULL, $request);
+        
+        $api = new ApiController($request, $request);
         $authToken = Cache::get('authToken');
-
         if($authToken == NULL) {
             $dataToken = $api->authToken();
             Cache::forever('authToken', $dataToken);

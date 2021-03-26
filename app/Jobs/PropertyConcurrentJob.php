@@ -46,7 +46,8 @@ class PropertyConcurrentJob implements ShouldQueue
     public function handle()
     {
         // ModelPropertyJob::truncate();
-        $dateInYear = $this->getDateInYear(date("Y") . "-01-01", date("Y") . "-12-31");
+        $nextYear = Carbon::now()->addYear()->format('Y-m-d');
+        $dateInYear = $this->getDateInYear(date("Y") . "-01-01", $nextYear);
         $allGroupDate  = [];
         $thisDay = "";
         foreach ($dateInYear as $valueDate) {
