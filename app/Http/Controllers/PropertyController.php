@@ -963,4 +963,9 @@ class PropertyController
             'data' => $dateReturn
         ];
     }
+	
+	public function test()
+	{
+		dispatch(new PropertyJob(env('PROPERTY_ID'));	
+	}
 }
