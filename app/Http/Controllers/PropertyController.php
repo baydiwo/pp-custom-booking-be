@@ -966,6 +966,6 @@ class PropertyController
 	
 	public function test()
 	{
-		dispatch(new PropertyJob(env('PROPERTY_ID'));	
+		dispatch(new PropertyJob(env('PROPERTY_ID')));	
 	}
 }
