@@ -45,7 +45,7 @@ class PropertyConcurrentJob implements ShouldQueue
 
     public function handle()
     {
-        ModelPropertyJob::truncate();
+        /*ModelPropertyJob::truncate();
         $dateInYear = $this->getDateInYear(date("Y") . "-01-01", date("Y") . "-12-31");
         $allGroupDate  = [];
 
@@ -61,7 +61,32 @@ class PropertyConcurrentJob implements ShouldQueue
 				array_push($allGroupDate, $tempDateInYear);
 			}
 			$days++;
+        }*/
+		
+		//Start - Putra code
+		$nextYear = Carbon::now()->addYear()->format('Y-m-d');
+        $dateInYear = $this->getDateInYear("2022-01-01", $nextYear);
+        $allGroupDate  = [];
+        $thisDay = "";
+		$days = 0;
+        foreach ($dateInYear as $valueDate) {
+            if($valueDate != "2021-12-31") {
+				if($days%7 == 0){
+					$thisDay = Carbon::parse($valueDate);
+					$groupDate = [];
+					for ($i=1; $i <= 7; $i++) {
+						$thisDay->addDays($i);
+						array_push($groupDate, $thisDay);
+						$thisDay = Carbon::parse($valueDate);
+					}
+	
+					$allGroupDate[$valueDate] =  $groupDate;
+				}
+				$days++;
+            }
         }
+		//End - Putra code
+
 		$datasetCount = ceil(count($allGroupDate)/10);
 
         $request       = new Request();
@@ -98,7 +123,7 @@ class PropertyConcurrentJob implements ShouldQueue
 	
 			foreach ($saveData as $valuejob) {
 				$model = new ModelPropertyJob();
-				$model->response = $valuejob;
+				$model->response = json_encode($valuejob);
 				$model->save();
 			}
 			sleep(120);		
@@ -164,11 +189,11 @@ class PropertyConcurrentJob implements ShouldQueue
                 $paramMinNight = [
                     'categoryIds' => $listCategory,
                     'dateFrom'    => $key,
-                    'dateTo'      => $value,
+                    'dateTo'      => $value[count($value)-1],
                     'propertyId'  => 1,
                     'rateIds'     => $listArea
                 ];
-    
+
                 yield new Psr7Request('POST', $uris, [
                     'headers' => [
                         'authToken' => $dataToken,
@@ -197,6 +222,7 @@ class PropertyConcurrentJob implements ShouldQueue
         $promise = $pool->promise();
         // Force the pool of requests to complete.
         $promise->wait();
+        //return json_encode($responses);
         return $responses;
     }
     private function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d')
