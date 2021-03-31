@@ -123,7 +123,7 @@ class PropertyConcurrentJob implements ShouldQueue
                 } else {
                     $check->response = $save;
                 }
-        sleep(10);
+        sleep(120);
     }
 
         // foreach ($saveData as $valuejob) {
