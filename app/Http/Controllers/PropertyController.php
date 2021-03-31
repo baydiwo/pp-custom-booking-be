@@ -541,6 +541,8 @@ class PropertyController
 
     public function checkAvailabilityConcurrent()
     {
+
+        $nonFeePackageArea = [221, 124, 66, 67, 68, 70];
         $feePackage = 66;
         $validator = Validator::make(
             $this->params,
@@ -554,7 +556,7 @@ class PropertyController
         $now = Carbon::now();
         $to = Carbon::parse($this->params['dateTo']);
         $nowYear = $now->modify('next year');
-        if($to > $nowYear){
+        if ($to > $nowYear) {
             throw new Exception("Date from Cannot Greater From One Year");
         }
         $diff = $from->diffInDays($to);
@@ -570,37 +572,89 @@ class PropertyController
         // }
 
         $getRate = $this->rateByDate($from, $to);
-        $result = Property::select('response')
-            ->where('property_id', $this->params['propertyId'])
-            ->where('area_id', $this->params['areaId'])
-            // ->whereBetween('date_from', [$from, $to])
-            ->where('date_from', '<=', $from)
-            ->orderBy('date_from', 'DESC')
-            ->first();
-        $new = json_decode($result->response);
-        $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
 
-        if ($diff <= 14) {
-           $return =  self::lowerWeek($collect, $to, $from, $getRate, $feePackage);
-        } else {
-           $return =  self::greaterWeek($collect, $to, $from, $getRate, $feePackage);
+        $result = ModelPropertyJob::select('response')
+            ->where('property_id', $this->params['propertyId'])
+            // ->whereBetween('date_from', [$from, $to])
+            ->where('date_from', '=', $from)
+            // ->where('date_from', '<=', $to)
+            ->first();
+        $api           = new ApiController($this->authToken, $this->request);
+        $detailArea = $api->detailArea($this->params['areaId']);
+
+        $new = json_decode($result->response);
+        $tempRate = [];
+        foreach ($new as $keynew => $valuenew) {
+            $json = json_decode($valuenew, true);
+            $dataRate = collect($json['categories'])->where('categoryId', $detailArea['categoryId'])->values()->first();
+            array_push($tempRate, $dataRate);
         }
 
-        return [
-            'code' => $return == NULL ? 0 : 1,
-            'status' => 'success',
-            'data' => [
-                "categories" => [
-                    "categoryId" => $new->categories[0]->categoryId,
-                    "name" => $new->categories[0]->name,
-                    "rates" => $return == NULL ? [] : $return,
-                ]
-            ]
-        ];
+            foreach ($tempRate as $valuetempRate) {
+                foreach ($valuetempRate['rates'] as $valueDatatempRate) {
+                    $countBreakDown = count($valueDatatempRate['dayBreakdown']);
+                    $getRate = $this->rateByDate($from, $to);
+                        if($diff <= 7) {
+                            if($diff == $countBreakDown) {
+                                if($getRate == $valueDatatempRate['rateId']) { 
+                                    return [
+                                        'code' => 1,
+                                        'status' => 'success',
+                                        'data' => [
+                                            "categories" => [
+                                                "categoryId" => $valuetempRate['categoryId'],
+                                                "name" => $valuetempRate['name'],
+                                                "rates" => $valueDatatempRate
+                                            ]
+                                        ]
+                                    ];
+                                } 
+                            }							
+                        } else {
+                            $return = [];
+                            if($valueDatatempRate['rateId'] == 6) {
+                                $dateInYear = $this->getDateInYear($from, $to);
+                                $getLast = collect($valueDatatempRate['dayBreakdown'])->last();
+                                foreach ($dateInYear as $keydateInYear => $valuedateInYear) {
+                                        $dateValueRate = Carbon::parse($valuedateInYear);
+                                        $dateValueRateNow = Carbon::parse($getLast['theDate']);
+                                        if($dateValueRate->gt($dateValueRateNow)){
+                                            if($dateValueRate != $to) {
+
+                                                $parse = [
+                                                    "availableAreas" => $getLast['availableAreas'],
+                                                    "closedOnArrival" => $getLast['closedOnArrival'],
+                                                    "closedOnDeparture" => $getLast['closedOnDeparture'],
+                                                    "dailyRate" => $getLast['dailyRate'],
+                                                    "theDate" => $dateValueRate->format('Y-m-d H:i:s'),
+                                                    "minStay" => $getLast['minStay'],
+                                                    "minStayOnArrival" => $getLast['minStayOnArrival'],
+                                                    "stopSell" => false,
+                                                ];
+    
+                                                array_push($valueDatatempRate['dayBreakdown'], $parse);
+                                            }
+                                        }
+                                    }
+
+                                return [
+                                    'code' => 1,
+                                    'status' => 'success',
+                                    'data' => [
+                                        "categories" => [
+                                            "categoryId" => $valuetempRate['categoryId'],
+                                            "name" => $valuetempRate['name'],
+                                            "rates" => $valueDatatempRate
+                                        ]
+                                    ]
+                                ];
+
+                            }
+                    }
 
 
-        return $result;
-
+                }
+            }
     }
 
     public function lowerWeek($collect, $to, $from, $getRate, $feePackage){
