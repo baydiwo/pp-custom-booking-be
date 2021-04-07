@@ -794,7 +794,7 @@ class PropertyController
 
                 }
             }
-			if($diff > 7)
+			if($diff > 7 && isset($tempVal['data']['categories']['rates']['dayBreakdown']))
 			{
 				$lday=count($tempVal['data']['categories']['rates']['dayBreakdown']);
 				if(isset($tempVal['data']['categories']['rates']['dayBreakdown'][$lday-1]['theDate']))
