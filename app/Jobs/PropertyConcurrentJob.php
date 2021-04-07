@@ -47,8 +47,9 @@ class PropertyConcurrentJob implements ShouldQueue
     {
         // ModelPropertyJob::truncate();
         $nextYear = Carbon::now()->addYear()->format('Y-m-d');
-        $dateInYear = $this->getDateInYear("2022-01-01", $nextYear);
-        $allGroupDate  = [];
+		$cDate = Carbon::now()->format('Y-m-d');
+        $dateInYear = $this->getDateInYear($cDate, $nextYear);
+		$allGroupDate  = [];
         $thisDay = "";
         foreach ($dateInYear as $valueDate) {
             if($valueDate != "2021-12-31") {
@@ -102,7 +103,6 @@ class PropertyConcurrentJob implements ShouldQueue
 
         foreach ($allGroupDate as $keyallGroupDate => $valueallGroupDate) {
             // foreach ($valueallGroupDate as $keyvalueallGroupDate1 => $valuevalueallGroupDate1) {
-
                 $save = self::requestConcurrent(
                     $listCategory,
                     $listRates,
@@ -126,8 +126,7 @@ class PropertyConcurrentJob implements ShouldQueue
                 }
 
             // }
-        sleep(30);
-        // die;
+        sleep(10);
     }
 
         // foreach ($saveData as $valuejob) {
