@@ -807,7 +807,7 @@ class PropertyController
 						{
 							foreach($tempData as $key => $tVal)
 							{
-								if($key > 0 && $tVal['theDate'] <= $to)
+								if($key > 0 && $tVal['theDate'] < $to)
 									$tempVal['data']['categories']['rates']['dayBreakdown'][] = $tVal;
 							}
 						}
