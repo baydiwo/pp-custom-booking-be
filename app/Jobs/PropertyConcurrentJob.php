@@ -126,7 +126,7 @@ class PropertyConcurrentJob implements ShouldQueue
                 }
 
             // }
-        sleep(120);
+        sleep(30);
         // die;
     }
 
