@@ -174,7 +174,7 @@ class PropertyConcurrentJob implements ShouldQueue
 
         public static function requestConcurrent($listCategory, $listArea, $to, $from, $dataToken)
         {
-            $concurrent = 8;
+            $concurrent = 10;
             $client = new Client([
                 'http_errors'     => false,
                 // 'connect_timeout' => 1.50, //////////////// 0.50
