@@ -65,26 +65,6 @@ class PropertyConcurrentJob implements ShouldQueue
             }
         }
 
-        // $check = ModelPropertyJob::where('date_from', )->first();
-        // $new = json_decode($check->response, true);
-        // // $json = preg_replace('/[[:cntrl:]]/', '', $check->response);
-        // echo json_encode(json_decode($new[0]), 0);
-        // die();
-        // foreach ($check->response as $key => $value) {
-        //     die($value);
-        //     echo ($value);
-        // } 
-        // foreach ($dateInYear as $dateInYearvalue) {
-        //     $tempDateInYear= [];
-        //     for ($i=0; $i <= 6; $i++) { 
-        //         $dateInYearFrom = Carbon::parse($dateInYearvalue)->addDays($i);
-        //         array_push($tempDateInYear, $dateInYearFrom);
-        //     }
-        //     array_push($allGroupDate, $tempDateInYear);
-
-        // }
-
-
         $request       = new Request();
         $token         = new ApiController(NULL, $request);
         $dataToken     = $token->authToken();
@@ -126,69 +106,33 @@ class PropertyConcurrentJob implements ShouldQueue
                 }
 
             // }
-        sleep(5);
-    }
+			sleep(3);
+		}
 
-        // foreach ($saveData as $valuejob) {
-        //     $model = new ModelPropertyJob();
-        //     $model->response = $valuejob;
-        //     $model->save();
-        // }
-        // sleep(120);
-        // $dateCollect2 = collect($allGroupDate)->skip(10)->take(10);
-        // $saveData2 = self::requestConcurrent(
-        //     $listCategory,
-        //     $listRates,
-        //     $dateCollect2,
-        //     $dataToken['token']
-        // );
+		return [
+			'code' => 1,
+			'status' => 'success',
+			'message' => "Data Has Been Saved"
+		];
+	}
 
-        // foreach ($saveData2 as $valuejob) {
-        //     $model = new ModelPropertyJob();
-        //     $model->response = $valuejob;
-        //     $model->save();
-        // }
-
-        // sleep(120);
-
-            // $dateCollect3 = collect($allGroupDate)->skip(20);
-            // $saveData3 = self::requestConcurrent(
-            //     $listCategory,
-            //     $listRates,
-            //     $dateCollect3,
-            //     $dataToken['token']
-            // );
-
-            // foreach ($saveData3 as $valuejob) {
-            //     $model = new ModelPropertyJob();
-            //     $model->response = $valuejob;
-            //     $model->save();
-            // }
-
-            return [
-                'code' => 1,
-                'status' => 'success',
-                'message' => "Data Has Been Saved"
-            ];
-        }
-
-        public static function requestConcurrent($listCategory, $listArea, $to, $from, $dataToken)
-        {
-            $concurrent = 12;
-            $client = new Client([
-                'http_errors'     => false,
-                // 'connect_timeout' => 1.50, //////////////// 0.50
-                // 'timeout'         => 2.00, //////////////// 1.00
-                'headers' => [
-                    'User-Agent' => 'Test/1.0',
-                    'authToken' => $dataToken,
-                ],
-                "content-type" => 'application/json'
-            ]);
-            $responses = collect();
-            $endpoint = 'availabilityRateGrid';
-            $requests = function ($total) use ($dataToken, $listCategory, $listArea, $endpoint, $to, $from) {
-                $uris = env('BASE_URL_RMS') . $endpoint;
+	public static function requestConcurrent($listCategory, $listArea, $to, $from, $dataToken)
+	{
+		$concurrent = 13;
+		$client = new Client([
+			'http_errors'     => false,
+			// 'connect_timeout' => 1.50, //////////////// 0.50
+			// 'timeout'         => 2.00, //////////////// 1.00
+			'headers' => [
+				'User-Agent' => 'Test/1.0',
+				'authToken' => $dataToken,
+			],
+			"content-type" => 'application/json'
+		]);
+		$responses = collect();
+		$endpoint = 'availabilityRateGrid';
+		$requests = function ($total) use ($dataToken, $listCategory, $listArea, $endpoint, $to, $from) {
+			$uris = env('BASE_URL_RMS') . $endpoint;
             foreach ($to as $key => $value) {
                 $paramMinNight = [
                     'categoryIds' => $listCategory,
