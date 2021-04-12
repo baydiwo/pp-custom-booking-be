@@ -45,7 +45,7 @@ class PropertyConcurrentJob implements ShouldQueue
 
     public function handle()
     {
-        // ModelPropertyJob::truncate();
+		// ModelPropertyJob::truncate();
         $nextYear = Carbon::now()->addYear()->format('Y-m-d');
 		$cDate = Carbon::now()->format('Y-m-d');
         $dateInYear = $this->getDateInYear($cDate, $nextYear);
@@ -102,7 +102,9 @@ class PropertyConcurrentJob implements ShouldQueue
                     $model->response = $save;
                     $model->save();
                 } else {
+					$currentTime = Carbon::now()->format("Y-m-d H:i:s");
                     $check->response = $save;
+                    $check->created_date = $currentTime;
                 }
 
             // }
