@@ -28,10 +28,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->job(new PropertyJob(env('PROPERTY_ID')))->daily();
-        $schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('12:40');//daily();
-        // $schedule->call(function () {
-        //     echo "a";    
-        // })->everyMinute();
+        //$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('12:40');//daily();
+		$schedule->job(new PropertyConcurrentJobFirst(env('PROPERTY_ID')))->dailyAt('05:29');
+		$schedule->job(new PropertyConcurrentJobSecond(env('PROPERTY_ID')))->dailyAt('12:30');
     }
 }   
