@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\PropertyConcurrentJob;
+use App\Jobs\PropertyConcurrentJobFirst;
+use App\Jobs\PropertyConcurrentJobSecond;
 use App\Jobs\PropertyJob;
 use App\Models\ModelPropertyJob;
 use App\Models\Property;
@@ -1226,4 +1228,42 @@ class PropertyController
 	{
 		dispatch(new PropertyConcurrentJob(env('PROPERTY_ID')));	
 	}
+
+    public function availabilityGridTestConcurrentFirst()
+    {
+        $validator = Validator::make(
+            $this->params,
+            Property::$rules['availability-grid']
+        );
+
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+
+        dispatch(new PropertyConcurrentJobFirst($this->params['propertyId']));
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => [],
+            'message' => "Data Has Been Saved in Cache"
+        ];
+    }
+	
+	public function availabilityGridTestConcurrentSecond()
+    {
+        $validator = Validator::make(
+            $this->params,
+            Property::$rules['availability-grid']
+        );
+
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+
+        dispatch(new PropertyConcurrentJobSecond($this->params['propertyId']));
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => [],
+            'message' => "Data Has Been Saved in Cache"
+        ];
+    }
 }
