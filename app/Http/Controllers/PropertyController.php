@@ -737,7 +737,7 @@ class PropertyController
 							$diffDate = $diff;
                             if($diff == $countBreakDown) {
                                 if($getRate == $valueDatatempRate['rateId']) { 
-									if($valueDatatempRate['dayBreakdown'][0]['minStay']>= ($getRate+1))
+									if($valueDatatempRate['dayBreakdown'][0]['minStay'] <= ($getRate+1))
 									{
 										$resultData = [
 											'code' => 1,
@@ -750,6 +750,7 @@ class PropertyController
 												]
 											]
 										];
+										goto result;
 									}
                                 }
                             }							
@@ -822,8 +823,14 @@ class PropertyController
 				$resultData = $tempVal;
 			}
 			
+			result:
 			if(count($resultData) > 0)
-				return $resultData;
+			{
+				if(isset($resultData['data']) && $resultData['data']['categories']['rates']['dayBreakdown'][0]['minStay'] <= ($resultData['data']['categories']['rates']['rateId']+1))
+					return $resultData;
+				else
+					throw new Exception("Data not available for selected date");
+			}
 			else
 				throw new Exception("Data not available for selected date");
     }
