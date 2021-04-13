@@ -706,7 +706,8 @@ class PropertyController
             $dataRate = collect($json['categories'])->where('categoryId', $detailArea['categoryId'])->values()->first();
             array_push($tempRate, $dataRate);
         }
-						$tempVal = [];
+		$tempVal = [];
+		$resultData = [];
 
             foreach ($tempRate as $valuetempRate) {
                 foreach ($valuetempRate['rates'] as $valueDatatempRate) {
@@ -736,17 +737,20 @@ class PropertyController
 							$diffDate = $diff;
                             if($diff == $countBreakDown) {
                                 if($getRate == $valueDatatempRate['rateId']) { 
-                                    return [
-                                        'code' => 1,
-                                        'status' => 'success',
-                                        'data' => [
-                                            "categories" => [
-                                                "categoryId" => $valuetempRate['categoryId'],
-                                                "name" => $valuetempRate['name'],
-                                                "rates" => $valueDatatempRate
-                                            ]
-                                        ]
-                                    ];
+									if($valueDatatempRate['dayBreakdown'][0]['minStay']>= ($getRate+1))
+									{
+										$resultData = [
+											'code' => 1,
+											'status' => 'success',
+											'data' => [
+												"categories" => [
+													"categoryId" => $valuetempRate['categoryId'],
+													"name" => $valuetempRate['name'],
+													"rates" => $valueDatatempRate
+												]
+											]
+										];
+									}
                                 }
                             }							
                         } else {							
@@ -778,7 +782,7 @@ class PropertyController
                                         }
                                     }
 
-                                return [
+                                $resultData = [
                                     'code' => 1,
                                     'status' => 'success',
                                     'data' => [
@@ -815,8 +819,13 @@ class PropertyController
 						}
 					}
 				}
-				return $tempVal;
+				$resultData = $tempVal;
 			}
+			
+			if(count($resultData) > 0)
+				return $resultData;
+			else
+				throw new Exception("Data not available for selected date");
     }
 	
 	private function fetchDataRecursive($propertyId, $from, $to, $categoryId, $getRate)
