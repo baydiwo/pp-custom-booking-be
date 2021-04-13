@@ -748,12 +748,6 @@ class PropertyController
                                         ]
                                     ];
                                 }
-								else{
-									return ['code' => 0,
-											'status' => 'failed',
-											'message' => 'Data not available'
-										];
-								}
                             }							
                         } else {							
 							$diffDate = $diff;
