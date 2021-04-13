@@ -31,7 +31,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         //$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('12:40');//daily();
-		$schedule->job(new PropertyConcurrentJobFirst(env('PROPERTY_ID')))->dailyAt('05:33');
-		$schedule->job(new PropertyConcurrentJobSecond(env('PROPERTY_ID')))->dailyAt('12:34');
+		$schedule->job(new PropertyConcurrentJobFirst(env('PROPERTY_ID')))->dailyAt('05:37');
+		$schedule->job(new PropertyConcurrentJobSecond(env('PROPERTY_ID')))->dailyAt('05:38');
     }
 }   
