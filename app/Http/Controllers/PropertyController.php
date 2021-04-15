@@ -6,7 +6,6 @@ use App\Jobs\PropertyConcurrentJob;
 use App\Jobs\PropertyConcurrentJobFirst;
 use App\Jobs\PropertyConcurrentJobSecond;
 use App\Jobs\PropertyConcurrentJobThird;
-use App\Jobs\PropertyConcurrentJobFourth;
 use App\Jobs\PropertyJob;
 use App\Models\ModelPropertyJob;
 use App\Models\Property;
@@ -1266,8 +1265,6 @@ class PropertyController
 			dispatch(new PropertyConcurrentJobSecond($this->params['propertyId']));
 		else if(isset($this->params['jobId']) && $this->params['jobId'] == 3)
 			dispatch(new PropertyConcurrentJobThird($this->params['propertyId']));
-		else if(isset($this->params['jobId']) && $this->params['jobId'] == 4)
-			dispatch(new PropertyConcurrentJobFourth($this->params['propertyId']));
 		else
 			dispatch(new PropertyConcurrentJob($this->params['propertyId']));
 			
