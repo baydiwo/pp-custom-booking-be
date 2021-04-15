@@ -40,9 +40,6 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
         $router->get('check-availability-concurrent', 'PropertyController@checkAvailabilityConcurrent');
         $router->get('check-availability-concurrent-new', 'PropertyController@checkAvailabilityConcurrentNew');
         $router->get('area-by-year', 'PropertyController@areaByYear');
-		//Test Links for RMS API data fetch
-		$router->get('availability-grid-test-concurrent-first', "PropertyController@availabilityGridTestConcurrentFirst");
-		$router->get('availability-grid-test-concurrent-second', "PropertyController@availabilityGridTestConcurrentSecond");
     });
     $router->post('payment/{reservationId}', 'PaymentController@payment');
     $router->get('countries', 'CountryController@list');
