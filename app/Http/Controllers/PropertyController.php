@@ -678,18 +678,8 @@ class PropertyController
         if ($to > $nowYear) {
             throw new Exception("Date from Cannot Greater From One Year");
         }
+		
         $diff = $from->diffInDays($to);
-        // if ($diff > 14) {
-        //     throw new Exception("Different Days Cannot Greater Than 14 Days");
-        // }
-        // if ($fromYear != date('Y')) {
-        //     throw new Exception("Date from  Cannot Greater From This Year");
-        // }
-
-        // if ($fromTo != date('Y')) {
-        //     throw new Exception("Date to  Cannot Greater From This Year");
-        // }
-
         $getRate = $this->rateByDate($from, $to);
 
         $result = ModelPropertyJob::select('response')
@@ -701,17 +691,20 @@ class PropertyController
 
         $new = json_decode($result->response);
         $tempRate = [];
-        foreach ($new as $keynew => $valuenew) {
-            $json = json_decode($valuenew, true);
-            $dataRate = collect($json['categories'])->where('categoryId', $detailArea['categoryId'])->values()->first();
-            array_push($tempRate, $dataRate);
-        }
 		$tempVal = [];
 		$resultData = [];
-
-            foreach ($tempRate as $valuetempRate) {
-                foreach ($valuetempRate['rates'] as $valueDatatempRate) {
-                    $countBreakDown = count($valueDatatempRate['dayBreakdown']);
+		foreach ($new as $keynew => $valuenew) {
+			$json = json_decode($valuenew, true);
+			$dataRate = collect($json['categories'])->where('categoryId', $detailArea['categoryId'])->values()->first();
+			if(is_countable($dataRate) && count($dataRate) > 0)
+				array_push($tempRate, $dataRate);
+		}
+		
+		if(is_countable($tempRate) && count($tempRate) > 0)
+		{
+			foreach ($tempRate as $valuetempRate) {
+				foreach ($valuetempRate['rates'] as $valueDatatempRate) {
+					$countBreakDown = count($valueDatatempRate['dayBreakdown']);
 					$getRate = $this->rateByDate($from, $to);
 					if($diff > 7)
 					{
@@ -732,75 +725,73 @@ class PropertyController
 							}
 						}
 					}
-					else
-                        if($diff <= 7) {								
-							$diffDate = $diff;
-                            if($diff == $countBreakDown) {
-                                if($getRate == $valueDatatempRate['rateId']) { 
-									if($valueDatatempRate['dayBreakdown'][0]['minStay'] <= ($getRate+1))
-									{
-										$resultData = [
-											'code' => 1,
-											'status' => 'success',
-											'data' => [
-												"categories" => [
-													"categoryId" => $valuetempRate['categoryId'],
-													"name" => $valuetempRate['name'],
-													"rates" => $valueDatatempRate
-												]
+					else if($diff <= 7) {								
+						$diffDate = $diff;
+						if($diff == $countBreakDown) {
+							if($getRate == $valueDatatempRate['rateId']) { 
+								//if($valueDatatempRate['dayBreakdown'][0]['minStay'] <= ($getRate+1))
+								//{
+									$resultData = [
+										'code' => 1,
+										'status' => 'success',
+										'data' => [
+											"categories" => [
+												"categoryId" => $valuetempRate['categoryId'],
+												"name" => $valuetempRate['name'],
+												"rates" => $valueDatatempRate
 											]
+										]
+									];
+									goto result;
+								//}
+							}
+						}							
+					} else {							
+						$diffDate = $diff;
+						$return = [];
+						if($valueDatatempRate['rateId'] == 6) {
+							$dateInYear = $this->getDateInYear($from, $to);
+							$getLast = collect($valueDatatempRate['dayBreakdown'])->last();
+							
+							foreach ($dateInYear as $keydateInYear => $valuedateInYear) {
+								$dateValueRate = Carbon::parse($valuedateInYear);
+								$dateValueRateNow = Carbon::parse($getLast['theDate']);
+								if($dateValueRate->gt($dateValueRateNow)){
+									if($dateValueRate != $to) {
+	
+										$parse = [
+											"availableAreas" => $getLast['availableAreas'],
+											"closedOnArrival" => $getLast['closedOnArrival'],
+											"closedOnDeparture" => $getLast['closedOnDeparture'],
+											"dailyRate" => $getLast['dailyRate'],
+											"theDate" => $dateValueRate->format('Y-m-d H:i:s'),
+											"minStay" => $getLast['minStay'],
+											"minStayOnArrival" => $getLast['minStayOnArrival'],
+											"stopSell" => false,
 										];
-										goto result;
+										
+										array_push($valueDatatempRate['dayBreakdown'], $parse);
 									}
-                                }
-                            }							
-                        } else {							
-							$diffDate = $diff;
-                            $return = [];
-                            if($valueDatatempRate['rateId'] == 6) {
-                                $dateInYear = $this->getDateInYear($from, $to);
-                                $getLast = collect($valueDatatempRate['dayBreakdown'])->last();
-								
-                                foreach ($dateInYear as $keydateInYear => $valuedateInYear) {
-                                        $dateValueRate = Carbon::parse($valuedateInYear);
-                                        $dateValueRateNow = Carbon::parse($getLast['theDate']);
-                                        if($dateValueRate->gt($dateValueRateNow)){
-                                            if($dateValueRate != $to) {
-
-                                                $parse = [
-                                                    "availableAreas" => $getLast['availableAreas'],
-                                                    "closedOnArrival" => $getLast['closedOnArrival'],
-                                                    "closedOnDeparture" => $getLast['closedOnDeparture'],
-                                                    "dailyRate" => $getLast['dailyRate'],
-                                                    "theDate" => $dateValueRate->format('Y-m-d H:i:s'),
-                                                    "minStay" => $getLast['minStay'],
-                                                    "minStayOnArrival" => $getLast['minStayOnArrival'],
-                                                    "stopSell" => false,
-                                                ];
-												
-                                                array_push($valueDatatempRate['dayBreakdown'], $parse);
-                                            }
-                                        }
-                                    }
-
-                                $resultData = [
-                                    'code' => 1,
-                                    'status' => 'success',
-                                    'data' => [
-                                        "categories" => [
-                                            "categoryId" => $valuetempRate['categoryId'],
-                                            "name" => $valuetempRate['name'],
-                                            "rates" => $valueDatatempRate
-                                        ]
-                                    ]
-                                ];
-
-                            }
-                    }
-
-
-                }
-            }
+								}
+							}
+	
+							$resultData = [
+								'code' => 1,
+								'status' => 'success',
+								'data' => [
+									"categories" => [
+										"categoryId" => $valuetempRate['categoryId'],
+										"name" => $valuetempRate['name'],
+										"rates" => $valueDatatempRate
+									]
+								]
+							];
+	
+						}
+					}
+				}
+			}
+			
 			if($diff > 7 && isset($tempVal['data']['categories']['rates']['dayBreakdown']))
 			{
 				$lday=count($tempVal['data']['categories']['rates']['dayBreakdown']);
@@ -810,7 +801,7 @@ class PropertyController
 					if($endDate < $to)
 					{
 						$tempData = $this->fetchDataRecursive($this->params['propertyId'], $endDate, $to, $detailArea['categoryId'], $getRate);
-						if(count($tempData) > 0)
+						if(is_countable($tempData) && count($tempData) > 0)
 						{
 							foreach($tempData as $key => $tVal)
 							{
@@ -822,17 +813,35 @@ class PropertyController
 				}
 				$resultData = $tempVal;
 			}
-			
-			result:
-			if(count($resultData) > 0)
+		}
+
+		result:
+		if(is_countable($resultData) && count($resultData) > 0)
+		{
+			if(isset($resultData['data']) && $resultData['data']['categories']['rates']['dayBreakdown'][0]['minStay'] <= ($resultData['data']['categories']['rates']['rateId']+1))
+				return $resultData;
+			else
+				throw new Exception("Minimum stay allowed is ".$resultData['data']['categories']['rates']['dayBreakdown'][0]['minStay']." Nights");
+		}
+		else
+		{
+			$endDate = $to;
+			$endDate = Carbon::parse($endDate)->format('Y-m-d');
+			$enddate = Carbon::createFromFormat('Y-m-d', $endDate)->addDays(1)->format('Y-m-d');
+			$diff = $from->diffInDays($enddate);
+        	$getRate = $this->rateByDate($from, $enddate);
+			$tempData = $this->fetchDataRecursive($this->params['propertyId'], $from, $enddate, $detailArea['categoryId'], $getRate);
+			if(count($tempData) > 0)
 			{
-				if(isset($resultData['data']) && $resultData['data']['categories']['rates']['dayBreakdown'][0]['minStay'] <= ($resultData['data']['categories']['rates']['rateId']+1))
-					return $resultData;
+				if(isset($tempData[0]['rates'][0]['dayBreakdown'][0]['minStay']))
+					$minStay = $tempData[0]['rates'][0]['dayBreakdown'][0]['minStay'];
 				else
-					throw new Exception("Data not available for selected date");
+					$minStay = $tempData[0]['minStay'];
+				throw new Exception("Minimum stay allowed is ".$minStay." Nights");
 			}
 			else
 				throw new Exception("Data not available for selected date");
+		}
     }
 	
 	private function fetchDataRecursive($propertyId, $from, $to, $categoryId, $getRate)
