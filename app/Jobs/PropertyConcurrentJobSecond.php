@@ -46,14 +46,14 @@ class PropertyConcurrentJobSecond implements ShouldQueue
     public function handle()
     {
 		// ModelPropertyJob::truncate();
-        $nextYear = Carbon::now()->addYear()->format('Y-m-d');
-		$lastEndDate = Carbon::now()->addMonths(6)->format('Y-m-d');
+        $nextYear = Carbon::now()->addMonths(6)->format('Y-m-d');
+		$lastEndDate = Carbon::now()->addMonths(3)->format('Y-m-d');
 		$cDate = Carbon::createFromFormat('Y-m-d', $lastEndDate)->addDays(1)->format('Y-m-d');
         $dateInYear = $this->getDateInYear($cDate, $nextYear);
 		$allGroupDate  = [];
         $thisDay = "";
         foreach ($dateInYear as $valueDate) {
-            if($valueDate != "2021-12-31") {
+            //if($valueDate != "2021-12-31") {
                 $thisDay = Carbon::parse($valueDate);
                 $groupDate = [];
                 for ($i=1; $i <= 7; $i++) {
@@ -63,7 +63,7 @@ class PropertyConcurrentJobSecond implements ShouldQueue
                 }
 
                 $allGroupDate[$valueDate] =  $groupDate;
-            }
+            //}
         }
 
         $request       = new Request();

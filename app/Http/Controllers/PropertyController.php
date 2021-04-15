@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Jobs\PropertyConcurrentJob;
 use App\Jobs\PropertyConcurrentJobFirst;
 use App\Jobs\PropertyConcurrentJobSecond;
+use App\Jobs\PropertyConcurrentJobThird;
+use App\Jobs\PropertyConcurrentJobFourth;
 use App\Jobs\PropertyJob;
 use App\Models\ModelPropertyJob;
 use App\Models\Property;
@@ -165,7 +167,7 @@ class PropertyController
         ];
     }
 
-    public function availabilityGridTestConcurrent()
+    public function availabilityGridTestConcurrentOld()
     {
         $validator = Validator::make(
             $this->params,
@@ -1248,7 +1250,7 @@ class PropertyController
 		dispatch(new PropertyConcurrentJob(env('PROPERTY_ID')));	
 	}
 
-    public function availabilityGridTestConcurrentFirst()
+    public function availabilityGridTestConcurrent()
     {
         $validator = Validator::make(
             $this->params,
@@ -1257,27 +1259,18 @@ class PropertyController
 
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
-
-        dispatch(new PropertyConcurrentJobFirst($this->params['propertyId']));
-        return [
-            'code' => 1,
-            'status' => 'success',
-            'data' => [],
-            'message' => "Data Has Been Saved in Cache"
-        ];
-    }
-	
-	public function availabilityGridTestConcurrentSecond()
-    {
-        $validator = Validator::make(
-            $this->params,
-            Property::$rules['availability-grid']
-        );
-
-        if ($validator->fails())
-            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
-
-        dispatch(new PropertyConcurrentJobSecond($this->params['propertyId']));
+			
+		if(isset($this->params['jobId']) && $this->params['jobId'] == 1)
+			dispatch(new PropertyConcurrentJobFirst($this->params['propertyId']));
+		else if(isset($this->params['jobId']) && $this->params['jobId'] == 1)
+			dispatch(new PropertyConcurrentJobSecond($this->params['propertyId']));
+		else if(isset($this->params['jobId']) && $this->params['jobId'] == 1)
+			dispatch(new PropertyConcurrentJobThird($this->params['propertyId']));
+		else if(isset($this->params['jobId']) && $this->params['jobId'] == 1)
+			dispatch(new PropertyConcurrentJobFourth($this->params['propertyId']));
+		else
+			dispatch(new PropertyConcurrentJob($this->params['propertyId']));
+			
         return [
             'code' => 1,
             'status' => 'success',
