@@ -6,6 +6,7 @@ use App\Jobs\PropertyConcurrentJob;
 use App\Jobs\PropertyConcurrentJobFirst;
 use App\Jobs\PropertyConcurrentJobSecond;
 use App\Jobs\PropertyConcurrentJobThird;
+use App\Jobs\PropertyConcurrentJobFourth;
 use App\Jobs\PropertyJob;
 use App\Models\ModelPropertyJob;
 use App\Models\Property;
