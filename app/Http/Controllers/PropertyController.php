@@ -1265,6 +1265,8 @@ class PropertyController
 			dispatch(new PropertyConcurrentJobSecond($this->params['propertyId']));
 		else if(isset($this->params['jobId']) && $this->params['jobId'] == 3)
 			dispatch(new PropertyConcurrentJobThird($this->params['propertyId']));
+		else if(isset($this->params['jobId']) && $this->params['jobId'] == 4)
+			dispatch(new PropertyConcurrentJobFourth($this->params['propertyId']));
 		else
 			dispatch(new PropertyConcurrentJob($this->params['propertyId']));
 			
