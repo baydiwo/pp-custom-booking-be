@@ -40,6 +40,7 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
         $router->get('check-availability-concurrent', 'PropertyController@checkAvailabilityConcurrent');
         $router->get('check-availability-concurrent-new', 'PropertyController@checkAvailabilityConcurrentNew');
         $router->get('area-by-year', 'PropertyController@areaByYear');
+		$router->post('get-availability-area', 'PropertyController@getAvailabilityDates');
     });
     $router->post('payment/{reservationId}', 'PaymentController@payment');
     $router->get('countries', 'CountryController@list');

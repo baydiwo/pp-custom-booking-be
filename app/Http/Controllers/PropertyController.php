@@ -11,6 +11,7 @@ use App\Jobs\PropertyAvailabilityJob;
 use App\Jobs\PropertyJob;
 use App\Models\ModelPropertyJob;
 use App\Models\Property;
+use App\Models\ModelPropertyAvailability;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -1246,9 +1247,27 @@ class PropertyController
         ];
     }
 	
-	public function test()
+	public function getAvailabilityDates()
 	{
-		dispatch(new PropertyConcurrentJob(env('PROPERTY_ID')));
+        $validator = Validator::make(
+            $this->params,
+            ModelPropertyAvailability::$rules['check-availability-area']
+        );
+
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+			
+		$data = ModelPropertyAvailability::select('response')->where("area_id", $this->params['areaId'])->where("property_id", $this->params['propertyId'])->first();
+        if (is_countable($data) && count($data) == 0) {
+            throw new Exception(ucwords('Data Not Found'));
+        }
+		$result = json_decode($data->response);
+		if(is_countable($result) && count($result) > 0)
+		{
+			return $result[0];
+		}
+		else
+			throw new Exception(ucwords('Data Not Found'));
 	}
 
     public function availabilityGridTestConcurrent()
