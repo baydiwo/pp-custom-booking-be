@@ -12,7 +12,7 @@ class ApiController
     private $request;
     private $params;
 
-    public function __construct($authToken, Request $request)
+    public function __construct($authToken = NULL, Request $request)
     {
         $this->authToken = $authToken;
         $this->request = $request;

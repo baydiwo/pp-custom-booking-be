@@ -21,7 +21,7 @@ use GuzzleHttp\Promise;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 
-class PropertyConcurrentJob implements ShouldQueue
+class PropertyConcurrentJobSecond implements ShouldQueue
 {
 
     use InteractsWithQueue, Queueable, SerializesModels;
@@ -46,8 +46,9 @@ class PropertyConcurrentJob implements ShouldQueue
     public function handle()
     {
 		// ModelPropertyJob::truncate();
-        $nextYear = Carbon::now()->addYear()->format('Y-m-d');
-		$cDate = Carbon::now()->format('Y-m-d');
+        $nextYear = Carbon::now()->addMonths(6)->format('Y-m-d');
+		$lastEndDate = Carbon::now()->addMonths(3)->format('Y-m-d');
+		$cDate = Carbon::createFromFormat('Y-m-d', $lastEndDate)->addDays(1)->format('Y-m-d');
         $dateInYear = $this->getDateInYear($cDate, $nextYear);
 		$allGroupDate  = [];
         $thisDay = "";
@@ -82,32 +83,26 @@ class PropertyConcurrentJob implements ShouldQueue
 
 
         foreach ($allGroupDate as $keyallGroupDate => $valueallGroupDate) {
-            // foreach ($valueallGroupDate as $keyvalueallGroupDate1 => $valuevalueallGroupDate1) {
-                $save = self::requestConcurrent(
-                    $listCategory,
-                    $listRates,
-                    $valueallGroupDate,
-                    $keyallGroupDate,
-                    $dataToken['token']
-                );
-                
-                $check = ModelPropertyJob::where('date_from', $keyallGroupDate)
-                    ->where('property_id', env("PROPERTY_ID"))
-                    ->first();
+			$save = self::requestConcurrent(
+				$listCategory,
+				$listRates,
+				$valueallGroupDate,
+				$keyallGroupDate,
+				$dataToken['token']
+			);
+			
+			$check = ModelPropertyJob::where('date_from', $keyallGroupDate)
+				->where('property_id', env("PROPERTY_ID"))
+				->first();
 
-                if(!$check) {
-                    $model = new ModelPropertyJob();
-                    $model->property_id = env("PROPERTY_ID");
-                    $model->date_from = $keyallGroupDate;
-                    $model->response = $save;
-                    $model->save();
-                } else {
-					$currentTime = Carbon::now()->format("Y-m-d H:i:s");
-                    $check->response = $save;
-                    $check->created_date = $currentTime;
-                }
-
-            // }
+			if($check) {
+				ModelPropertyJob::where('id', $check->id)->firstorfail()->delete();
+			}
+			$model = new ModelPropertyJob();
+			$model->property_id = env("PROPERTY_ID");
+			$model->date_from = $keyallGroupDate;
+			$model->response = $save;
+			$model->save();
 			sleep(3);
 		}
 
@@ -120,11 +115,9 @@ class PropertyConcurrentJob implements ShouldQueue
 
 	public static function requestConcurrent($listCategory, $listArea, $to, $from, $dataToken)
 	{
-		$concurrent = 13;
+		$concurrent = 10;
 		$client = new Client([
 			'http_errors'     => false,
-			// 'connect_timeout' => 1.50, //////////////// 0.50
-			// 'timeout'         => 2.00, //////////////// 1.00
 			'headers' => [
 				'User-Agent' => 'Test/1.0',
 				'authToken' => $dataToken,
@@ -138,7 +131,6 @@ class PropertyConcurrentJob implements ShouldQueue
             foreach ($to as $key => $value) {
                 $paramMinNight = [
                     'categoryIds' => $listCategory,
-                    // 'categoryIds' => [3],
                     'dateTo'      => Carbon::parse($value)->format('Y-m-d'),
                     'dateFrom'    => $from,
                     'propertyId'  => 1,

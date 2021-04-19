@@ -10,6 +10,8 @@ if ($method == "OPTIONS") {
     header("HTTP/1.1 200 OK");
     die();
 }
+
+ini_set('memory_limit','-1');
 /*
 |--------------------------------------------------------------------------
 | Create The Application

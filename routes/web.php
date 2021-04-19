@@ -23,6 +23,7 @@ $router->get('users_with_query', "UserController@getUser");
 $router->get('users_with_cache', "UserController@index");
 $router->get('testing', "UserController@test");
 $router->post('auth-token', "ApiController@authToken");
+$router->get('test', "PropertyController@test");
 
 $router->group(['middleware' => 'auth.token'], function () use ($router) {
     $router->group(['prefix' => 'booking'], function () use ($router) {
@@ -37,6 +38,7 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
         $router->get('availability-grid-concurrent', 'PropertyController@availabilityGridConcurrent');
         $router->get('check-availability', 'PropertyController@checkAvailability');
         $router->get('check-availability-concurrent', 'PropertyController@checkAvailabilityConcurrent');
+        $router->get('check-availability-concurrent-new', 'PropertyController@checkAvailabilityConcurrentNew');
         $router->get('area-by-year', 'PropertyController@areaByYear');
     });
     $router->post('payment/{reservationId}', 'PaymentController@payment');
