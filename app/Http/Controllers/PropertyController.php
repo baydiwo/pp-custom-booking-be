@@ -1249,6 +1249,7 @@ class PropertyController
 	
 	public function getAvailabilityDates()
 	{
+		$this->params['propertyId'] = 1;
         $validator = Validator::make(
             $this->params,
             ModelPropertyAvailability::$rules['check-availability-area']
