@@ -7,6 +7,7 @@ use App\Jobs\PropertyConcurrentJobFirst;
 use App\Jobs\PropertyConcurrentJobSecond;
 use App\Jobs\PropertyConcurrentJobThird;
 use App\Jobs\PropertyConcurrentJobFourth;
+use App\Jobs\PropertyAvailabilityJob;
 use App\Jobs\PropertyJob;
 use App\Models\ModelPropertyJob;
 use App\Models\Property;
@@ -1247,7 +1248,10 @@ class PropertyController
 	
 	public function test()
 	{
-		dispatch(new PropertyConcurrentJob(env('PROPERTY_ID')));	
+		if(isset($this->params['job']) && $this->params['job'] == 1)
+			dispatch(new PropertyAvailabilityJob(env('propertyId')));
+		else
+			dispatch(new PropertyConcurrentJob(env('PROPERTY_ID')));
 	}
 
     public function availabilityGridTestConcurrent()
