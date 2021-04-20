@@ -4,8 +4,11 @@ namespace App\Console;
 
 use App\Http\Controllers\ApiController;
 use App\Jobs\PropertyConcurrentJob;
+use App\Jobs\PropertyAvailabilityJob;
 use App\Jobs\PropertyConcurrentJobFirst;
 use App\Jobs\PropertyConcurrentJobSecond;
+use App\Jobs\PropertyConcurrentJobThird;
+use App\Jobs\PropertyConcurrentJobFourth;
 use App\Jobs\PropertyJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
@@ -30,8 +33,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        //$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('12:40');//daily();
-		$schedule->job(new PropertyConcurrentJobFirst(env('PROPERTY_ID')))->dailyAt('05:37');
-		$schedule->job(new PropertyConcurrentJobSecond(env('PROPERTY_ID')))->dailyAt('05:38');
+        $schedule->job(new PropertyAvailabilityJob(env('PROPERTY_ID')))->everyTenMinutes();
+		$schedule->job(new PropertyConcurrentJobFirst(env('PROPERTY_ID')))->dailyAt('04:00');
+		$schedule->job(new PropertyConcurrentJobSecond(env('PROPERTY_ID')))->dailyAt('04:00');
+		$schedule->job(new PropertyConcurrentJobThird(env('PROPERTY_ID')))->dailyAt('04:00');
+		$schedule->job(new PropertyConcurrentJobFourth(env('PROPERTY_ID')))->dailyAt('04:00');
     }
 }   
