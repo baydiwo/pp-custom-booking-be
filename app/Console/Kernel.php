@@ -8,11 +8,12 @@ use App\Jobs\PropertyAvailabilityJob;
 use App\Jobs\PropertyConcurrentJobFirst;
 use App\Jobs\PropertyConcurrentJobSecond;
 use App\Jobs\PropertyConcurrentJobThird;
-use App\Jobs\PropertyConcurrentJobFourth;
+//use App\Jobs\PropertyConcurrentJobFourth;
 use App\Jobs\PropertyJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
 use phpDocumentor\Reflection\Types\Null_;
+use Carbon\Carbon;
 
 class Kernel extends ConsoleKernel
 {
@@ -37,6 +38,6 @@ class Kernel extends ConsoleKernel
 		$schedule->job(new PropertyConcurrentJobFirst(env('PROPERTY_ID')))->dailyAt('04:00');
 		$schedule->job(new PropertyConcurrentJobSecond(env('PROPERTY_ID')))->dailyAt('04:00');
 		$schedule->job(new PropertyConcurrentJobThird(env('PROPERTY_ID')))->dailyAt('04:00');
-		$schedule->job(new PropertyConcurrentJobFourth(env('PROPERTY_ID')))->dailyAt('04:00');
+		//$schedule->job(new PropertyConcurrentJobFourth(env('PROPERTY_ID')))->dailyAt('04:00');
     }
 }   
