@@ -82,6 +82,8 @@ class PropertyConcurrentJobThird implements ShouldQueue
 
 
         foreach ($allGroupDate as $keyallGroupDate => $valueallGroupDate) {
+			$rFlag = 0;
+			repeatProcess:
 			$save = self::requestConcurrent(
 				$listCategory,
 				$listRates,
@@ -89,6 +91,12 @@ class PropertyConcurrentJobThird implements ShouldQueue
 				$keyallGroupDate,
 				$dataToken['token']
 			);
+			
+			if(strpos($save,"<html>") >= 0 && $rFlag <= 1)
+			{
+				$rFlag++; 
+				goto repeatProcess;
+			}
 			
 			$check = ModelPropertyJob::where('date_from', $keyallGroupDate)
 				->where('property_id', env("PROPERTY_ID"))
