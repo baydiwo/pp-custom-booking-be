@@ -82,8 +82,8 @@ class PropertyConcurrentJobFirst implements ShouldQueue
 
 
         foreach ($allGroupDate as $keyallGroupDate => $valueallGroupDate) {
-			$rFlag = 0;
-			repeatProcess:
+			//$rFlag = 0;
+			//repeatProcess:
 			$save = self::requestConcurrent(
 				$listCategory,
 				$listRates,
@@ -92,24 +92,27 @@ class PropertyConcurrentJobFirst implements ShouldQueue
 				$dataToken['token']
 			);
 			
-			if(strpos($save,"<html>") > 0 && $rFlag <= 1)
+			/*if(strpos($save,"<html>") > 0 && $rFlag <= 1)
 			{
 				$rFlag++; 
 				goto repeatProcess;
+			}*/
+			
+			if(strpos($save,"<html>") <= 0)
+			{
+				$check = ModelPropertyJob::where('date_from', $keyallGroupDate)
+					->where('property_id', env("PROPERTY_ID"))
+					->first();
+	
+				if($check) {
+					ModelPropertyJob::where('id', $check->id)->firstorfail()->delete();
+				}
+				$model = new ModelPropertyJob();
+				$model->property_id = env("PROPERTY_ID");
+				$model->date_from = $keyallGroupDate;
+				$model->response = $save;
+				$model->save();
 			}
-				
-			$check = ModelPropertyJob::where('date_from', $keyallGroupDate)
-				->where('property_id', env("PROPERTY_ID"))
-				->first();
-
-			if($check) {
-				ModelPropertyJob::where('id', $check->id)->firstorfail()->delete();
-			}
-			$model = new ModelPropertyJob();
-			$model->property_id = env("PROPERTY_ID");
-			$model->date_from = $keyallGroupDate;
-			$model->response = $save;
-			$model->save();
 			sleep(3);
 		}
 
