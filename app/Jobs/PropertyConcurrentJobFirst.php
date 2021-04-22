@@ -92,7 +92,7 @@ class PropertyConcurrentJobFirst implements ShouldQueue
 				$dataToken['token']
 			);
 			
-			if(strpos($save,"<html>") >= 0 && $rFlag <= 1)
+			if(strpos($save,"<html>") > 0 && $rFlag <= 1)
 			{
 				$rFlag++; 
 				goto repeatProcess;
