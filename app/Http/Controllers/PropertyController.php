@@ -9,9 +9,11 @@ use App\Jobs\PropertyConcurrentJobThird;
 use App\Jobs\PropertyConcurrentJobFourth;
 use App\Jobs\PropertyAvailabilityJob;
 use App\Jobs\PropertyJob;
+use App\Jobs\PropertyDetailsJob;
 use App\Models\ModelPropertyJob;
 use App\Models\Property;
 use App\Models\ModelPropertyAvailability;
+use App\Models\PropertyDetails;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -51,7 +53,7 @@ class PropertyController
             'data' => $data
         ];
     }
-    public function detail($id)
+    public function detail_old($id)
     {
         $api = new ApiController($this->authToken, $this->request);
         $validator = Validator::make(
@@ -662,11 +664,20 @@ class PropertyController
                 }
             }
     }
-    public function checkAvailabilityConcurrentNew()
+    public function checkAvailabilityConcurrentNew($areaID = 0, $propertyID = 0, $dateFrom = '', $dateTo = '')
     {
         $nonFeePackageArea = [221, 124, 66, 67, 68, 70];
 
         $feePackage = 66;
+		if($areaID > 0)
+			$this->params['areaId'] = $areaID;
+		if($propertyID > 0)
+			$this->params['propertyId'] = $propertyID;
+		if($dateFrom != '')
+			$this->params['dateFrom'] = $dateFrom;
+		if($dateTo != '')
+			$this->params['dateTo'] = $dateTo;
+
         $validator = Validator::make(
             $this->params,
             Property::$rules['check-availability']
@@ -822,8 +833,12 @@ class PropertyController
 		result:
 		if(is_countable($resultData) && count($resultData) > 0)
 		{
-			if(isset($resultData['data']) && $resultData['data']['categories']['rates']['dayBreakdown'][0]['minStay'] <= ($resultData['data']['categories']['rates']['rateId']+1))
-				return $resultData;
+			if(isset($resultData['data']) && $resultData['data']['categories']['rates']['dayBreakdown'][0]['minStay'] <= ($resultData['data']['categories']['rates']['rateId']+1)){
+				if($areaID > 0)
+					return $resultData['data']['categories']['rates']['dayBreakdown'];
+				else
+					return $resultData;
+			}
 			else
 				throw new Exception("Minimum stay allowed is ".$resultData['data']['categories']['rates']['dayBreakdown'][0]['minStay']." Nights");
 		}
@@ -1301,4 +1316,30 @@ class PropertyController
             'message' => "Data Has Been Saved in Cache"
         ];
     }
+	
+	public function detail($id)
+	{
+		$from = Carbon::parse($this->params['arrivalDate'])->format('Y-m-d');
+		$to = Carbon::parse($this->params['departureDate'])->format('Y-m-d');
+		$priceData = $this->checkAvailabilityConcurrentNew($this->params['areaId'], $id, $from, $to);
+
+		$price = 0;
+		foreach($priceData as $data)
+		{
+			$price+=$data['dailyRate'];
+		}
+		$check = PropertyDetails::where('property_id', $id)
+			->where('property_id', env("PROPERTY_ID"))
+			->first();
+		if(isset($check->pets_allowed) && $check->pets_allowed == 1)
+			$price+=env('PET_PRICE');
+
+		return [
+				'code' => 1,
+				'status' => 'success',
+				'data' => [
+					"booking_cost" => $price
+					]
+				];
+	}
 }
