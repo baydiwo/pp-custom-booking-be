@@ -1332,13 +1332,16 @@ class PropertyController
 			->where('property_id', env("PROPERTY_ID"))
 			->first();
 		if(isset($check->pets_allowed) && $check->pets_allowed == 1)
-			$price+=env('PET_PRICE');
+			$pet_fee = env('PET_PRICE');
+		else
+			$pet_fee = 0;
 
 		return [
 				'code' => 1,
 				'status' => 'success',
 				'data' => [
-					"booking_cost" => $price
+					"accomodation_fee" => $price,
+					"pet_fee" => $pet_fee
 					]
 				];
 	}
