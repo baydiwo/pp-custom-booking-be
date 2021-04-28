@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\PropertyController;
 use App\Models\ModelPropertyJob;
+use App\Models\ModelPropertyJobError;
 use App\Models\Property;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
@@ -109,6 +110,13 @@ class PropertyConcurrentJobSecond implements ShouldQueue
 					ModelPropertyJob::where('id', $check->id)->firstorfail()->delete();
 				}
 				$model = new ModelPropertyJob();
+				$model->property_id = env("PROPERTY_ID");
+				$model->date_from = $keyallGroupDate;
+				$model->response = $save;
+				$model->save();
+			}
+			else{
+				$model = new ModelPropertyJobError();
 				$model->property_id = env("PROPERTY_ID");
 				$model->date_from = $keyallGroupDate;
 				$model->response = $save;
