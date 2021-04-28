@@ -10,6 +10,7 @@ use App\Jobs\PropertyConcurrentJobSecond;
 use App\Jobs\PropertyConcurrentJobThird;
 //use App\Jobs\PropertyConcurrentJobFourth;
 use App\Jobs\PropertyJob;
+use App\Jobs\PropertyDetailsJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
 use phpDocumentor\Reflection\Types\Null_;
@@ -35,9 +36,27 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->job(new PropertyAvailabilityJob(env('PROPERTY_ID')))->everyTenMinutes();
+        $schedule->job(new PropertyDetailsJob())->dailyAt('00:00');
+		
+		//12AM schedule - Perth Time
+		$schedule->job(new PropertyConcurrentJobFirst(env('PROPERTY_ID')))->dailyAt('16:00');
+		$schedule->job(new PropertyConcurrentJobSecond(env('PROPERTY_ID')))->dailyAt('16:00');
+		$schedule->job(new PropertyConcurrentJobThird(env('PROPERTY_ID')))->dailyAt('16:00');
+
+		//6AM schedule - Perth Time
+		$schedule->job(new PropertyConcurrentJobFirst(env('PROPERTY_ID')))->dailyAt('22:00');
+		$schedule->job(new PropertyConcurrentJobSecond(env('PROPERTY_ID')))->dailyAt('22:00');
+		$schedule->job(new PropertyConcurrentJobThird(env('PROPERTY_ID')))->dailyAt('22:00');
+
+		//12PM schedule - Perth Time
 		$schedule->job(new PropertyConcurrentJobFirst(env('PROPERTY_ID')))->dailyAt('04:00');
 		$schedule->job(new PropertyConcurrentJobSecond(env('PROPERTY_ID')))->dailyAt('04:00');
 		$schedule->job(new PropertyConcurrentJobThird(env('PROPERTY_ID')))->dailyAt('04:00');
+
+		//6PM schedule - Perth Time
+		$schedule->job(new PropertyConcurrentJobFirst(env('PROPERTY_ID')))->dailyAt('10:00');
+		$schedule->job(new PropertyConcurrentJobSecond(env('PROPERTY_ID')))->dailyAt('10:00');
+		$schedule->job(new PropertyConcurrentJobThird(env('PROPERTY_ID')))->dailyAt('10:00');
 		//$schedule->job(new PropertyConcurrentJobFourth(env('PROPERTY_ID')))->dailyAt('04:00');
     }
 }   

@@ -17,8 +17,8 @@ class Property extends Model
             'children'        => 'required|integer',
             'infants'         => 'required|integer',
             'bookingSourceId' => 'required|integer',
-            'arrivalDate'     => 'required|date_format:Y-m-d H:i:s',
-            'departureDate'   => 'required|date_format:Y-m-d H:i:s|after:arrivalDate',
+            'arrivalDate'     => 'required|date_format:Y-m-d',
+            'departureDate'   => 'required|date_format:Y-m-d|after:arrivalDate',
         ],
         'availability-grid' => [
             // 'categoryId' => 'required|integer',
