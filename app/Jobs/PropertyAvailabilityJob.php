@@ -112,6 +112,7 @@ class PropertyAvailabilityJob implements ShouldQueue
 								"pencil",
 								"arrived",
 								"departed",
+								"owner"
 								],
 				"areaIds" => $listArea
 			];
