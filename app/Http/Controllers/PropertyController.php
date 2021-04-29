@@ -14,6 +14,7 @@ use App\Models\ModelPropertyJob;
 use App\Models\Property;
 use App\Models\ModelPropertyAvailability;
 use App\Models\PropertyDetails;
+use App\Models\PropertyAreaDetails;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -1302,8 +1303,6 @@ class PropertyController
 			dispatch(new PropertyConcurrentJobSecond($this->params['propertyId']));
 		else if(isset($this->params['jobId']) && $this->params['jobId'] == 3)
 			dispatch(new PropertyConcurrentJobThird($this->params['propertyId']));
-		//else if(isset($this->params['jobId']) && $this->params['jobId'] == 4)
-			//dispatch(new PropertyConcurrentJobFourth($this->params['propertyId']));
 		else if(isset($this->params['jobId']) && $this->params['jobId'] == 0)
 			dispatch(new PropertyAvailabilityJob(env('propertyId')));
 		else
@@ -1329,8 +1328,7 @@ class PropertyController
 			$price+=$data['dailyRate'];
 		}
 		$check = PropertyDetails::where('property_id', $id)
-			->where('property_id', env("PROPERTY_ID"))
-			->first();
+								->first();
 		if(isset($check->pets_allowed) && $check->pets_allowed == 1)
 			$pet_fee = env('PET_PRICE');
 		else
@@ -1342,6 +1340,36 @@ class PropertyController
 				'data' => [
 					"accomodation_fee" => $price,
 					"pet_fee" => $pet_fee
+					]
+				];
+	}
+	
+	public function propertyAreaDetail($id)
+	{
+		$data = PropertyAreaDetails::where('area_id', $id)
+									->where('property_id', env("PROPERTY_ID"))
+									->first();
+			
+		if (is_countable($data) && count($data) == 0) {
+            throw new Exception(ucwords('Data Not Found'));
+        }
+		
+		$propData = PropertyDetails::where('property_id', env("PROPERTY_ID"))
+									->first();
+
+		if($propData->pets_allowed)
+			$pet_flag = $propData->pets_allowed;
+		else
+			$pet_flag = 0;
+
+		return [
+				'code' => 1,
+				'status' => 'success',
+				'data' => [
+					"name" => $data->name,
+					"petAllowed" => $pet_flag,
+					"maxOccupants" => $data->max_occupants,
+					"town" => $data->town
 					]
 				];
 	}
