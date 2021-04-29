@@ -29,7 +29,6 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
         $router->get('{id}', 'BookingController@detail');
         $router->post('', 'BookingController@create');
     });
-	
     $router->group(['prefix' => 'property'], function () use ($router) {
         $router->get('', 'PropertyController@list');
         $router->get('availability-grid', 'PropertyController@availabilityGrid');
@@ -42,11 +41,6 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
 		$router->post('get-availability-area', 'PropertyController@getAvailabilityDates');
         $router->get('{id}', 'PropertyController@detail');
     });
-	
-    $router->group(['prefix' => 'property-details'], function () use ($router) {
-        $router->get('{id}', 'PropertyController@propertyAreaDetail');
-    });
-	
     $router->post('payment/{reservationId}', 'PaymentController@payment');
     $router->get('countries', 'CountryController@list');
     $router->group(['prefix' => 'rate'], function () use ($router) {
