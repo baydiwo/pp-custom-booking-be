@@ -46,7 +46,7 @@ class PropertyAvailabilityJob implements ShouldQueue
     public function handle()
     {
 		// ModelPropertyJob::truncate();
-        $nextYear = Carbon::now()->addYear(1)->format('Y-m-d');
+        $nextYear = Carbon::now()->addYear(2)->format('Y-m-d');
 		$cDate = Carbon::now()->format('Y-m-d');
 		
         $request       = new Request();
