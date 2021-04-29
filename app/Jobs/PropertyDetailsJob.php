@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Http\Controllers\ApiController;
 use App\Models\PropertyDetails;
+use App\Models\PropertyAreaDetails;
 use GuzzleHttp\Client;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -50,8 +51,7 @@ class PropertyDetailsJob implements ShouldQueue
 		$save = self::requestDetails( $id, $dataToken['token']);
 		
 		$check = PropertyDetails::where('property_id', $id)
-			->where('property_id', env("PROPERTY_ID"))
-			->first();
+								->first();
 
 		if($check) {
 			PropertyDetails::where('id', $check->id)->firstorfail()->delete();
@@ -76,6 +76,49 @@ class PropertyDetailsJob implements ShouldQueue
 		$model->max_group_bookings = (isset($save['maxGroupBookings']))? $save['maxGroupBookings']:'';
 		$model->google_analytics_code = (isset($save['googleAnalyticsCode']))? $save['googleAnalyticsCode']:'';
 		$model->save();
+		
+		
+        $api           = new ApiController($dataToken['token'], $request);
+        $listAreasData = $api->listArea(env("PROPERTY_ID"));
+        $listCategory  = collect($listAreasData)->where('inactive', false)->pluck('id');
+		
+		foreach($listCategory as $areaId)
+		{
+			$saveAreaDetails = self::requestAreaDetails(
+				$areaId,
+				$dataToken['token']
+			);
+			
+			$check = PropertyAreaDetails::where('property_id', $id)
+										->where('area_id', $areaId)
+										->first();
+
+	  		if($check){
+				PropertyAreaDetails::where('id', $check->id)->firstorfail()->delete();
+			}
+				
+			$saveData = new PropertyAreaDetails();
+			$saveData->category_id 		= $saveAreaDetails['categoryId'];
+			$saveData->name 			= $saveAreaDetails['name'];
+			$saveData->address_line1 	= $saveAreaDetails['addressLine1'];
+			$saveData->address_line2 	= $saveAreaDetails['addressLine2'];
+			$saveData->address_line3 	= $saveAreaDetails['addressLine3'];
+			$saveData->town 			= $saveAreaDetails['town'];
+			$saveData->state 			= $saveAreaDetails['state'];
+			$saveData->post_code 		= $saveAreaDetails['postCode'];
+			$saveData->external_ref 	= $saveAreaDetails['externalRef'];
+			$saveData->clean_status 	= $saveAreaDetails['cleanStatus'];
+			$saveData->description 		= $saveAreaDetails['description'];
+			$saveData->extension 		= $saveAreaDetails['extension'];
+			$saveData->guest_description = $saveAreaDetails['guestDescription'];
+			$saveData->max_occupants 	= $saveAreaDetails['maxOccupants'];
+			$saveData->created_date 	= $saveAreaDetails['createdDate'];
+			$saveData->property_id 		= $saveAreaDetails['propertyId'];
+			$saveData->area_id			= $areaId;
+			$ss = $saveData;
+			$saveData->save();
+			sleep(1);
+		}
 
 		return [
 			'code' => 1,
@@ -86,8 +129,22 @@ class PropertyDetailsJob implements ShouldQueue
 
 	public static function requestDetails($id, $dataToken)
 	{
-		$value = Cache::remember('property_setting_' . $id, 10 * 60, function () use ($id, $dataToken) {
+		$value = Cache::remember('property_details_' . $id, 10 * 60, function () use ($id, $dataToken) {
             $endpoint = 'properties/' . $id . '/ibe/settings';
+            $response = Http::withHeaders([
+                'authToken' => $dataToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
+
+            return $response->json();
+        });
+
+        return $value;
+    }
+
+	public static function requestAreaDetails($id, $dataToken)
+	{
+		$value = Cache::remember('area_details_' . $id, 10 * 60, function () use ($id, $dataToken) {
+            $endpoint = 'areas/' . $id . '?modelType=full';
             $response = Http::withHeaders([
                 'authToken' => $dataToken
             ])->get(env('BASE_URL_RMS') . $endpoint);
