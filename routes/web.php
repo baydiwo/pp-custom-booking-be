@@ -23,7 +23,6 @@ $router->get('users_with_query', "UserController@getUser");
 $router->get('users_with_cache', "UserController@index");
 $router->get('testing', "UserController@test");
 $router->post('auth-token', "ApiController@authToken");
-$router->get('test', "PropertyController@storeData");
 
 $router->group(['middleware' => 'auth.token'], function () use ($router) {
     $router->group(['prefix' => 'booking'], function () use ($router) {
