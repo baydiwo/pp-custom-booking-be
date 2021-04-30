@@ -8,6 +8,7 @@ use App\Jobs\PropertyConcurrentJobSecond;
 use App\Jobs\PropertyConcurrentJobThird;
 use App\Jobs\PropertyConcurrentJobFourth;
 use App\Jobs\PropertyAvailabilityJob;
+use App\Jobs\PropertyAvailabilityDateJob;
 use App\Jobs\PropertyJob;
 use App\Jobs\PropertyDetailsJob;
 use App\Models\ModelPropertyJob;
@@ -1289,7 +1290,7 @@ class PropertyController
 	}
 
     public function availabilityGridTestConcurrent()
-    {
+    {		
         $validator = Validator::make(
             $this->params,
             Property::$rules['availability-grid']
@@ -1374,4 +1375,16 @@ class PropertyController
 					]
 				];
 	}
+
+    public function storeData()
+    {
+		dispatch(new PropertyAvailabilityDateJob(env("PROPERTY_ID")));
+			
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => [],
+            'message' => "Data Has Been Saved in Cache"
+        ];
+    }
 }
