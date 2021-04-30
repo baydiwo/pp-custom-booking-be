@@ -665,6 +665,7 @@ class PropertyController
                 }
             }
     }
+	
     public function checkAvailabilityConcurrentNew($areaID = 0, $propertyID = 0, $dateFrom = '', $dateTo = '')
     {
         $nonFeePackageArea = [221, 124, 66, 67, 68, 70];
@@ -1368,7 +1369,7 @@ class PropertyController
 				'data' => [
 					"name" => $data->name,
 					"petAllowed" => $pet_flag,
-					"maxOccupants" => $data->max_occupants,
+					"maxOccupants" => (int)$data->max_occupants,
 					"town" => $data->town
 					]
 				];
