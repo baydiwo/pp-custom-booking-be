@@ -20,7 +20,7 @@ use GuzzleHttp\Promise;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 
-class PropertyAvailabilityDateJob implements ShouldQueue
+class PropertyAvailabilityDateJobSecond implements ShouldQueue
 {
 
     use InteractsWithQueue, Queueable, SerializesModels;
@@ -44,8 +44,9 @@ class PropertyAvailabilityDateJob implements ShouldQueue
 
     public function handle()
     {
-        $nextYear = Carbon::now()->addMonths(3)->format('Y-m-d');
-		$cDate = Carbon::now()->format('Y-m-d');
+        $nextYear = Carbon::now()->addMonths(8)->format('Y-m-d');
+		$lastEndDate = Carbon::now()->addMonths(4)->format('Y-m-d');
+		$cDate = Carbon::createFromFormat('Y-m-d', $lastEndDate)->addDays(1)->format('Y-m-d');
         $dateInYear = $this->getDateInYear($cDate, $nextYear);
 		$allGroupDate  = [];
         $thisDay = "";
