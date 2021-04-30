@@ -54,14 +54,12 @@ class PropertyAvailabilityDateJob implements ShouldQueue
 			if($idate%7 == 0){
                 $thisDay = Carbon::parse($valueDate);
                 $groupDate = [];
-                //for ($i=1; $i <= 7; $i++) {
-                    $thisDay->addDays(7);
-                    array_push($groupDate, $thisDay);
-                    $thisDay = Carbon::parse($valueDate);
-                //}
+				$thisDay->addDays(7);
+				array_push($groupDate, $thisDay);
+				$thisDay = Carbon::parse($valueDate);
                 $allGroupDate[$valueDate] =  $groupDate;
-				$idate++;
 			}
+			$idate++;
         }
 
         $request       = new Request();
@@ -79,7 +77,7 @@ class PropertyAvailabilityDateJob implements ShouldQueue
 
         $listRates = collect($filtered)->pluck('id');
 		$listRates = [4];
-
+		
         foreach ($allGroupDate as $keyallGroupDate => $valueallGroupDate) {
 			$save = self::requestConcurrent(
 				$listCategory,
