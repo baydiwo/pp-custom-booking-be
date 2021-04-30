@@ -1306,9 +1306,9 @@ class PropertyController
 		else if(isset($this->params['jobId']) && $this->params['jobId'] == 3)
 			dispatch(new PropertyConcurrentJobThird($this->params['propertyId']));
 		else if(isset($this->params['jobId']) && $this->params['jobId'] == 0)
-			dispatch(new PropertyAvailabilityJob(env('propertyId')));
+			dispatch(new PropertyAvailabilityJob($this->params['propertyId']));
 		else if(isset($this->params['jobId']) && $this->params['jobId'] == 4)
-			dispatch(new PropertyAvailabilityDateJob(env('propertyId')));
+			dispatch(new PropertyAvailabilityDateJob($this->params['propertyId']));
 		else
 			dispatch(new PropertyConcurrentJob($this->params['propertyId']));
 			
