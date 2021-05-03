@@ -46,8 +46,9 @@ class PropertyConcurrentJobTest implements ShouldQueue
 
     public function handle()
     {
-        $nextYear = Carbon::now()->addMonths(1)->format('Y-m-d');
-		$cDate = Carbon::now()->format('Y-m-d');
+        $nextYear = Carbon::now()->addMonths(2)->format('Y-m-d');
+		$lastEndDate = Carbon::now()->addMonths(1)->format('Y-m-d');
+		$cDate = Carbon::createFromFormat('Y-m-d', $lastEndDate)->addDays(1)->format('Y-m-d');
         $dateInYear = $this->getDateInYear($cDate, $nextYear);
 		$allGroupDate  = [];
         $thisDay = "";
@@ -111,7 +112,7 @@ class PropertyConcurrentJobTest implements ShouldQueue
 				$model->response = $save;
 				$model->save();
 			}
-			sleep(3);
+			sleep(1);
 		}
 
 		return [
@@ -123,7 +124,7 @@ class PropertyConcurrentJobTest implements ShouldQueue
 
 	public static function requestConcurrent($listCategory, $listArea, $to, $from, $dataToken)
 	{
-		$concurrent = 12;
+		$concurrent = 20;
 		$client = new Client([
 			'http_errors'     => false,
 			'headers' => [
