@@ -14,11 +14,13 @@ use App\Jobs\PropertyAvailabilityDateJobThird;
 use App\Jobs\PropertyJob;
 use App\Jobs\PropertyConcurrentOneCatJob;
 use App\Jobs\PropertyDetailsJob;
+use App\Jobs\PropertyConcurrentJobTest;
 use App\Models\ModelPropertyJob;
 use App\Models\Property;
 use App\Models\ModelPropertyAvailability;
 use App\Models\PropertyDetails;
 use App\Models\PropertyAreaDetails;
+use App\Models\ModelPropertyTestJob;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -1318,6 +1320,8 @@ class PropertyController
 			dispatch(new PropertyAvailabilityDateJobThird($this->params['propertyId']));
 		else if(isset($this->params['jobId']) && $this->params['jobId'] == 7)
 			dispatch(new PropertyConcurrentOneCatJob($this->params['propertyId']));
+		else if(isset($this->params['jobId']) && $this->params['jobId'] == 8)
+			dispatch(new PropertyConcurrentJobTest($this->params['propertyId']));
 		else
 			dispatch(new PropertyConcurrentJob($this->params['propertyId']));
 			
