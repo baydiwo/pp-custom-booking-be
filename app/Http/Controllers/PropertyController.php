@@ -12,6 +12,7 @@ use App\Jobs\PropertyAvailabilityDateJob;
 use App\Jobs\PropertyAvailabilityDateJobSecond;
 use App\Jobs\PropertyAvailabilityDateJobThird;
 use App\Jobs\PropertyJob;
+use App\Jobs\PropertyConcurrentOneCatJob;
 use App\Jobs\PropertyDetailsJob;
 use App\Models\ModelPropertyJob;
 use App\Models\Property;
@@ -1315,6 +1316,8 @@ class PropertyController
 			dispatch(new PropertyAvailabilityDateJobSecond($this->params['propertyId']));
 		else if(isset($this->params['jobId']) && $this->params['jobId'] == 6)
 			dispatch(new PropertyAvailabilityDateJobThird($this->params['propertyId']));
+		else if(isset($this->params['jobId']) && $this->params['jobId'] == 7)
+			dispatch(new PropertyConcurrentOneCatJob($this->params['propertyId']));
 		else
 			dispatch(new PropertyConcurrentJob($this->params['propertyId']));
 			
