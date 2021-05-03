@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use App\Models\BookingDetails;
 
 class BookingController
 {
@@ -26,6 +27,131 @@ class BookingController
     }
 
     public function create()
+    {
+        $api = new ApiController($this->authToken, $this->request);
+        $validator = Validator::make(
+            $this->params,
+            [
+                'dateFrom'     	=> 'required|date_format:Y-m-d',
+                'dateTo'  		=> 'required|date_format:Y-m-d',
+                'surname'       => 'required',
+                'given'         => 'required',
+                'email'         => 'required|email',
+                'adults'        => 'required|integer',
+                'areaId'        => 'required|integer',
+                'categoryId'    => 'required|integer',
+                'children'      => 'required|integer',
+                'infants'       => 'required|integer',
+                'address'       => 'required',
+                'rateTypeId'    => 'required|integer',
+                'state'         => 'required',
+                'town'          => 'required',
+                'countryId'     => 'required|integer',
+                'nights'        => 'required|integer',
+                'phone'         => 'required',
+                'postCode'      => 'required'
+            ]
+        );
+		
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+
+        $paramSearchGuest = [
+            "surname" => $this->params['surname'],
+            "given"   => $this->params['given'],
+            "mobile"  => $this->params['phone'],
+        ];
+		
+        $searchGuest = $api->guestSearch($paramSearchGuest);
+        if((count($searchGuest) == 0) || (isset($searchGuest['Message']))) {
+            $paramCreateGuest = [
+                'addressLine1' => $this->params['address'],
+                'postCode'     => $this->params['postCode'],
+                'state'        => $this->params['state'],
+                'town'         => $this->params['town'],
+                'countryId'    => $this->params['countryId'],
+                'email'        => $this->params['email'],
+                'guestGiven'   => $this->params['given'],
+                'guestSurname' => $this->params['surname'],
+                'mobile'       => $this->params['phone'],
+            ];
+
+            $createGuest = $api->createGuest($paramCreateGuest);
+            if(isset($createGuest['Message'])) {
+                throw new Exception(ucwords($createGuest['Message']));
+            }
+            $guestId = $createGuest['id'];
+        } else {
+            $searchGuest = collect($searchGuest)->first();
+            $guestId = $searchGuest['id'];
+        }
+		
+		$paramDetails = [
+							'arrivalDate'   => $this->params['dateFrom'],
+							'departureDate' => $this->params['dateTo'],
+							'surname'		=> $this->params['surname'],
+							'given'         => $this->params['given'],
+							'email'         => $this->params['email'],
+							'adults'        => $this->params['adults'],
+							'areaId'       	=> $this->params['areaId'],
+							'categoryId'   	=> $this->params['categoryId'],
+							'children'      => $this->params['children'],
+							'infants'       => $this->params['infants'],
+							'notes'      	=> $this->params['notes'],
+							'address'       => $this->params['address'],
+							'rateTypeId'  	=> $this->params['rateTypeId'],
+							'state'         => $this->params['state'],
+							'town'          => $this->params['town'],
+							'countryId'    	=> $this->params['countryId'],
+							'nights'        => $this->params['nights'],
+							'phone'         => $this->params['phone'],
+							'postCode'     	=> $this->params['postCode'],
+							'pets'      	=> (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0,
+							'guestId'		=> $guestId,
+							'bookingSourceId' => 200
+						];
+						
+		$model = new BookingDetails();
+		$model->arrival_date   	= $this->params['dateFrom'];
+		$model->departure_date 	= $this->params['dateTo'];
+		$model->surname			= $this->params['surname'];
+		$model->given         	= $this->params['given'];
+		$model->email         	= $this->params['email'];
+		$model->adults        	= $this->params['adults'];
+		$model->area_id       	= $this->params['areaId'];
+		$model->category_id   	= $this->params['categoryId'];
+		$model->children      	= $this->params['children'];
+		$model->infants       	= $this->params['infants'];
+		$model->notes     		= $this->params['notes'];
+		$model->address       	= $this->params['address'];
+		$model->rate_type_id  	= $this->params['rateTypeId'];
+		$model->state         	= $this->params['state'];
+		$model->town         	= $this->params['town'];
+		$model->country_id    	= $this->params['countryId'];
+		$model->nights        	= $this->params['nights'];
+		$model->phone         	= $this->params['phone'];
+		$model->post_code     	= $this->params['postCode'];
+		$model->pets      		= (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
+		$model->guest_id		= $guestId;
+		$model->save();
+		
+        $endpoint = 'reservations';
+
+        $response = Http::withHeaders([
+            'authtoken' => $this->authToken
+        ])->post(env('BASE_URL_RMS') . $endpoint, $paramDetails);
+
+        if(isset($response['Message'])) {
+            throw new Exception(ucwords($response['Message']));
+        }
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => $response->json()
+        ];
+    }
+
+    public function create_old()
     {
         $api = new ApiController($this->authToken, $this->request);
         $validator = Validator::make(
