@@ -46,8 +46,8 @@ class PropertyConcurrentJobTest implements ShouldQueue
 
     public function handle()
     {
-        $nextYear = Carbon::now()->addMonths(6)->format('Y-m-d');
-		$lastEndDate = Carbon::now()->addMonths(4)->format('Y-m-d');
+        $nextYear = Carbon::now()->addMonths(7)->format('Y-m-d');
+		$lastEndDate = Carbon::now()->addMonths(6)->format('Y-m-d');
 		$cDate = Carbon::createFromFormat('Y-m-d', $lastEndDate)->addDays(1)->format('Y-m-d');
         $dateInYear = $this->getDateInYear($cDate, $nextYear);
 		$allGroupDate  = [];
@@ -70,7 +70,7 @@ class PropertyConcurrentJobTest implements ShouldQueue
         $dataToken     = $token->authToken();
         $api           = new ApiController($dataToken['token'], $request);
         $listAreasData = $api->listArea($this->propertyId);
-        $listCategory  = collect($listAreasData)->where('inactive', false)->pluck('categoryId');
+        $listCategory  = collect($listAreasData)->where('inactive', false)->where('categoryId',3)->pluck('categoryId');
         $listRatesData = collect($api->listRates());
 
         $name = 'Night Direct';
