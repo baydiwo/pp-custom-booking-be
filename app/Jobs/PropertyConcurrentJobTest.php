@@ -46,9 +46,11 @@ class PropertyConcurrentJobTest implements ShouldQueue
 
     public function handle()
     {
-        $nextYear = Carbon::now()->addMonths(7)->format('Y-m-d');
-		$lastEndDate = Carbon::now()->addMonths(6)->format('Y-m-d');
-		$cDate = Carbon::createFromFormat('Y-m-d', $lastEndDate)->addDays(1)->format('Y-m-d');
+        //$nextYear = Carbon::now()->addMonths(7)->format('Y-m-d');
+		//$lastEndDate = Carbon::now()->addMonths(6)->format('Y-m-d');
+		//$cDate = Carbon::createFromFormat('Y-m-d', $lastEndDate)->addDays(1)->format('Y-m-d');
+		$nextYear = Carbon::now()->addYear()->format('Y-m-d');
+		$cDate = Carbon::now()->format('Y-m-d');
         $dateInYear = $this->getDateInYear($cDate, $nextYear);
 		$allGroupDate  = [];
         $thisDay = "";
@@ -69,16 +71,18 @@ class PropertyConcurrentJobTest implements ShouldQueue
         $token         = new ApiController(NULL, $request);
         $dataToken     = $token->authToken();
         $api           = new ApiController($dataToken['token'], $request);
-        $listAreasData = $api->listArea($this->propertyId);
-        $listCategory  = collect($listAreasData)->where('inactive', false)->where('categoryId',3)->pluck('categoryId');
-        $listRatesData = collect($api->listRates());
+        //$listAreasData = $api->listArea($this->propertyId);
+        //$listCategory  = collect($listAreasData)->where('inactive', false)->where('categoryId',3)->pluck('categoryId');
+        //$listRatesData = collect($api->listRates());
 
         $name = 'Night Direct';
-        $filtered = $listRatesData->filter(function ($item) use ($name) {
-            return false !== stripos($item['name'], $name);
-        })->all();
+        //$filtered = $listRatesData->filter(function ($item) use ($name) {
+        //    return false !== stripos($item['name'], $name);
+        //})->all();
 
-        $listRates = collect($filtered)->pluck('id');
+        //$listRates = collect($filtered)->pluck('id');
+		$listCategory = [3];
+		$listRates = [6];
 
 
         foreach ($allGroupDate as $keyallGroupDate => $valueallGroupDate) {
