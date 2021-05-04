@@ -147,7 +147,7 @@ class PropertyAvailabilityDateJobSecond implements ShouldQueue
 
 	public static function requestConcurrent($listCategory, $listArea, $to, $from, $dataToken)
 	{
-		$concurrent = 10;
+		$concurrent = 5;
 		$client = new Client([
 			'http_errors'     => false,
 			'headers' => [
