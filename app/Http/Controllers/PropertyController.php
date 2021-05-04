@@ -21,6 +21,7 @@ use App\Models\ModelPropertyAvailability;
 use App\Models\PropertyDetails;
 use App\Models\PropertyAreaDetails;
 use App\Models\ModelPropertyTestJob;
+use App\Models\AvailabilityDate;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -1324,7 +1325,7 @@ class PropertyController
 			dispatch(new PropertyConcurrentJobTest($this->params['propertyId']));
 		else
 			dispatch(new PropertyConcurrentJob($this->params['propertyId']));
-			
+		
         return [
             'code' => 1,
             'status' => 'success',
@@ -1402,4 +1403,85 @@ class PropertyController
             'message' => "Data Has Been Saved in Cache"
         ];
     }
+	
+	public function getAvailabilityDatesByArea()
+	{
+		$validator = Validator::make(
+            $this->params,
+            [
+				'areaId'     => 'required|integer'
+            ]
+        );
+		
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+			
+		$data = PropertyAreaDetails::where('area_id', $this->params['areaId'])
+									->where('property_id', env("PROPERTY_ID"))
+									->first();
+			
+		if (is_countable($data) && count($data) == 0) {
+            throw new Exception(ucwords('Data Not Found'));
+        }
+
+		if($data->category_id)
+			$category_id = $data->category_id;
+		else
+			$category_id = 0;
+			
+			
+		$dateAvail = AvailabilityDate::select('date_from')->where('category_id', $category_id)
+									->where('available_area', 1)
+									->get();
+									
+		$availDates = [];
+		foreach($dateAvail as $result)
+		{
+			$availDates[] = $result['date_from'];
+		}
+		return [
+				'code' => 1,
+				'status' => 'success',
+				'data' => [
+					"available_dates" => $availDates
+					]
+				];
+	}
+	
+	public function getAvailabilityAreasByDate()
+	{
+		$validator = Validator::make(
+            $this->params,
+            [
+				'dateFrom'   => 'required|date_format:Y-m-d',
+				'dateTo'     => 'required|date_format:Y-m-d|after:dateFrom'
+            ]
+        );
+		
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+			
+		$dateAvail = AvailabilityDate::select('area_details.area_id')->whereBetween('availability_date.date_from', [$this->params['dateFrom'],$this->params['dateTo']])
+										->leftJoin('area_details', 'area_details.category_id', '=', 'availability_date.category_id')
+										->where('availability_date.available_area', 1)
+										->orderBy('area_details.area_id','ASC')
+										->get();
+		
+			
+		$availCategories = [];
+		foreach($dateAvail as $result)
+		{
+			$availCategories[] = $result['area_id'];
+		}
+
+		$availAreas = array_unique($availCategories);
+		
+		return [
+				'code' => 1,
+				'status' => 'success',
+				'data' => [
+					"available_areas" => $availAreas
+					]
+				];
+	}
 }

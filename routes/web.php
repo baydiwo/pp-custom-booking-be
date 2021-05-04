@@ -40,6 +40,8 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
         $router->get('check-availability-concurrent-new', 'PropertyController@checkAvailabilityConcurrentNew');
         $router->get('area-by-year', 'PropertyController@areaByYear');
 		$router->post('get-availability-area', 'PropertyController@getAvailabilityDates');
+		$router->get('get-availability-dates', 'PropertyController@getAvailabilityDatesByArea');
+		$router->get('get-availability-areas', 'PropertyController@getAvailabilityAreasByDate');
         $router->get('{id}', 'PropertyController@detail');
     });
 	
