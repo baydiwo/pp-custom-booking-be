@@ -44,17 +44,17 @@ class PropertyAvailabilityDateJob implements ShouldQueue
 
     public function handle()
     {
-        $nextYear = Carbon::now()->addMonths(3)->format('Y-m-d');
+        $nextYear = Carbon::now()->addMonths(4)->format('Y-m-d');
 		$cDate = Carbon::now()->format('Y-m-d');
         $dateInYear = $this->getDateInYear($cDate, $nextYear);
 		$allGroupDate  = [];
         $thisDay = "";
 		$idate = 0;
         foreach ($dateInYear as $valueDate) {
-			if($idate%7 == 0){
+			if($idate%14 == 0){
                 $thisDay = Carbon::parse($valueDate);
                 $groupDate = [];
-				$thisDay->addDays(7);
+				$thisDay->addDays(14);
 				array_push($groupDate, $thisDay);
 				$thisDay = Carbon::parse($valueDate);
                 $allGroupDate[$valueDate] =  $groupDate;
@@ -146,7 +146,7 @@ class PropertyAvailabilityDateJob implements ShouldQueue
 
 	public static function requestConcurrent($listCategory, $listArea, $to, $from, $dataToken)
 	{
-		$concurrent = 10;
+		$concurrent = 5;
 		$client = new Client([
 			'http_errors'     => false,
 			'headers' => [
