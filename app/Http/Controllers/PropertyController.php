@@ -1461,20 +1461,27 @@ class PropertyController
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 			
-		$dateAvail = AvailabilityDate::select('area_details.area_id')->whereBetween('availability_date.date_from', [$this->params['dateFrom'],$this->params['dateTo']])
+		$dateAvail = AvailabilityDate::select('area_details.area_id', 'availability_date.date_from')->whereBetween('availability_date.date_from', [$this->params['dateFrom'],$this->params['dateTo']])
 										->leftJoin('area_details', 'area_details.category_id', '=', 'availability_date.category_id')
 										->where('availability_date.available_area', 1)
 										->orderBy('area_details.area_id','ASC')
 										->get();
 		
 			
-		$availCategories = [];
-		foreach($dateAvail as $result)
+		$availCategories = $availAreas = [];
+		foreach($dateAvail as $dateResult)
 		{
-			$availCategories[] = $result['area_id'];
+			$availCategories[$dateResult['area_id']][] = $dateResult['date_from'];
 		}
+		$from = Carbon::parse($this->params['dateFrom']);
+        $to = Carbon::parse($this->params['dateTo']);
+        $diff = $from->diffInDays($to) + 1;
 
-		$availAreas = array_unique($availCategories);
+		foreach($availCategories as $key => $areaRes)
+		{
+			if(is_countable($areaRes) && count($areaRes) == $diff)
+				$availAreas[] = $key;
+		}
 		
 		return [
 				'code' => 1,
