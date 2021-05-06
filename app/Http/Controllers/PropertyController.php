@@ -1436,6 +1436,7 @@ class PropertyController
 									->where('date_from', '>=', $startDate)
 									->where('date_from', '<=', $nextYear)
 									->where('available_area', 1)
+									->orderBy('date_from', 'Asc')
 									->get();
 									
 		$availDates = [];
