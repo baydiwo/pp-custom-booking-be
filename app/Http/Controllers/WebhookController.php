@@ -42,7 +42,7 @@ class WebhookController
         return [
             'code' => 1,
             'status' => 'success',
-            'data' => $data
+            'data' => $model
         ];
     }
 }
