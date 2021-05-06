@@ -44,9 +44,9 @@ class PropertyAvailabilityDateJob implements ShouldQueue
 
     public function handle()
     {
-        //$nextYear = Carbon::now()->addMonths(4)->format('Y-m-d');
-        $nextYear = Carbon::now()->addYear()->format('Y-m-d');
-		$cDate = Carbon::now()->format('Y-m-d');
+        $nxtYear = Carbon::now()->addYear()->format('Y-m-d');
+		$nextYear = Carbon::parse($nxtYear)->endOfMonth()->format('Y-m-d');
+		$cDate = Carbon::now()->format('Y-m-01');
         $dateInYear = $this->getDateInYear($cDate, $nextYear);
 		$allGroupDate  = [];
         $thisDay = "";

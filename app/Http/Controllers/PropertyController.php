@@ -1415,7 +1415,7 @@ class PropertyController
 		
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
-			
+		
 		$data = PropertyAreaDetails::where('area_id', $this->params['areaId'])
 									->where('property_id', env("PROPERTY_ID"))
 									->first();
@@ -1429,8 +1429,12 @@ class PropertyController
 		else
 			$category_id = 0;
 			
-			
+		$startDate = Carbon::now()->format('Y-m-01');
+		$nxtYear = Carbon::now()->addYear()->format('Y-m-d');
+		$nextYear = Carbon::parse($nxtYear)->endOfMonth()->format('Y-m-d');
 		$dateAvail = AvailabilityDate::select('date_from')->where('category_id', $category_id)
+									->where('date_from', '>=', $startDate)
+									->where('date_from', '<=', $nextYear)
 									->where('available_area', 1)
 									->get();
 									
