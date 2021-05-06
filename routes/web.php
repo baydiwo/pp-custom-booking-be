@@ -44,6 +44,11 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
 		$router->get('get-availability-areas', 'PropertyController@getAvailabilityAreasByDate');
         $router->get('{id}', 'PropertyController@detail');
     });
+
+    $router->group(['prefix' => 'webhooks'], function () use ($router) {
+        $router->get('', 'WebhookController@getResponse');
+        $router->post('', 'WebhookController@getResponse');
+    });
 	
     $router->group(['prefix' => 'property-details'], function () use ($router) {
         $router->get('{id}', 'PropertyController@propertyAreaDetail');
