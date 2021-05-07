@@ -1453,6 +1453,57 @@ class PropertyController
 				];
 	}
 	
+	public function getAvailabilityDatesADByArea()
+	{
+		$validator = Validator::make(
+            $this->params,
+            [
+				'areaId'     => 'required|integer'
+            ]
+        );
+		
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+		
+		$data = PropertyAreaDetails::where('area_id', $this->params['areaId'])
+									->where('property_id', env("PROPERTY_ID"))
+									->first();
+			
+		if (is_countable($data) && count($data) == 0) {
+            throw new Exception(ucwords('Data Not Found'));
+        }
+
+		if($data->category_id)
+			$category_id = $data->category_id;
+		else
+			$category_id = 0;
+			
+		$startDate = Carbon::now()->format('Y-m-01');
+		$nxtYear = Carbon::now()->addYear()->format('Y-m-d');
+		$nextYear = Carbon::parse($nxtYear)->endOfMonth()->format('Y-m-d');
+		$dateAvail = AvailabilityDate::select('date_from')->where('category_id', $category_id)
+									->where('date_from', '>=', $startDate)
+									->where('date_from', '<=', $nextYear)
+									->where('available_area', 1)
+									->orderBy('date_from', 'Asc')
+									->get();
+									
+		$availDates = [];
+		foreach($dateAvail as $result)
+		{
+			$from_date = $result['date_from'].' 14:30:00';
+			$to_date = Carbon::createFromFormat('Y-m-d', $result['date_from'])->addDays(1)->format('Y-m-d 10:30:00');
+			$availDates[] = ['arrival_date' => $from_date, 'departure_date' => $to_date];//$result['date_from'];
+		}
+		return [
+				'code' => 1,
+				'status' => 'success',
+				'data' => [
+					"available_dates" => $availDates
+					]
+				];
+	}
+	
 	public function getAvailabilityAreasByDate()
 	{
 		$validator = Validator::make(
