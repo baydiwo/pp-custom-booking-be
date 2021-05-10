@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\PropertyController;
 use App\Models\ModelPropertyJob;
+use App\Models\ModelPropertyJobError;
 use App\Models\Property;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
@@ -45,24 +46,19 @@ class PropertyConcurrentJob implements ShouldQueue
 
     public function handle()
     {
-		// ModelPropertyJob::truncate();
-        $nextYear = Carbon::now()->addYear()->format('Y-m-d');
+		$nextYear = Carbon::now()->addYear()->format('Y-m-d');
 		$cDate = Carbon::now()->format('Y-m-d');
         $dateInYear = $this->getDateInYear($cDate, $nextYear);
 		$allGroupDate  = [];
         $thisDay = "";
         foreach ($dateInYear as $valueDate) {
-            //if($valueDate != "2021-12-31") {
-                $thisDay = Carbon::parse($valueDate);
-                $groupDate = [];
-                for ($i=1; $i <= 7; $i++) {
-                    $thisDay->addDays($i);
-                    array_push($groupDate, $thisDay);
-                    $thisDay = Carbon::parse($valueDate);
-                }
+			$thisDay = Carbon::parse($valueDate);
+			$groupDate = [];
+			$thisDay->addDays(7);
+			array_push($groupDate, $thisDay);
+			$thisDay = Carbon::parse($valueDate);
 
-                $allGroupDate[$valueDate] =  $groupDate;
-            //}
+			$allGroupDate[$valueDate] =  $groupDate;
         }
 
         $request       = new Request();
@@ -80,35 +76,38 @@ class PropertyConcurrentJob implements ShouldQueue
 
         $listRates = collect($filtered)->pluck('id');
 
-
         foreach ($allGroupDate as $keyallGroupDate => $valueallGroupDate) {
-            // foreach ($valueallGroupDate as $keyvalueallGroupDate1 => $valuevalueallGroupDate1) {
-                $save = self::requestConcurrent(
-                    $listCategory,
-                    $listRates,
-                    $valueallGroupDate,
-                    $keyallGroupDate,
-                    $dataToken['token']
-                );
-                
-                $check = ModelPropertyJob::where('date_from', $keyallGroupDate)
-                    ->where('property_id', env("PROPERTY_ID"))
-                    ->first();
-
-                if(!$check) {
-                    $model = new ModelPropertyJob();
-                    $model->property_id = env("PROPERTY_ID");
-                    $model->date_from = $keyallGroupDate;
-                    $model->response = $save;
-                    $model->save();
-                } else {
-					$currentTime = Carbon::now()->format("Y-m-d H:i:s");
-                    $check->response = $save;
-                    $check->created_date = $currentTime;
-                }
-
-            // }
-			sleep(3);
+			$save = self::requestConcurrent(
+				$listCategory,
+				$listRates,
+				$valueallGroupDate,
+				$keyallGroupDate,
+				$dataToken['token']
+			);
+			
+			if(strpos($save,"<html>") <= 0)
+			{
+				$check = ModelPropertyJob::where('date_from', $keyallGroupDate)
+					->where('property_id', env("PROPERTY_ID"))
+					->first();
+	
+				if($check) {
+					ModelPropertyJob::where('id', $check->id)->firstorfail()->delete();
+				}
+				$model = new ModelPropertyJob();
+				$model->property_id = env("PROPERTY_ID");
+				$model->date_from = $keyallGroupDate;
+				$model->response = $save;
+				$model->save();
+			}
+			else{
+				$model = new ModelPropertyJobError();
+				$model->property_id = env("PROPERTY_ID");
+				$model->date_from = $keyallGroupDate;
+				$model->response = $save;
+				$model->save();
+			}
+			sleep(1);
 		}
 
 		return [
@@ -120,11 +119,9 @@ class PropertyConcurrentJob implements ShouldQueue
 
 	public static function requestConcurrent($listCategory, $listArea, $to, $from, $dataToken)
 	{
-		$concurrent = 13;
+		$concurrent = 6;
 		$client = new Client([
 			'http_errors'     => false,
-			// 'connect_timeout' => 1.50, //////////////// 0.50
-			// 'timeout'         => 2.00, //////////////// 1.00
 			'headers' => [
 				'User-Agent' => 'Test/1.0',
 				'authToken' => $dataToken,
@@ -138,7 +135,6 @@ class PropertyConcurrentJob implements ShouldQueue
             foreach ($to as $key => $value) {
                 $paramMinNight = [
                     'categoryIds' => $listCategory,
-                    // 'categoryIds' => [3],
                     'dateTo'      => Carbon::parse($value)->format('Y-m-d'),
                     'dateFrom'    => $from,
                     'propertyId'  => 1,

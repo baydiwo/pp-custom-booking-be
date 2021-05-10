@@ -3,24 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\PropertyConcurrentJob;
-use App\Jobs\PropertyConcurrentJobFirst;
-use App\Jobs\PropertyConcurrentJobSecond;
-use App\Jobs\PropertyConcurrentJobThird;
-use App\Jobs\PropertyConcurrentJobFourth;
-use App\Jobs\PropertyAvailabilityJob;
 use App\Jobs\PropertyAvailabilityDateJob;
-use App\Jobs\PropertyAvailabilityDateJobSecond;
-use App\Jobs\PropertyAvailabilityDateJobThird;
 use App\Jobs\PropertyJob;
 use App\Jobs\PropertyConcurrentOneCatJob;
 use App\Jobs\PropertyDetailsJob;
-use App\Jobs\PropertyConcurrentJobTest;
 use App\Models\ModelPropertyJob;
 use App\Models\Property;
 use App\Models\ModelPropertyAvailability;
 use App\Models\PropertyDetails;
 use App\Models\PropertyAreaDetails;
-use App\Models\ModelPropertyTestJob;
 use App\Models\AvailabilityDate;
 use Exception;
 use GuzzleHttp\Client;
@@ -171,25 +162,6 @@ class PropertyController
         // );
 
         dispatch(new PropertyJob($this->params['propertyId']));
-        return [
-            'code' => 1,
-            'status' => 'success',
-            'data' => [],
-            'message' => "Data Has Been Saved in Cache"
-        ];
-    }
-
-    public function availabilityGridTestConcurrentOld()
-    {
-        $validator = Validator::make(
-            $this->params,
-            Property::$rules['availability-grid']
-        );
-
-        if ($validator->fails())
-            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
-
-        dispatch(new PropertyConcurrentJob($this->params['propertyId']));
         return [
             'code' => 1,
             'status' => 'success',
@@ -749,26 +721,31 @@ class PropertyController
 							}
 						}
 					}
-					else if($diff <= 7) {								
+					else if($diff <= 7) {	
 						$diffDate = $diff;
-						if($diff == $countBreakDown) {
-							if($getRate == $valueDatatempRate['rateId']) { 
-								//if($valueDatatempRate['dayBreakdown'][0]['minStay'] <= ($getRate+1))
-								//{
-									$resultData = [
-										'code' => 1,
-										'status' => 'success',
-										'data' => [
-											"categories" => [
-												"categoryId" => $valuetempRate['categoryId'],
-												"name" => $valuetempRate['name'],
-												"rates" => $valueDatatempRate
-											]
-										]
-									];
-									goto result;
-								//}
+						if($getRate == $valueDatatempRate['rateId']) { 
+							$valTemp = array();
+							foreach($valueDatatempRate['dayBreakdown'] as $valRes)
+							{
+								$recDate = Carbon::parse($valRes['theDate']);
+								if($recDate < $to)
+									$valTemp[] = $valRes;
 							}
+							if(is_countable($valTemp) && count($valTemp) > 0)
+								$valueDatatempRate['dayBreakdown'] = $valTemp;
+							
+							$resultData = [
+								'code' => 1,
+								'status' => 'success',
+								'data' => [
+									"categories" => [
+										"categoryId" => $valuetempRate['categoryId'],
+										"name" => $valuetempRate['name'],
+										"rates" => $valueDatatempRate
+									]
+								]
+							];
+							goto result;
 						}							
 					} else {							
 						$diffDate = $diff;
@@ -880,7 +857,7 @@ class PropertyController
             ->first();
 
         $new = json_decode($result->response);
-        $tempRate = $tempData = [];
+        $tempRates = $tempRate = $tempData = [];
         foreach ($new as $keynew => $valuenew) {
             $json = json_decode($valuenew, true);
             $dataRate = collect($json['categories'])->where('categoryId', $categoryId)->values()->first();
@@ -889,17 +866,18 @@ class PropertyController
 
 		foreach ($tempRate as $valuetempRate) {
 			foreach ($valuetempRate['rates'] as $valueDatatempRate) {
-				if($getRate == $valueDatatempRate['rateId'] && count($valueDatatempRate['dayBreakdown']) == $getRate) {
-					$tempRate = $valueDatatempRate['dayBreakdown'];
+				if($getRate == $valueDatatempRate['rateId']) {
+					$tempRates = $valueDatatempRate['dayBreakdown'];
 				}
 			}
 		}
-		if(count($tempRate) > 0)
+
+		if(is_countable($tempRates) && count($tempRates) > 0)
 		{
-			$lday=count($tempRate);
-			if(isset($tempRate[$lday-1]['theDate']))
+			$lday=count($tempRates);
+			if(isset($tempRates[$lday-1]['theDate']))
 			{
-				$endDate = Carbon::parse($tempRate[$lday-1]['theDate']);
+				$endDate = Carbon::parse($tempRates[$lday-1]['theDate']);
 				if($endDate < $to)
 				{
 					$tempData = $this->fetchDataRecursive($propertyId, $endDate, $to, $categoryId, $getRate);
@@ -907,7 +885,7 @@ class PropertyController
 			}
 		}
 		array_shift($tempData);
-		return array_merge($tempRate,$tempData);
+		return array_merge($tempRates,$tempData);
 	}
 
     public function lowerWeek($collect, $to, $from, $getRate, $feePackage){
@@ -1063,158 +1041,6 @@ class PropertyController
         }
 
     }
-    public function checkAvailabilityConcurrentOld()
-    {
-        $api = new ApiController($this->authToken, $this->request);
-
-        $validator = Validator::make(
-            $this->params,
-            Property::$rules['check-availability']
-        );
-
-        if ($validator->fails())
-            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
-
-        $from = Carbon::parse($this->params['dateFrom']);
-        $to = Carbon::parse($this->params['dateTo']);
-        $diff = $from->diffInDays($to);
-        if ($diff > 14) {
-            throw new Exception("Different Days Cannot Greater Than 14 Days");
-        }
-
-        $allGroupDate  = [];
-        $dateInYear = $this->getDateInYear(date("Y") . "-01-01", date("Y") . "-12-31");
-
-        $thisDay = "";
-        foreach ($dateInYear as $valueDate) {
-            if ($valueDate != "2021-12-31") {
-                if ($valueDate == $thisDay || $thisDay == "") {
-
-                    $prevDay = Carbon::parse($valueDate);
-                    $thisDay = $prevDay->addDays(14)->format('Y-m-d');
-                    $allGroupDate[$valueDate] = $thisDay;
-                }
-            }
-        }
-
-        $area = $api->detailArea($this->params['areaId']);
-        if(!$area) {
-            throw new Exception("Area Not Found");
-        }
-
-        $getRate = $this->rateByDate($from, $to);
-        $result = ModelPropertyJob::select('response')
-            // ->where('response', 'LIKE', '%'. $from. '%')
-            ->where('response', 'LIKE', '%name":Lantana Studio - Albany%' )
-            ->get();
-        die(json_encode($result));
-        $new = json_decode($result->response);
-
-        $collect = collect($new->categories[0]->rates)->where('rateId', $getRate)->values()->first();
-        $dayBreakDown2 = collect();
-        $dayBreakDown = collect();
-        if($collect) {
-            $dayBreakDown = collect($collect->dayBreakdown)
-                ->whereBetween('theDate', [$this->params['dateFrom'], $this->params['dateTo']]);
-
-            if($dayBreakDown){
-                //check another date to
-                $checkAnotherDate = $dayBreakDown->where('theDate', $to)->all();
-                if(!$checkAnotherDate) {
-                    $result2 = Property::select('response')
-                    ->where('property_id', $this->params['propertyId'])
-                    ->where('area_id', $this->params['areaId'])
-                    // ->whereBetween('date_from', [$from, $to])
-                    ->where('date_from', '<=', $to)
-                    ->orderBy('date_from', 'DESC')
-                    ->first();        
-                }
-                $new2 = json_decode($result2->response);
-
-                $collect2 = collect($new2->categories[0]->rates)->where('rateId', $getRate)->values()->first();
-                $dayBreakDown2 = collect($collect2->dayBreakdown)
-                        ->where('theDate', '<=', $this->params['dateTo']);
-        
-            }
-            $merge = $dayBreakDown->merge($dayBreakDown2)->all();
-            $collect->dayBreakdown = $merge;
-        }
-        // $name = "prop1_area_".$this->params['areaId']."_from_".$this->params['dateFrom'].
-        // "_to_". $this->params['dateTo'];
-
-        // $redis = Cache::getRedis();
-        // $keys = $redis->keys("*{$name}*");
-        // // $count = 0;
-        // $result = [];
-
-        // foreach ($keys as $key) {
-        //     $result[] = $red
-
-        // }      
-
-        // $newResult  = [];
-        // foreach ($result as $value) {
-        //     $newResult[] = unserialize($value);
-        // }
-
-        return [
-            'code' => 1,
-            'status' => 'success',
-            'data' => [
-                "categories" => [
-                    "categoryId" => $new->categories[0]->categoryId,
-                    "name" => $new->categories[0]->name,
-                    "rates" => $collect == NULL ? [] : $collect,
-                ]
-            ]
-        ];
-
-
-        return $result;
-
-        // $api = new ApiController($this->authToken, $this->request);
-        // $listProperty = $api->listProperty();
-
-        // $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-12-31");
-        // $chunck = array_chunk($dateInYear, 14);
-        // $push = [];
-        // $temp = "";
-        // for ($i=0; $i <= count($chunck[0]) ; $i++) { 
-        //     for ($j=0; $j < $i; $j++) { 
-        //         $push[$i][$j] = $chunck[0][$j];
-        //     }
-        // }
-
-        // $push2 = [];
-        // foreach ($push as $key => $value) {
-        //     if($key != 1) {
-        //         $push2[$key]['first']= reset($value);
-        //         $push2[$key]['last']= end($value);
-        //     }
-        // }
-
-        // $newArrayValue = array_values($push2);
-        // if($listProperty) {
-        //     foreach ($listProperty as $keyProp => $valueProp) {
-        //         foreach ($newArrayValue as $keyNew => $valueNew) {
-        //             $paramMinNight = [
-        //                 'categoryIds' => [$this->params['categoryId']],
-        //                 'dateFrom'    => $valueNew['first'],
-        //                 'dateTo'      => $valueNew['last'],
-        //                 'propertyId'  => $valueProp['id'],
-        //                 'rateIds'     => [$this->params['rateIds']]
-        //             ];    
-
-        //             Cache::remember('min_night_prop'.$valueProp['id']."from {$valueNew['first']} - to {$valueNew['last']}"
-        //             , 10 * 60, function () use ($api, $paramMinNight) {
-        //                 return $api->availabilityrategrid($paramMinNight);
-        //             });
-        //         }
-        //     }
-        // }
-
-        // return "Data Has Been Saved in Cache";
-    }
 
     public function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d')
     {
@@ -1306,23 +1132,7 @@ class PropertyController
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 			
 		if(isset($this->params['jobId']) && $this->params['jobId'] == 1)
-			dispatch(new PropertyConcurrentJobFirst($this->params['propertyId']));
-		else if(isset($this->params['jobId']) && $this->params['jobId'] == 2)
-			dispatch(new PropertyConcurrentJobSecond($this->params['propertyId']));
-		else if(isset($this->params['jobId']) && $this->params['jobId'] == 3)
-			dispatch(new PropertyConcurrentJobThird($this->params['propertyId']));
-		else if(isset($this->params['jobId']) && $this->params['jobId'] == 0)
-			dispatch(new PropertyAvailabilityJob($this->params['propertyId']));
-		else if(isset($this->params['jobId']) && $this->params['jobId'] == 4)
 			dispatch(new PropertyAvailabilityDateJob($this->params['propertyId']));
-		else if(isset($this->params['jobId']) && $this->params['jobId'] == 5)
-			dispatch(new PropertyAvailabilityDateJobSecond($this->params['propertyId']));
-		else if(isset($this->params['jobId']) && $this->params['jobId'] == 6)
-			dispatch(new PropertyAvailabilityDateJobThird($this->params['propertyId']));
-		else if(isset($this->params['jobId']) && $this->params['jobId'] == 7)
-			dispatch(new PropertyConcurrentOneCatJob($this->params['propertyId']));
-		else if(isset($this->params['jobId']) && $this->params['jobId'] == 8)
-			dispatch(new PropertyConcurrentJobTest($this->params['propertyId']));
 		else
 			dispatch(new PropertyConcurrentJob($this->params['propertyId']));
 		
@@ -1391,18 +1201,6 @@ class PropertyController
 					]
 				];
 	}
-
-    public function storeData()
-    {
-		dispatch(new PropertyAvailabilityDateJob(env("PROPERTY_ID")));
-			
-        return [
-            'code' => 1,
-            'status' => 'success',
-            'data' => [],
-            'message' => "Data Has Been Saved in Cache"
-        ];
-    }
 	
 	public function getAvailabilityDatesByArea()
 	{
