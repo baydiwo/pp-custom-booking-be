@@ -35,7 +35,7 @@ class PropertyAvailabilityDateJob implements ShouldQueue
      *
      * @return void
      */
-    public $tries = 3;
+    public $tries = 1;
     public $timeout = 0;
     public function __construct($propertyId)
     {
@@ -47,7 +47,8 @@ class PropertyAvailabilityDateJob implements ShouldQueue
         $nxtYear = Carbon::now()->addYear()->format('Y-m-d');
 		$nextYear = Carbon::parse($nxtYear)->endOfMonth()->format('Y-m-d');
 		$cDate = Carbon::now()->format('Y-m-01');
-        $dateInYear = $this->getDateInYear($cDate, $nextYear);
+		$startDate = Carbon::createFromFormat('Y-m-d', $cDate)->addDays(-1)->format('Y-m-d');
+        $dateInYear = $this->getDateInYear($startDate, $nextYear);
 		$allGroupDate  = [];
         $thisDay = "";
 		$idate = 0;
