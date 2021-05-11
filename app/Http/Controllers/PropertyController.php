@@ -1227,7 +1227,8 @@ class PropertyController
 		else
 			$category_id = 0;
 			
-		$startDate = Carbon::now()->format('Y-m-01');
+		$cDate = Carbon::now()->format('Y-m-01');
+		$startDate = Carbon::createFromFormat('Y-m-d', $cDate)->addDays(-1)->format('Y-m-d');
 		$nxtYear = Carbon::now()->addYear()->format('Y-m-d');
 		$nextYear = Carbon::parse($nxtYear)->endOfMonth()->format('Y-m-d');
 		$dateAvail = AvailabilityDate::select('date_from')->where('category_id', $category_id)
