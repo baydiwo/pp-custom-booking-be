@@ -645,19 +645,27 @@ class PropertyController
             }
     }
 	
-    public function checkAvailabilityConcurrentNew($areaID = 0, $propertyID = 0, $dateFrom = '', $dateTo = '')
+    public function checkAvailabilityConcurrentNew($areaID = 0, $propertyID = 0, $dateFrom = '', $dateTo = '', $postParams = array())
     {
+		
         $nonFeePackageArea = [221, 124, 66, 67, 68, 70];
 
         $feePackage = 66;
-		if($areaID > 0)
-			$this->params['areaId'] = $areaID;
-		if($propertyID > 0)
-			$this->params['propertyId'] = $propertyID;
-		if($dateFrom != '')
-			$this->params['dateFrom'] = $dateFrom;
-		if($dateTo != '')
-			$this->params['dateTo'] = $dateTo;
+		if(is_countable($postParams) && count($postParams) > 0)
+		{
+			$this->params = $postParams;
+		}
+		else
+		{
+			if($areaID > 0)
+				$this->params['areaId'] = $areaID;
+			if($propertyID > 0)
+				$this->params['propertyId'] = $propertyID;
+			if($dateFrom != '')
+				$this->params['dateFrom'] = $dateFrom;
+			if($dateTo != '')
+				$this->params['dateTo'] = $dateTo;
+		}			
 
         $validator = Validator::make(
             $this->params,
@@ -845,7 +853,16 @@ class PropertyController
 				throw new Exception("Minimum stay allowed is ".$minStay." Nights");
 			}
 			else
-				throw new Exception("Data not available for selected date");
+			{
+				$diffDays = $from->diffInDays($to);
+				if($diffDays < 3)
+				{
+					$this->params['dateTo'] = Carbon::parse($to)->addDays(1)->format('Y-m-d');
+					return $this->checkAvailabilityConcurrentNew(0, 0, '', '', $this->params);
+				}
+				else
+					throw new Exception("Data not available for selected date");
+			}
 		}
     }
 	
