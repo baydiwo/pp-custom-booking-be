@@ -48,7 +48,12 @@ class PropertyDetailsJob implements ShouldQueue
         $dataToken     = $token->authToken();
 		$id = env("PROPERTY_ID");
 		
-		$save = self::requestDetails( $id, $dataToken['token']);
+		$save = self::requestDetails($id, $dataToken['token']);
+		$savePropertyDetails = self::requestPropertyDetails($id, $dataToken['token']);
+		if(is_countable($savePropertyDetails) && count($savePropertyDetails) > 0)
+			$propertyDetails = $savePropertyDetails[0];
+		else
+			$propertyDetails = array();
 		
 		$check = PropertyDetails::where('property_id', $id)
 								->first();
@@ -56,27 +61,38 @@ class PropertyDetailsJob implements ShouldQueue
 		if($check) {
 			PropertyDetails::where('id', $check->id)->firstorfail()->delete();
 		}
-		$model = new PropertyDetails();
-		$model->property_id = $id;
-		$model->allow_group_bookings = (isset($save['allowGroupBookings']))? $save['allowGroupBookings']:0;
-		$model->children_allowed = (isset($save['childrenAllowed']))? $save['childrenAllowed']:0;
-		$model->currency = (isset($save['currency']))? $save['currency']:'';
-		$model->currency_symbol = (isset($save['currencySymbol']))? $save['currencySymbol']:'';
-		$model->default_arrival_time = $save['defaultArrivalTime'];
-		$model->default_depart_time = $save['defaultDepartTime'];
-		$model->gateway_id = (isset($save['gatewayId']))? $save['gatewayId']:0;
-		$model->latitude = (isset($save['latitude']))? $save['latitude']:'';
-		$model->longitude = (isset($save['latitude']))? $save['longitude']:'';
-		$model->max_child_age = (isset($save['maxChildAge']))? $save['maxChildAge']:'';
-		$model->max_infant_age = (isset($save['maxInfantAge']))? $save['maxInfantAge']:'';
+		$model 							= new PropertyDetails();
+		$model->property_id 			= $id;
+		$model->allow_group_bookings 	= (isset($save['allowGroupBookings']))? $save['allowGroupBookings']:0;
+		$model->children_allowed 		= (isset($save['childrenAllowed']))? $save['childrenAllowed']:0;
+		$model->currency 				= (isset($save['currency']))? $save['currency']:'';
+		$model->currency_symbol 		= (isset($save['currencySymbol']))? $save['currencySymbol']:'';
+		$model->default_arrival_time 	= $save['defaultArrivalTime'];
+		$model->default_depart_time 	= $save['defaultDepartTime'];
+		$model->gateway_id 				= (isset($save['gatewayId']))? $save['gatewayId']:0;
+		$model->latitude 				= (isset($save['latitude']))? $save['latitude']:'';
+		$model->longitude 				= (isset($save['latitude']))? $save['longitude']:'';
+		$model->max_child_age 			= (isset($save['maxChildAge']))? $save['maxChildAge']:'';
+		$model->max_infant_age 			= (isset($save['maxInfantAge']))? $save['maxInfantAge']:'';
 		$model->min_age_required_to_book = (isset($save['minAgeRequiredToBook']))? $save['minAgeRequiredToBook']:'';
-		$model->pets_allowed = (isset($save['petsAllowed']))? $save['petsAllowed']:0;
-		$model->redirection_url = (isset($save['redirectionURL']))? $save['redirectionURL']:'';
-		$model->smoking_allowed = (isset($save['smokingAllowed']))? $save['smokingAllowed']:0;
-		$model->max_group_bookings = (isset($save['maxGroupBookings']))? $save['maxGroupBookings']:'';
-		$model->google_analytics_code = (isset($save['googleAnalyticsCode']))? $save['googleAnalyticsCode']:'';
+		$model->pets_allowed 			= (isset($save['petsAllowed']))? $save['petsAllowed']:0;
+		$model->redirection_url 		= (isset($save['redirectionURL']))? $save['redirectionURL']:'';
+		$model->smoking_allowed 		= (isset($save['smokingAllowed']))? $save['smokingAllowed']:0;
+		$model->max_group_bookings 		= (isset($save['maxGroupBookings']))? $save['maxGroupBookings']:'';
+		$model->google_analytics_code 	= (isset($save['googleAnalyticsCode']))? $save['googleAnalyticsCode']:'';
+		$model->address_line1 			= (isset($propertyDetails['addressLine1']))? $propertyDetails['addressLine1']:'';
+		$model->address_line2 			= (isset($propertyDetails['addressLine2']))? $propertyDetails['addressLine2']:'';
+		$model->address_line3			= (isset($propertyDetails['addressLine3']))? $propertyDetails['addressLine3']:'';
+		$model->address_line4 			= (isset($propertyDetails['addressLine4']))? $propertyDetails['addressLine4']:'';
+		$model->city 					= (isset($propertyDetails['city']))? $propertyDetails['city']:'';
+		$model->country_id 				= (isset($propertyDetails['countryId']))? $propertyDetails['countryId']:'';
+		$model->email 					= (isset($propertyDetails['email']))? $propertyDetails['email']:'';
+		$model->mobile 					= (isset($propertyDetails['mobile']))? $propertyDetails['mobile']:'';
+		$model->phone 					= (isset($propertyDetails['phone']))? $propertyDetails['phone']:'';
+		$model->post_code 				= (isset($propertyDetails['postCode']))? $propertyDetails['postCode']:'';
+		$model->state 					= (isset($propertyDetails['state']))? $propertyDetails['state']:'';
+		$model->name 					= (isset($propertyDetails['name']))? $propertyDetails['name']:'';
 		$model->save();
-		
 		
         $api           = new ApiController($dataToken['token'], $request);
         $listAreasData = $api->listArea(env("PROPERTY_ID"));
@@ -145,6 +161,21 @@ class PropertyDetailsJob implements ShouldQueue
 	{
 		$value = Cache::remember('property_details_' . $id, 10 * 60, function () use ($id, $dataToken) {
             $endpoint = 'properties/' . $id . '/ibe/settings';
+            $response = Http::withHeaders([
+                'authToken' => $dataToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
+
+            return $response->json();
+        });
+
+        return $value;
+    }
+
+	public static function requestPropertyDetails($id, $dataToken)
+	{
+		//echo env('BASE_URL_RMS') .'properties/' . $id . '?modelType=full';die;//?modelType=full
+        $value = Cache::remember('property_' . $id, 10 * 60, function () use ($id, $dataToken) {
+            $endpoint = 'properties/' . $id . '?modelType=full';
             $response = Http::withHeaders([
                 'authToken' => $dataToken
             ])->get(env('BASE_URL_RMS') . $endpoint);
