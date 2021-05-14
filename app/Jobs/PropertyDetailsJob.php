@@ -96,6 +96,20 @@ class PropertyDetailsJob implements ShouldQueue
 	  		if($check){
 				PropertyAreaDetails::where('id', $check->id)->firstorfail()->delete();
 			}
+			
+			$saveAreaConfigDetails = self::requestAreaConfigDetails(
+				$areaId,
+				$dataToken['token']
+			);
+			
+			$saveCategoryDetails = self::requestCategoryDetails(
+				$saveAreaDetails['categoryId'],
+				$dataToken['token']
+			);
+			
+			//print_r($saveAreaConfigDetails);
+			//print_r($saveCategoryDetails);
+			//die;
 				
 			$saveData = new PropertyAreaDetails();
 			$saveData->category_id 		= $saveAreaDetails['categoryId'];
@@ -111,7 +125,11 @@ class PropertyDetailsJob implements ShouldQueue
 			$saveData->description 		= $saveAreaDetails['description'];
 			$saveData->extension 		= $saveAreaDetails['extension'];
 			$saveData->guest_description = $saveAreaDetails['guestDescription'];
-			$saveData->max_occupants 	= $saveAreaDetails['maxOccupants'];
+			$saveData->max_occupants 	= $saveCategoryDetails['maxOccupantsPerCategory'];
+			$saveData->total_rooms 		= $saveCategoryDetails['numberOfAreas'];
+			$saveData->pets_allowed 	= $saveAreaConfigDetails['petsAllowed'];
+			$saveData->total_bedrooms 	= $saveAreaConfigDetails['numberOfBedrooms'];
+			$saveData->total_baths 		= $saveAreaConfigDetails['numberOfFullBaths'];
 			$saveData->created_date 	= $saveAreaDetails['createdDate'];
 			$saveData->property_id 		= $saveAreaDetails['propertyId'];
 			$saveData->area_id			= $areaId;
@@ -145,6 +163,34 @@ class PropertyDetailsJob implements ShouldQueue
 	{
 		$value = Cache::remember('area_details_' . $id, 10 * 60, function () use ($id, $dataToken) {
             $endpoint = 'areas/' . $id . '?modelType=full';
+            $response = Http::withHeaders([
+                'authToken' => $dataToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
+
+            return $response->json();
+        });
+
+        return $value;
+    }
+
+	public static function requestAreaConfigDetails($id, $dataToken)
+	{
+		$value = Cache::remember('category_areas_' . $id, 10 * 60, function () use ($id, $dataToken) {
+            $endpoint = 'areas/' . $id . '/configuration';
+            $response = Http::withHeaders([
+                'authToken' => $dataToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
+
+            return $response->json();
+        });
+
+        return $value;
+    }
+
+	public static function requestCategoryDetails($id, $dataToken)
+	{
+        $value = Cache::remember('category_' . $id, 10 * 60, function () use ($id, $dataToken) {
+            $endpoint = 'categories/' . $id;
             $response = Http::withHeaders([
                 'authToken' => $dataToken
             ])->get(env('BASE_URL_RMS') . $endpoint);
