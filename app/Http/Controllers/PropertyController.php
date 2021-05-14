@@ -52,7 +52,8 @@ class PropertyController
             'data' => $data
         ];
     }
-    public function detail_old($id)
+	
+    public function detail($id)
     {
         $api = new ApiController($this->authToken, $this->request);
         $validator = Validator::make(
@@ -69,7 +70,7 @@ class PropertyController
             throw new Exception(ucwords('Detail Property Not Found'));
         }
 
-        $paramMinNight = [
+        /*$paramMinNight = [
             'categoryIds' => [$this->params['categoryId']],
             'dateFrom'    => $this->params['arrivalDate'],
             'dateTo'      => $this->params['departureDate'],
@@ -85,14 +86,14 @@ class PropertyController
         }
         if (empty($minNight['categories'][0]['rates'])) {
             throw new Exception(ucwords('Rate Not Found'));
-        }
+        }*/
 
         $detailSetting = $api->detailPropertySetting($id);
         if (isset($detailSetting['Message'])) {
             throw new Exception(ucwords($detailSetting['Message']));
         }
 
-        $detailCategory = $api->detailCategory($id);
+        $detailCategory = $api->detailCategory($this->params['categoryId']);
         if (isset($detailCategory['Message'])) {
             throw new Exception(ucwords($detailCategory['Message']));
         }
@@ -101,7 +102,7 @@ class PropertyController
             throw new Exception(ucwords('Occupants over limit'));
         }
 
-        $areaConfiguration = $api->areaConfiguration($id);
+        $areaConfiguration = $api->areaConfiguration($this->params['categoryId']);
         if (isset($areaConfiguration['Message'])) {
             throw new Exception(ucwords($areaConfiguration['Message']));
         }
@@ -123,8 +124,8 @@ class PropertyController
         if (isset($rateQuote['Message'])) {
             throw new Exception(ucwords($rateQuote['Message']));
         }
-        $to   = Carbon::createFromFormat('Y-m-d H:s:i', $this->params['arrivalDate']);
-        $from = Carbon::createFromFormat('Y-m-d H:s:i', $this->params['departureDate']);
+        $to   = Carbon::createFromFormat('Y-m-d', $this->params['arrivalDate']);
+        $from = Carbon::createFromFormat('Y-m-d', $this->params['departureDate']);
         $data['propertyId']      = $id;
         $data['propertyName']    = $detailProperty[0]['name'];
         $data['petAllowed']      = $detailSetting['petsAllowed'];
@@ -1161,7 +1162,7 @@ class PropertyController
         ];
     }
 	
-	public function detail($id)
+	public function detail_bkp($id)
 	{
 		$from = Carbon::parse($this->params['arrivalDate'])->format('Y-m-d');
 		$to = Carbon::parse($this->params['departureDate'])->format('Y-m-d');
