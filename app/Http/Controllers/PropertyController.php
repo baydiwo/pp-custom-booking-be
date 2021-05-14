@@ -63,6 +63,66 @@ class PropertyController
 
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+		
+		$propertyData = PropertyDetails::select('name')->where('property_id', $id)
+            ->first();
+		
+		$areaData = PropertyAreaDetails::where('property_id', $id)
+            ->where('area_id', $this->params['areaId'])
+            ->where('category_id', $this->params['categoryId'])
+            ->first();
+		//print_r($areaData);die;
+
+        $paramsRateQuote = [
+            'adults'        => $this->params['adults'],
+            'areaId'        => $this->params['areaId'],
+            'arrivalDate'   => $this->params['arrivalDate'],
+            'categoryId'    => $this->params['categoryId'],
+            'children'      => $this->params['children'],
+            'departureDate' => $this->params['departureDate'],
+            'infants'       => $this->params['infants'],
+            'propertyId'    => $id,
+            'rateTypeId'    => $this->params['rateTypeId'],
+        ];
+
+        $rateQuote = $api->rateQuote($paramsRateQuote);
+		
+        if (isset($rateQuote['Message'])) {
+            throw new Exception(ucwords($rateQuote['Message']));
+        }
+        $to   = Carbon::createFromFormat('Y-m-d', $this->params['arrivalDate']);
+        $from = Carbon::createFromFormat('Y-m-d', $this->params['departureDate']);
+        $data['propertyId']      = $id;
+        $data['propertyName']    = $propertyData['name'];
+        $data['petAllowed']      = $areaData['pets_allowed'] == 0 ? false : true;
+        $data['petFee']          = $areaData['pets_allowed'] == 0 ? 0 : 150;
+        $data['maxOccupants']    = (integer)$areaData['max_occupants'];
+        $data['totalRooms']      = (integer)$areaData['total_rooms'];
+        $data['totalGuests']     = $this->params['adults'] . ' adults, ' . $this->params['children'] . ' children, ' . $this->params['infants'] . ' infants';
+        $data['totalBedrooms']   = (integer)$areaData['total_bedrooms'];
+        $data['totalBaths']      = (integer)$areaData['total_baths'];
+        $data['nights']          = $to->diffInDays($from);
+        $data['accomodation']    = collect($rateQuote['rateBreakdown'])->sum('totalRate');
+        $data['totalAmount']     = $data['accomodation'] + $data['petFee'];
+        $data['dueToday']        = $rateQuote['firstNightRate'];
+		
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => $data
+        ];
+    }
+	
+    public function detail_old($id)
+    {
+        $api = new ApiController($this->authToken, $this->request);
+        $validator = Validator::make(
+            $this->params,
+            Property::$rules['detail']
+        );
+
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 
         $detailProperty = $api->detailProperty($id);
 
