@@ -106,10 +106,6 @@ class PropertyDetailsJob implements ShouldQueue
 				$saveAreaDetails['categoryId'],
 				$dataToken['token']
 			);
-			
-			//print_r($saveAreaConfigDetails);
-			//print_r($saveCategoryDetails);
-			//die;
 				
 			$saveData = new PropertyAreaDetails();
 			$saveData->category_id 		= $saveAreaDetails['categoryId'];
