@@ -70,7 +70,7 @@ class PropertyController
             throw new Exception(ucwords('Detail Property Not Found'));
         }
 
-        $paramMinNight = [
+        /*$paramMinNight = [
             'categoryIds' => [$this->params['categoryId']],
             'dateFrom'    => $this->params['arrivalDate'],
             'dateTo'      => $this->params['departureDate'],
@@ -86,7 +86,7 @@ class PropertyController
         }
         if (empty($minNight['categories'][0]['rates'])) {
             throw new Exception(ucwords('Rate Not Found'));
-        }
+        }*/
 
         $detailSetting = $api->detailPropertySetting($id);
         if (isset($detailSetting['Message'])) {
