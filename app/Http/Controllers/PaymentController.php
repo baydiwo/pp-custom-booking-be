@@ -63,9 +63,12 @@ class PaymentController
             "storeCard"           => false,
             "storeCardIndicator"  => "single",
             "callbackUrls" => [
-                "approved" => "https://pp-booking-staging.netlify.app/success",
-                "declined" => "https://pp-booking-staging.netlify.app/fail", 
-                "cancelled" => "https://pp-booking-staging.netlify.app/cancel", 
+                "approved" => "https://pp-booking-apidev.herokuapp.com/success",
+                "declined" => "https://pp-booking-apidev.herokuapp.com/fail", 
+                "cancelled" => "https://pp-booking-apidev.herokuapp.com/cancel", 
+                //"approved" => "https://pp-booking-staging.netlify.app/success",
+                //"declined" => "https://pp-booking-staging.netlify.app/fail", 
+                //"cancelled" => "https://pp-booking-staging.netlify.app/cancel", 
             ],
             "notificationUrl" => "https://pp-booking-staging.netlify.app/success"
         ];
