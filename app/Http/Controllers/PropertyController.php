@@ -94,6 +94,8 @@ class PropertyController
         $from = Carbon::createFromFormat('Y-m-d', $this->params['departureDate']);
         $data['categoryId']      = $areaData['category_id'];
         $data['areaName']    	 = $areaData['name'];
+        $data['description']     = $areaData['long_description'];
+        $data['imageUrl']     = $areaData['image_link'];
         $data['petAllowed']      = $areaData['pets_allowed'] == 0 ? false : true;
         $data['petFee']          = $areaData['pets_allowed'] == 0 ? 0 : 150;
         $data['maxOccupants']    = (integer)$areaData['max_occupants'];
@@ -1212,7 +1214,8 @@ class PropertyController
 		if(isset($this->params['jobId']) && $this->params['jobId'] == 1)
 			dispatch(new PropertyAvailabilityDateJob($this->params['propertyId']));
 		else
-			dispatch(new PropertyConcurrentJob($this->params['propertyId']));
+			dispatch(new PropertyDetailsJob($this->params['propertyId']));
+			//dispatch(new PropertyConcurrentJob($this->params['propertyId']));
 		
         return [
             'code' => 1,

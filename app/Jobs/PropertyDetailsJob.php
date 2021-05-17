@@ -122,7 +122,12 @@ class PropertyDetailsJob implements ShouldQueue
 				$saveAreaDetails['categoryId'],
 				$dataToken['token']
 			);
-				
+			
+			$saveCategoryImage = self::requestCategoryImage(
+				$saveAreaDetails['categoryId'],
+				$dataToken['token']
+			);
+			
 			$saveData = new PropertyAreaDetails();
 			$saveData->category_id 		= $saveAreaDetails['categoryId'];
 			$saveData->name 			= $saveAreaDetails['name'];
@@ -139,6 +144,8 @@ class PropertyDetailsJob implements ShouldQueue
 			$saveData->guest_description = $saveAreaDetails['guestDescription'];
 			$saveData->max_occupants 	= $saveCategoryDetails['maxOccupantsPerCategory'];
 			$saveData->total_rooms 		= $saveCategoryDetails['numberOfAreas'];
+			$saveData->long_description = $saveCategoryDetails['longDescription'];
+			$saveData->image_link 		= (isset($saveCategoryImage[0]['url']) && $saveCategoryImage[0]['url'] != '') ? $saveCategoryImage[0]['url'] : '';
 			$saveData->pets_allowed 	= $saveAreaConfigDetails['petsAllowed'];
 			$saveData->total_bedrooms 	= $saveAreaConfigDetails['numberOfBedrooms'];
 			$saveData->total_baths 		= $saveAreaConfigDetails['numberOfFullBaths'];
@@ -218,6 +225,20 @@ class PropertyDetailsJob implements ShouldQueue
 	{
         $value = Cache::remember('category_' . $id, 10 * 60, function () use ($id, $dataToken) {
             $endpoint = 'categories/' . $id;
+            $response = Http::withHeaders([
+                'authToken' => $dataToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
+
+            return $response->json();
+        });
+
+        return $value;
+    }
+
+	public static function requestCategoryImage($id, $dataToken)
+	{
+        $value = Cache::remember('category_images_' . $id, 10 * 60, function () use ($id, $dataToken) {
+            $endpoint = 'categories/' . $id .'/images';
             $response = Http::withHeaders([
                 'authToken' => $dataToken
             ])->get(env('BASE_URL_RMS') . $endpoint);
