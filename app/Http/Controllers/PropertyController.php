@@ -92,8 +92,8 @@ class PropertyController
         }
         $to   = Carbon::createFromFormat('Y-m-d', $this->params['arrivalDate']);
         $from = Carbon::createFromFormat('Y-m-d', $this->params['departureDate']);
-        $data['propertyId']      = $id;
-        $data['propertyName']    = $propertyData['name'];
+        $data['categoryId']      = $areaData['category_id'];
+        $data['areaName']    	 = $areaData['name'];
         $data['petAllowed']      = $areaData['pets_allowed'] == 0 ? false : true;
         $data['petFee']          = $areaData['pets_allowed'] == 0 ? 0 : 150;
         $data['maxOccupants']    = (integer)$areaData['max_occupants'];
