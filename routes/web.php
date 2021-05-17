@@ -18,6 +18,15 @@ $router->get('/', function () {
     $p = Redis::incr('p');
     return $p;
 });
+$router->get('fail/', function () {
+    return 'failed';
+});
+$router->get('success/', function () {
+    return 'Success';
+});
+$router->get('cancel/', function () {
+    return 'Cancelled';
+});
 
 $router->get('users_with_query', "UserController@getUser");
 $router->get('users_with_cache', "UserController@index");

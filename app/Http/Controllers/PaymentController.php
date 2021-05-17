@@ -60,7 +60,7 @@ class PaymentController
             "amount"              => $this->params['amount'],
             "currency"            => env('CURRENCY'),
             "merchantReference"   => "Private Properties",
-            "storeCard"           => true,
+            "storeCard"           => false,
             "storeCardIndicator"  => "single",
             "callbackUrls" => [
                 "approved" => "https://pp-booking-staging.netlify.app/success",
@@ -80,7 +80,7 @@ class PaymentController
             throw new Exception($messageErrorPurchaseSessions);
         }
 
-        $ajaxPostUrl = $createPurchaseSessions['links'][3]['href'];
+        echo $ajaxPostUrl = $createPurchaseSessions['links'][3]['href'];
         $paramPostCardData = [
             'card' => [
                 'cardHolderName'    => $this->params['cardHolderName'],
@@ -98,9 +98,11 @@ class PaymentController
         }
 
         $accountPropertyId = $accountProperty[0]['id'];
+		die;
 
         //do payment
         $postCardData = $api->windCavePostCardData($ajaxPostUrl, $paramPostCardData);
+		print_r($postCardData);
         $cardId = $postCardData['id'];
         $windCaveDetail = $api->windCaveTransactionDetail($cardId);
         if(isset($windCaveDetail['errors'])) {
