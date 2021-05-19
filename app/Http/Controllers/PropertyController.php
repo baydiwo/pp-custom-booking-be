@@ -87,6 +87,8 @@ class PropertyController
             'propertyId'    => $id,
             'rateTypeId'    => $this->params['rateTypeId'],
         ];
+		
+		$petCount = (isset($this->params['pets']) && $this->params['pets'] > 0) ? $this->params['pets'] : 0;
 
         $rateQuote = $api->rateQuote($paramsRateQuote);
 		
@@ -109,7 +111,7 @@ class PropertyController
         $data['totalBaths']      = (integer)$areaData['total_baths'];
         $data['nights']          = $to->diffInDays($from);
         $data['accomodation']    = collect($rateQuote['rateBreakdown'])->sum('totalRate');
-        $data['totalAmount']     = $data['accomodation'] + $data['petFee'];
+        $data['totalAmount']     = $data['accomodation'] + ($petCount * $data['petFee']);
         $data['dueToday']        = $rateQuote['firstNightRate'];
 		
         return [
