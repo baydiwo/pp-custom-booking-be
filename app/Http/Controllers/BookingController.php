@@ -136,7 +136,7 @@ class BookingController
 		$model->guest_id		= $guestId;
 		$model->save();
 		
-        $endpoint = 'reservations';
+        $endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
 
         $response = Http::withHeaders([
             'authtoken' => $this->authToken
