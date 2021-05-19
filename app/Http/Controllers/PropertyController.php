@@ -74,6 +74,7 @@ class PropertyController
 		
 		$from = Carbon::parse($this->params['arrivalDate']);
         $to = Carbon::parse($this->params['departureDate']);
+		$now = Carbon::now();
         $this->params['rateTypeId'] = $this->rateByDate($from, $to);
 
         $paramsRateQuote = [
@@ -88,8 +89,8 @@ class PropertyController
             'rateTypeId'    => $this->params['rateTypeId'],
         ];
 		
+		$diffWeek = $now->diffInWeeks($from);
 		$petCount = (isset($this->params['pets']) && $this->params['pets'] > 0) ? $this->params['pets'] : 0;
-
         $rateQuote = $api->rateQuote($paramsRateQuote);
 		
         if (isset($rateQuote['Message'])) {
@@ -112,7 +113,10 @@ class PropertyController
         $data['nights']          = $to->diffInDays($from);
         $data['accomodation']    = collect($rateQuote['rateBreakdown'])->sum('totalRate');
         $data['totalAmount']     = $data['accomodation'] + ($petCount * $data['petFee']);
-        $data['dueToday']        = $rateQuote['firstNightRate'];
+		if($diffWeek > 3)
+        	$data['dueToday']        = number_format((0.3* $data['accomodation']) * 1.012,2);
+		else
+        	$data['dueToday']        = number_format($data['accomodation'] * 1.012,2);
 		
         return [
             'code' => 1,
