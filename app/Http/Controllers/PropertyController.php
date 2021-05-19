@@ -71,7 +71,10 @@ class PropertyController
             ->where('area_id', $this->params['areaId'])
             ->where('category_id', $this->params['categoryId'])
             ->first();
-		//print_r($areaData);die;
+		
+		$from = Carbon::parse($this->params['arrivalDate']);
+        $to = Carbon::parse($this->params['departureDate']);
+        $this->params['rateTypeId'] = $this->rateByDate($from, $to);
 
         $paramsRateQuote = [
             'adults'        => $this->params['adults'],
