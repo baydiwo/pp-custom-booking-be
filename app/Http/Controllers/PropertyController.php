@@ -94,8 +94,9 @@ class PropertyController
         $from = Carbon::createFromFormat('Y-m-d', $this->params['departureDate']);
         $data['categoryId']      = $areaData['category_id'];
         $data['areaName']    	 = $areaData['name'];
+        $data['town']    	 	 = $areaData['town'];
         $data['description']     = $areaData['long_description'];
-        $data['imageUrl']     = $areaData['image_link'];
+        $data['imageUrl']     	 = $areaData['image_link'];
         $data['petAllowed']      = $areaData['pets_allowed'] == 0 ? false : true;
         $data['petFee']          = $areaData['pets_allowed'] == 0 ? 0 : 150;
         $data['maxOccupants']    = (integer)$areaData['max_occupants'];
