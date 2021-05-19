@@ -100,6 +100,7 @@ class BookingController
 							'notes'      	=> $this->params['notes'],
 							'address'       => $this->params['address'],
 							'rateTypeId'  	=> $this->params['rateTypeId'],
+							//'resTypeId'  	=> $this->params['resTypeId'],
 							'state'         => $this->params['state'],
 							'town'          => $this->params['town'],
 							'countryId'    	=> $this->params['countryId'],
@@ -214,7 +215,7 @@ class BookingController
 
         $this->params['bookingSourceId'] = 200;
 
-        $endpoint = 'reservations';
+        $endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
 
         $response = Http::withHeaders([
             'authtoken' => $this->authToken
