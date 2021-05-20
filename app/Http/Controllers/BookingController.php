@@ -109,10 +109,13 @@ class BookingController
 							'phone'         => $this->params['phone'],
 							'postCode'     	=> $this->params['postCode'],
 							'pets'      	=> (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0,
+							'accomodation'  => $this->params['accomodationFee'],
+							'pet_fee'     	=> $this->params['petFee'],
+							'due_today'    	=> $this->params['dueToday'],
 							'guestId'		=> $guestId,
 							'bookingSourceId' => 200
 						];
-						
+
 		$model = new BookingDetails();
 		$model->arrival_date   	= $this->params['dateFrom'];
 		$model->departure_date 	= $this->params['dateTo'];
