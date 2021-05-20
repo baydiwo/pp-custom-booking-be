@@ -147,7 +147,7 @@ class BookingController
         }*/
 		
 		//$model->booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
-		$model->booking_id = 0;
+		$model->booking_id = rand(6,100000);
 		$response = array();//temporarily added when reserbvation API was blocked
 		$model->save();
 		
