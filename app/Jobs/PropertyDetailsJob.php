@@ -146,7 +146,7 @@ class PropertyDetailsJob implements ShouldQueue
 			$saveData->total_rooms 		= $saveCategoryDetails['numberOfAreas'];
 			$saveData->long_description = $saveCategoryDetails['longDescription'];
 			$saveData->image_link 		= (isset($saveCategoryImage[0]['url']) && $saveCategoryImage[0]['url'] != '') ? $saveCategoryImage[0]['url'] : '';
-			$saveData->pets_allowed 	= $saveAreaConfigDetails['petsAllowed'];
+			$saveData->pets_allowed 	= (isset($saveAreaConfigDetails['petsAllowed']) && $saveAreaConfigDetails['petsAllowed'] == true) ? 1 : 0;
 			$saveData->total_bedrooms 	= $saveAreaConfigDetails['numberOfBedrooms'];
 			$saveData->total_baths 		= $saveAreaConfigDetails['numberOfFullBaths'];
 			$saveData->created_date 	= $saveAreaDetails['createdDate'];
