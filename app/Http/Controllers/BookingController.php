@@ -154,7 +154,7 @@ class BookingController
         return [
             'code' => 1,
             'status' => 'success',
-            'data' => $response->json(),
+            'data' => [],//$response->json(),
 			'postData' => $this->params
         ];
     }
