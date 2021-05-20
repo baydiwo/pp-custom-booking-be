@@ -134,7 +134,6 @@ class BookingController
 		$model->post_code     	= $this->params['postCode'];
 		$model->pets      		= (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
 		$model->guest_id		= $guestId;
-		$model->save();
 		
         $endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
 
@@ -145,10 +144,15 @@ class BookingController
         if(isset($response['Message'])) {
             throw new Exception(ucwords($response['Message']));
         }
+		
+		$model->booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+		$model->save();
+		
         return [
             'code' => 1,
             'status' => 'success',
-            'data' => $response->json()
+            'data' => $response->json(),
+			'postData' => $this->params
         ];
     }
 
