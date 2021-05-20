@@ -56,7 +56,7 @@ class BookingController
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 
-        $paramSearchGuest = [
+        /*$paramSearchGuest = [
             "surname" => $this->params['surname'],
             "given"   => $this->params['given'],
             "mobile"  => $this->params['phone'],
@@ -84,7 +84,8 @@ class BookingController
         } else {
             $searchGuest = collect($searchGuest)->first();
             $guestId = $searchGuest['id'];
-        }
+        }*/
+		$guestId = 19439;//temporarily added when Guest API was blocked
 		
 		$paramDetails = [
 							'arrivalDate'   => $this->params['dateFrom'],
@@ -135,7 +136,7 @@ class BookingController
 		$model->pets      		= (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
 		$model->guest_id		= $guestId;
 		
-        $endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
+        /*$endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
 
         $response = Http::withHeaders([
             'authtoken' => $this->authToken
@@ -143,9 +144,11 @@ class BookingController
 
         if(isset($response['Message'])) {
             throw new Exception(ucwords($response['Message']));
-        }
+        }*/
 		
-		$model->booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+		//$model->booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+		$model->booking_id = 0;
+		$response = array();//temporarily added when reserbvation API was blocked
 		$model->save();
 		
         return [
