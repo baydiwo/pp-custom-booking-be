@@ -152,6 +152,7 @@ class PropertyDetailsJob implements ShouldQueue
 			$saveData->total_baths 		= $saveAreaConfigDetails['numberOfFullBaths'];
 			$saveData->created_date 	= $saveAreaDetails['createdDate'];
 			$saveData->property_id 		= $saveAreaDetails['propertyId'];
+			$saveData->bond 			= $saveAreaDetails['keyNumber2'];
 			$saveData->area_id			= $areaId;
 			$ss = $saveData;
 			$saveData->save();
