@@ -107,6 +107,7 @@ class PaymentController
 		print_r($postCardData);
         $cardId = $postCardData['id'];
         $windCaveDetail = $api->windCaveTransactionDetail($cardId);
+		print_r($windCaveDetail);die;
         if(isset($windCaveDetail['errors'])) {
             throw new Exception('Wind Cave Transaction Detail Not Found');
         }
