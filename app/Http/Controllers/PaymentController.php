@@ -98,9 +98,9 @@ class PaymentController
         /*$accountProperty = $api->guestAccountProperty($detailReservation['guestId']);
         if ((isset($accountProperty['Message'])) || (count($accountProperty) == 0)) {
             throw new Exception('Account Property Guest Not Found');
-        }*/
+        }
 
-        $accountPropertyId = $accountProperty[0]['id'];
+        $accountPropertyId = $accountProperty[0]['id'];*/
 
         //do payment
         $postCardData = $api->windCavePostCardData($ajaxPostUrl, $paramPostCardData);
@@ -112,7 +112,7 @@ class PaymentController
             throw new Exception('Wind Cave Transaction Detail Not Found');
         }
 
-        if($windCaveDetail['transactions'][0]['responseText'] == 'APPROVED') {
+        /*if($windCaveDetail['transactions'][0]['responseText'] == 'APPROVED') {
             $paramTransactionReceipt = [
                 'accountId'                          => $accountPropertyId,
                 'amount'                             => $this->params['amount'],
@@ -123,7 +123,7 @@ class PaymentController
                 'useRmsAccountingDateForPostingDate' => "true",
             ];
             $api->transactionReceipt($paramTransactionReceipt);
-        }
+        }*/
 
         return [
             'code'    => 1,
