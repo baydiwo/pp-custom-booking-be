@@ -88,9 +88,12 @@ class PaymentController
             'card' => [
                 'cardHolderName'    => $this->params['cardHolderName'],
                 'cardNumber'        => $this->params['cardNumber'],
+                'ExpiryMonth'   	=> $this->params['dateExpiryMonth'],
+                'ExpiryYear'    	=> $this->params['dateExpiryYear'],
+                'cvc2'              => $this->params['cvc']/*,
                 'dateExpiryMonth'   => $this->params['dateExpiryMonth'],
                 'dateExpiryYear'    => $this->params['dateExpiryYear'],
-                'cvc2'              => $this->params['cvc'],
+                'cvc2'              => $this->params['cvc'],*/
             ]
         ];
 
