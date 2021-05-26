@@ -86,8 +86,8 @@ class PaymentController
         echo $ajaxPostUrl = $createPurchaseSessions['links'][3]['href'];
         $paramPostCardData = [
             'card' => [
-                'cardHolderName'    => $this->params['cardHolderName'],
-                'cardNumber'        => $this->params['cardNumber'],
+                'CardHolderName'    => $this->params['cardHolderName'],
+                'CardNumber'        => $this->params['cardNumber'],
                 'ExpiryMonth'   	=> $this->params['dateExpiryMonth'],
                 'ExpiryYear'    	=> $this->params['dateExpiryYear'],
                 'cvc2'              => $this->params['cvc']/*,
