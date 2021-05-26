@@ -70,7 +70,7 @@ class PaymentController
                 //"declined" => "https://pp-booking-staging.netlify.app/fail", 
                 //"cancelled" => "https://pp-booking-staging.netlify.app/cancel", 
             ],
-            "notificationUrl" => "https://pp-booking-staging.netlify.app/success"
+            "notificationUrl" => "https://pp-booking-apidev.herokuapp.com/success"
         ];
 
         $createPurchaseSessions = $api->windCaveCreatePurchaseSessions($paramsCreatePurchaseSessions);
@@ -101,7 +101,6 @@ class PaymentController
         }
 
         $accountPropertyId = $accountProperty[0]['id'];
-		die;
 
         //do payment
         $postCardData = $api->windCavePostCardData($ajaxPostUrl, $paramPostCardData);
