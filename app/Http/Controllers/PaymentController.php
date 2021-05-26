@@ -33,10 +33,10 @@ class PaymentController
     public function payment($reservationId)
     {
         $api = new ApiController($this->authToken, $this->request);
-        $detailReservation = $api->detailReservation($reservationId);
+        /*$detailReservation = $api->detailReservation($reservationId);
         if (isset($detailReservation['Message'])) {
             throw new Exception('Data Reservation Not Found');
-        }
+        }*/
         $validator = Validator::make(
             $this->params,
             [
@@ -95,10 +95,10 @@ class PaymentController
         ];
 
         //get account property guest
-        $accountProperty = $api->guestAccountProperty($detailReservation['guestId']);
+        /*$accountProperty = $api->guestAccountProperty($detailReservation['guestId']);
         if ((isset($accountProperty['Message'])) || (count($accountProperty) == 0)) {
             throw new Exception('Account Property Guest Not Found');
-        }
+        }*/
 
         $accountPropertyId = $accountProperty[0]['id'];
 
