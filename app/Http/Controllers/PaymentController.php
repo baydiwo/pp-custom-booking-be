@@ -33,6 +33,46 @@ class PaymentController
     public function payment($reservationId)
     {
         $api = new ApiController($this->authToken, $this->request);
+		
+		/*$booking_details = BookingDetails::where('booking_id', $reservationId)->orWhere('id', $reservationId)->first();
+		$paramDetails = [
+							'arrivalDate'   => $this->params['dateFrom'],
+							'departureDate' => $this->params['dateTo'],
+							'surname'		=> $this->params['surname'],
+							'given'         => $this->params['given'],
+							'email'         => $this->params['email'],
+							'adults'        => $this->params['adults'],
+							'areaId'       	=> $this->params['areaId'],
+							'categoryId'   	=> $this->params['categoryId'],
+							'children'      => $this->params['children'],
+							'infants'       => $this->params['infants'],
+							'notes'      	=> $this->params['notes'],
+							'address'       => $this->params['address'],
+							'rateTypeId'  	=> $this->params['rateTypeId'],
+							'state'         => $this->params['state'],
+							'town'          => $this->params['town'],
+							'countryId'    	=> $this->params['countryId'],
+							'nights'        => $this->params['nights'],
+							'phone'         => $this->params['phone'],
+							'postCode'     	=> $this->params['postCode'],
+							'pets'      	=> (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0,
+							'guestId'		=> $guestId,
+							'bookingSourceId' => 200
+						];
+						
+		$endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
+
+        $response = Http::withHeaders([
+            'authtoken' => $this->authToken
+        ])->post(env('BASE_URL_RMS') . $endpoint, $paramDetails);
+
+        if(isset($response['Message'])) {
+            throw new Exception(ucwords($response['Message']));
+        }
+		
+		$model->booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+		
+		
         /*$detailReservation = $api->detailReservation($reservationId);
         if (isset($detailReservation['Message'])) {
             throw new Exception('Data Reservation Not Found');
@@ -83,7 +123,7 @@ class PaymentController
             throw new Exception($messageErrorPurchaseSessions);
         }
 
-        echo $ajaxPostUrl = $createPurchaseSessions['links'][3]['href'];
+        $ajaxPostUrl = $createPurchaseSessions['links'][3]['href'];
         $paramPostCardData = [
             'card' => [
                 'cardHolderName'    => $this->params['cardHolderName'],
@@ -104,15 +144,43 @@ class PaymentController
 
         //do payment
         $postCardData = $api->windCavePostCardData($ajaxPostUrl, $paramPostCardData);
-		print_r($postCardData);
+		
+		if(isset($postCardData['links'][0]['rel']) && $postCardData['links'][0]['rel'] == '3DSecure')
+		{
+			return [
+				'code'    => 1,
+				'status'  => 'success',
+				'data'    => $postCardData['links'][0]['href'],
+				'message' => "Waiting for 3D Secure Code verification"
+			];
+		}
         $cardId = $postCardData['id'];
         $windCaveDetail = $api->windCaveTransactionDetail($cardId);
-		print_r($windCaveDetail);die;
         if(isset($windCaveDetail['errors'])) {
             throw new Exception('Wind Cave Transaction Detail Not Found');
         }
 
-        /*if($windCaveDetail['transactions'][0]['responseText'] == 'APPROVED') {
+        return [
+            'code'    => 1,
+            'status'  => 'success',
+            'data'    => $postCardData['links'][0]['href'],
+            'message' => $windCaveDetail['transactions'][0]['responseText']
+        ];
+    }
+	
+	public function updateTransactionDetails()
+	{
+		$validator = Validator::make(
+            $this->params,
+            [
+                'sessionID' => 'required'
+            ]
+        );
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+		
+		$booking_details = BookingDetails::where('session_id', $this->params['sessionID'])->orWhere('id', $reservationId)->first();
+        if($windCaveDetail['transactions'][0]['responseText'] == 'APPROVED') {
             $paramTransactionReceipt = [
                 'accountId'                          => $accountPropertyId,
                 'amount'                             => $this->params['amount'],
@@ -123,13 +191,6 @@ class PaymentController
                 'useRmsAccountingDateForPostingDate' => "true",
             ];
             $api->transactionReceipt($paramTransactionReceipt);
-        }*/
-
-        return [
-            'code'    => 1,
-            'status'  => 'success',
-            'data'    => $postCardData['links'][0]['href'],
-            'message' => "Data Has Been ". $windCaveDetail['transactions'][0]['responseText']
-        ];
-    }
+        }	
+	}
 }
