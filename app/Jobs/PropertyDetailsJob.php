@@ -55,13 +55,12 @@ class PropertyDetailsJob implements ShouldQueue
 		else
 			$propertyDetails = array();
 		
-		$check = PropertyDetails::where('property_id', $id)
+		$model = PropertyDetails::where('property_id', $id)
 								->first();
 
-		if($check) {
-			PropertyDetails::where('id', $check->id)->firstorfail()->delete();
+		if(!$model) {
+			$model = new PropertyDetails();
 		}
-		$model 							= new PropertyDetails();
 		$model->property_id 			= $id;
 		$model->allow_group_bookings 	= (isset($save['allowGroupBookings']))? $save['allowGroupBookings']:0;
 		$model->children_allowed 		= (isset($save['childrenAllowed']))? $save['childrenAllowed']:0;
@@ -105,13 +104,9 @@ class PropertyDetailsJob implements ShouldQueue
 				$dataToken['token']
 			);
 			
-			$check = PropertyAreaDetails::where('property_id', $id)
+			$saveData = PropertyAreaDetails::where('property_id', $id)
 										->where('area_id', $areaId)
 										->first();
-
-	  		if($check){
-				PropertyAreaDetails::where('id', $check->id)->firstorfail()->delete();
-			}
 			
 			$saveAreaConfigDetails = self::requestAreaConfigDetails(
 				$areaId,
@@ -129,7 +124,9 @@ class PropertyDetailsJob implements ShouldQueue
 			);
 			
 			$petsAllowed = (isset($saveAreaConfigDetails['petsAllowed']) && $saveAreaConfigDetails['petsAllowed'] == 'True') ? 1 : 0;
-			$saveData = new PropertyAreaDetails();
+			if(!$saveData){
+				$saveData = new PropertyAreaDetails();
+			}
 			$saveData->category_id 		= $saveAreaDetails['categoryId'];
 			$saveData->name 			= $saveAreaDetails['name'];
 			$saveData->address_line1 	= $saveAreaDetails['addressLine1'];
@@ -154,6 +151,7 @@ class PropertyDetailsJob implements ShouldQueue
 			$saveData->property_id 		= $saveAreaDetails['propertyId'];
 			$saveData->bond 			= $saveAreaDetails['keyNumber2'];
 			$saveData->area_id			= $areaId;
+			$saveData->created_date		= date('Y-m-d H:i:s');
 			$ss = $saveData;
 			$saveData->save();
 			sleep(1);
@@ -182,7 +180,6 @@ class PropertyDetailsJob implements ShouldQueue
 
 	public static function requestPropertyDetails($id, $dataToken)
 	{
-		//echo env('BASE_URL_RMS') .'properties/' . $id . '?modelType=full';die;//?modelType=full
         $value = Cache::remember('property_' . $id, 10 * 60, function () use ($id, $dataToken) {
             $endpoint = 'properties/' . $id . '?modelType=full';
             $response = Http::withHeaders([

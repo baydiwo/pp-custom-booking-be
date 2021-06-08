@@ -87,17 +87,17 @@ class PropertyConcurrentJob implements ShouldQueue
 			
 			if(strpos($save,"<html>") <= 0)
 			{
-				$check = ModelPropertyJob::where('date_from', $keyallGroupDate)
+				$model = ModelPropertyJob::where('date_from', $keyallGroupDate)
 					->where('property_id', env("PROPERTY_ID"))
 					->first();
 	
-				if($check) {
-					ModelPropertyJob::where('id', $check->id)->firstorfail()->delete();
+				if(!$model) {
+					$model = new ModelPropertyJob();
 				}
-				$model = new ModelPropertyJob();
 				$model->property_id = env("PROPERTY_ID");
 				$model->date_from = $keyallGroupDate;
 				$model->response = $save;
+				$model->created_date	= date('Y-m-d H:i:s');
 				$model->save();
 			}
 			else{
