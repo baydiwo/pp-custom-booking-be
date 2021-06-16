@@ -1333,20 +1333,22 @@ class PropertyController
 		
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
-			
-		$dateAvail = AvailabilityDate::select('area_details.area_id', 'availability_date.date_from')->whereBetween('availability_date.date_from', [$this->params['dateFrom'],$this->params['dateTo']])
-										->leftJoin('area_details', 'area_details.category_id', '=', 'availability_date.category_id')
-										->where('availability_date.available_area', 1)
-										->orderBy('area_details.area_id','ASC')
-										->get();
 		
+	$this->params['dateTo'] = Carbon::createFromFormat('Y-m-d', $this->params['dateTo'])->addDays(-1)->format('Y-m-d');
 			
-		$availCategories = $availAreas = [];
-		foreach($dateAvail as $dateResult)
-		{
-			$availCategories[$dateResult['area_id']][] = $dateResult['date_from'];
-		}
-		$from = Carbon::parse($this->params['dateFrom']);
+	$dateAvail = AvailabilityDate::select('area_details.area_id', 'availability_date.date_from')->whereBetween('availability_date.date_from', [$this->params['dateFrom'],$this->params['dateTo']])
+									->leftJoin('area_details', 'area_details.category_id', '=', 'availability_date.category_id')
+									->where('availability_date.available_area', 1)
+									->orderBy('area_details.area_id','ASC')
+									->get();
+
+
+	$availCategories = $availAreas = [];
+	foreach($dateAvail as $dateResult)
+	{
+		$availCategories[$dateResult['area_id']][] = $dateResult['date_from'];
+	}
+	$from = Carbon::parse($this->params['dateFrom']);
         $to = Carbon::parse($this->params['dateTo']);
         $diff = $from->diffInDays($to) + 1;
 
