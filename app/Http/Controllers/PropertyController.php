@@ -1077,6 +1077,8 @@ class PropertyController
 		
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+		
+		$this->params['dateTo'] = Carbon::createFromFormat('Y-m-d', $this->params['dateTo'])->addDays(-1)->format('Y-m-d');
 			
 		$dateAvail = AvailabilityDate::select('area_details.area_id', 'availability_date.date_from')->whereBetween('availability_date.date_from', [$this->params['dateFrom'],$this->params['dateTo']])
 										->leftJoin('area_details', 'area_details.category_id', '=', 'availability_date.category_id')
