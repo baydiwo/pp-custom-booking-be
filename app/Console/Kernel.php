@@ -41,27 +41,27 @@ class Kernel extends ConsoleKernel
         $schedule->job(new PropertyDetailsJob())->dailyAt('00:00');
 		
 		//12AM schedule - Perth Time
-		$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('16:00');
+		//$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('16:00');
 
 		//3AM schedule - Perth Time
-		$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('19:00');
+		//$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('19:00');
 
 		//6AM schedule - Perth Time
-		$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('22:00');
+		//$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('22:00');
 		
 		//9AM schedule - Perth Time
-		$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('01:00');
+		//$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('01:00');
 		
 		//12PM schedule - Perth Time
-		$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('04:00');
+		//$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('04:00');
 
 		//3PM schedule - Perth Time
-		$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('07:00');
+		//$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('07:00');
 
 		//6PM schedule - Perth Time
-		$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('10:00');
+		//$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('10:00');
 		
 		//9PM schedule - Perth Time
-		$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('13:00');
+		//$schedule->job(new PropertyConcurrentJob(env('PROPERTY_ID')))->dailyAt('13:00');
     }
 }   
