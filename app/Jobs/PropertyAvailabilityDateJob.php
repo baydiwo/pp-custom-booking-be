@@ -35,7 +35,7 @@ class PropertyAvailabilityDateJob implements ShouldQueue
      *
      * @return void
      */
-    public $tries = 3;
+    public $tries = 2;
     public $timeout = 0;
     public function __construct($propertyId)
     {
@@ -101,37 +101,29 @@ class PropertyAvailabilityDateJob implements ShouldQueue
 					foreach ($valuetempRaterr as $valueDatatempRate) {
 						foreach($valueDatatempRate as $adData)
 						{
-							/*$check = PropertyAreaDetails::where('property_id', $this->propertyId)
-										->where('category_id', $adData['categoryId'])
-										->first();
-							if($check){
-								$area_id = $check->area_id;*/
-								if(isset($adData['rates'][0]['dayBreakdown']))
+							if(isset($adData['rates'][0]['dayBreakdown']))
+							{
+								$dayBreakdown = $adData['rates'][0]['dayBreakdown'];
+								if(is_countable($dayBreakdown) && count($dayBreakdown) > 0)
 								{
-									$dayBreakdown = $adData['rates'][0]['dayBreakdown'];
-									if(is_countable($dayBreakdown) && count($dayBreakdown) > 0)
+									foreach($dayBreakdown as $dayBd)
 									{
-										foreach($dayBreakdown as $dayBd)
-										{
-											$theDate = Carbon::parse($dayBd['theDate'])->format('Y-m-d');
-											$check_ad = AvailabilityDate::where('category_id', $adData['categoryId'])
-																		->where('date_from', $theDate)
-																		->first();
-									
-											if($check_ad) {
-												AvailabilityDate::where('id', $check_ad->id)->firstorfail()->delete();
-											}
-											
+										$theDate = Carbon::parse($dayBd['theDate'])->format('Y-m-d');
+										$model = AvailabilityDate::where('category_id', $adData['categoryId'])
+																	->where('date_from', $theDate)
+																	->first();
+								
+										if(!$model) {
 											$model = new AvailabilityDate();
-											//$model->area_id 		= $area_id;
-											$model->category_id 	= $adData['categoryId'];
-											$model->available_area 	= (int)$dayBd['availableAreas'];
-											$model->date_from 		= $theDate;
-											$model->save();
 										}
+										$model->category_id 	= $adData['categoryId'];
+										$model->available_area 	= (int)$dayBd['availableAreas'];
+										$model->date_from 		= $theDate;
+										$model->created_date	= date('Y-m-d H:i:s');
+										$model->save();
 									}
 								}
-							//}
+							}
 						}
 					}
 				}
