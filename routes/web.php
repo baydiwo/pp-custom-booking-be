@@ -39,11 +39,11 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
         $router->get('check-availability-concurrent', 'PropertyController@checkAvailabilityConcurrent');
         $router->get('check-availability-concurrent-new', 'PropertyController@checkAvailabilityConcurrentNew');
         $router->get('area-by-year', 'PropertyController@areaByYear');
-		/*$router->post('get-availability-area', 'PropertyController@getAvailabilityDates');
+		$router->post('get-availability-area', 'PropertyController@getAvailabilityDates');
 		$router->get('get-availability-dates', 'PropertyController@getAvailabilityDatesByArea');
 		$router->get('get-availability-dates-arrival', 'PropertyController@getAvailabilityDatesADByArea');
 		$router->get('get-availability-areas', 'PropertyController@getAvailabilityAreasByDate');
-        $router->get('{id}', 'PropertyController@detail');*/
+        $router->get('{id}', 'PropertyController@detail');
     });
 
     $router->group(['prefix' => 'webhooks'], function () use ($router) {
@@ -59,16 +59,6 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
     $router->get('countries', 'CountryController@list');
     $router->group(['prefix' => 'rate'], function () use ($router) {
         $router->get('', 'RateController@rateList');
-    });
-});
-
-$router->group(['prefix' => ''], function () use ($router) {	
-    $router->group(['prefix' => 'property'], function () use ($router) {
-		$router->post('get-availability-area', 'PropertyController@getAvailabilityDates');
-		$router->get('get-availability-dates', 'PropertyController@getAvailabilityDatesByArea');
-		$router->get('get-availability-dates-arrival', 'PropertyController@getAvailabilityDatesADByArea');
-		$router->get('get-availability-areas', 'PropertyController@getAvailabilityAreasByDate');
-        $router->get('{id}', 'PropertyController@detail');
     });
 });
 

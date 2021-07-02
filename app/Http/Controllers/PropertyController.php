@@ -37,7 +37,7 @@ class PropertyController
 
     public function __construct(Request $request)
     {
-        $this->authToken = '';//Cache::get('authToken')['token'];
+        $this->authToken = '71a558c2f3d781ea73d69ec3b7f222b8';//Cache::get('authToken')['token'];
         $this->request = $request;
         $this->params  = $request->all();
     }
