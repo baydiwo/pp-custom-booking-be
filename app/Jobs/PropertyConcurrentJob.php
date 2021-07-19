@@ -37,7 +37,7 @@ class PropertyConcurrentJob implements ShouldQueue
      *
      * @return void
      */
-    public $tries = 3;
+    public $tries = 1;
     public $timeout = 0;
     public function __construct($propertyId)
     {
