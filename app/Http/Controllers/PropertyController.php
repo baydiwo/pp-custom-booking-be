@@ -103,6 +103,7 @@ class PropertyController
         $data['town']    	 	 = $areaData['town'];
         $data['description']     = $areaData['long_description'];
         $data['imageUrl']     	 = $areaData['image_link'];
+        $data['bond']    	 	 = $areaData['bond'];
         $data['petAllowed']      = $areaData['pets_allowed'] == 0 ? false : true;
         $data['petFee']          = $areaData['pets_allowed'] == 0 ? 0 : 150;
         $data['maxOccupants']    = (integer)$areaData['max_occupants'];
