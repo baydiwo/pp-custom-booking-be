@@ -75,6 +75,7 @@ class BookingController
                 'guestGiven'   => $this->params['given'],
                 'guestSurname' => $this->params['surname'],
                 'mobile'       => $this->params['phone'],
+                'propertyId'   => 1
             ];
 
             $createGuest = $api->createGuest($paramCreateGuest);
@@ -215,7 +216,7 @@ class BookingController
     {
         $api = new ApiController($this->authToken, $this->request);
 		$reservation = array();
-		$booking_details = BookingDetails::where('booking_id', $id)->first();
+		$booking_details = BookingDetails::where('booking_id', $id)->orWhere('id', $id)->first();
 		
 		$reservation['arrivalDate'] 	= $booking_details['arrival_date'];
 		$reservation['departureDate']	= $booking_details['departure_date'];
@@ -250,6 +251,7 @@ class BookingController
         $areaDetails['town']    	 	= $areaData['town'];
         $areaDetails['description']     = $areaData['long_description'];
         $areaDetails['imageUrl']     	= $areaData['image_link'];
+		$areaDetails['bond']        	= $areaData['bond'];
         $areaDetails['petAllowed']      = $areaData['pets_allowed'] == 0 ? false : true;
         $areaDetails['petFee']          = $booking_details['pet_fee'];
         $areaDetails['maxOccupants']    = (integer)$areaData['max_occupants'];
