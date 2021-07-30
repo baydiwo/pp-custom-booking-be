@@ -99,8 +99,9 @@ class PaymentController
 		if(!$booking_details)
 			throw new Exception(ucwords('Booking details not found!'));
 		else
-			$amount = $booking_details['accomodation'] + ($booking_details['pets'] * $booking_details['pet_fee']);
-			
+			$amount = $booking_details['accomodation_fee'] + ($booking_details['pets'] * $booking_details['pet_fee']);
+		$amount = number_format($amount,2);
+		
         $paramsCreatePurchaseSessions = [
             "type"                => "purchase",
             "amount"              => $amount,
@@ -118,7 +119,7 @@ class PaymentController
             ],
             "notificationUrl" => "https://pp-booking-apidev.herokuapp.com/success"
         ];
-
+		
         $createPurchaseSessions = $api->windCaveCreatePurchaseSessions($paramsCreatePurchaseSessions);
         if(isset($createPurchaseSessions['errors'])) {
             $messageErrorPurchaseSessions = "";
@@ -134,8 +135,8 @@ class PaymentController
             'card' => [
                 'cardHolderName'    => $this->params['cardHolderName'],
                 'cardNumber'        => $this->params['cardNumber'],
-                'dateExpiryMonth'   	=> $this->params['dateExpiryMonth'],
-                'dateExpiryYear'    	=> $this->params['dateExpiryYear'],
+                'dateExpiryMonth'   => $this->params['dateExpiryMonth'],
+                'dateExpiryYear'    => $this->params['dateExpiryYear'],
                 'cvc2'              => $this->params['cvc']
             ]
         ];
@@ -181,7 +182,7 @@ class PaymentController
 			return [
 				'code'    => 0,
 				'status'  => 'error',
-				'message' => 'Payment Failed. '.$windCaveDetail['transactions'][0]['responseText'];
+				'message' => 'Payment Failed. '.$windCaveDetail['transactions'][0]['responseText']
 			];
 		}
     }
