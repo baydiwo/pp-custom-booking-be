@@ -16,6 +16,7 @@ use LVR\CreditCard\CardExpirationMonth;
 use LVR\CreditCard\CardExpirationYear;
 use LVR\CreditCard\CardNumber;
 use LVR\CreditCard\Cards\Card;
+use App\Models\BookingDetails;
 
 class PaymentController
 {
@@ -88,16 +89,21 @@ class PaymentController
                 'cardNumber'        => 'required',
                 'dateExpiryMonth'   => 'required',
                 'dateExpiryYear'    => 'required',
-                'cvc'               => 'required',
-                'amount'            => 'required'
+                'cvc'               => 'required'
             ]
         );
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
         
+		$booking_details = BookingDetails::select('pets', 'accomodation_fee', 'pet_fee', 'booking_id', 'email')->where('booking_id', $reservationId)->orWhere('id', $reservationId)->first();
+		if(!$booking_details)
+			throw new Exception(ucwords('Booking details not found!'));
+		else
+			$amount = $booking_details['accomodation'] + ($booking_details['pets'] * $booking_details['pet_fee']);
+			
         $paramsCreatePurchaseSessions = [
             "type"                => "purchase",
-            "amount"              => $this->params['amount'],
+            "amount"              => $amount,
             "currency"            => env('CURRENCY'),
             "merchantReference"   => "Private Properties",
             "storeCard"           => false,
@@ -159,13 +165,25 @@ class PaymentController
         if(isset($windCaveDetail['errors'])) {
             throw new Exception('Wind Cave Transaction Detail Not Found');
         }
-
-        return [
-            'code'    => 1,
-            'status'  => 'success',
-            'data'    => $postCardData['links'][0]['href'],
-            'message' => $windCaveDetail['transactions'][0]['responseText']
-        ];
+		
+		if($windCaveDetail['transactions'][0]['responseText'] == 'APPROVED') {
+			return [
+				'code'    => 1,
+				'status'  => 'success',
+				'data'    => $postCardData['links'][0]['href'],
+				'email'	  => $booking_details['email'],
+				'booking_id' => $booking_details['booking_id'],
+				'message' => $windCaveDetail['transactions'][0]['responseText']
+			];
+		}
+		else
+		{
+			return [
+				'code'    => 0,
+				'status'  => 'error',
+				'message' => 'Payment Failed. '.$windCaveDetail['transactions'][0]['responseText'];
+			];
+		}
     }
 	
 	public function updateTransactionDetails()
