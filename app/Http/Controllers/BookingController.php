@@ -272,4 +272,71 @@ class BookingController
             'data' => $data
         ];
     }
+
+    public function update($booking_id)
+    {
+        $api = new ApiController($this->authToken, $this->request);
+        $validator = Validator::make(
+            $this->params,
+            [
+                'dateFrom'     	=> 'required|date_format:Y-m-d',
+                'dateTo'  		=> 'required|date_format:Y-m-d',
+                'surname'       => 'required',
+                'given'         => 'required',
+                'email'         => 'required|email',
+                'adults'        => 'required|integer',
+                'areaId'        => 'required|integer',
+                'categoryId'    => 'required|integer',
+                'children'      => 'required|integer',
+                'infants'       => 'required|integer',
+                'address'       => 'required',
+                'rateTypeId'    => 'required|integer',
+                'state'         => 'required',
+                'town'          => 'required',
+                'countryId'     => 'required|integer',
+                'nights'        => 'required|integer',
+                'phone'         => 'required',
+                'postCode'      => 'required'
+            ]
+        );
+		
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+		
+		$booking_details = BookingDetails::where('booking_id', $booking_id)->first();
+		$guestId = 19439;//temporarily added when Guest API was blocked
+
+		$booking_details->arrival_date   	= $this->params['dateFrom'];
+		$booking_details->departure_date 	= $this->params['dateTo'];
+		$booking_details->surname			= $this->params['surname'];
+		$booking_details->given         	= $this->params['given'];
+		$booking_details->email         	= $this->params['email'];
+		$booking_details->adults        	= $this->params['adults'];
+		$booking_details->area_id       	= $this->params['areaId'];
+		$booking_details->category_id   	= $this->params['categoryId'];
+		$booking_details->children      	= $this->params['children'];
+		$booking_details->infants       	= $this->params['infants'];
+		$booking_details->notes     		= $this->params['notes'];
+		$booking_details->address       	= $this->params['address'];
+		$booking_details->rate_type_id  	= $this->params['rateTypeId'];
+		$booking_details->state         	= $this->params['state'];
+		$booking_details->town         	= $this->params['town'];
+		$booking_details->country_id    	= $this->params['countryId'];
+		$booking_details->nights        	= $this->params['nights'];
+		$booking_details->phone         	= $this->params['phone'];
+		$booking_details->post_code     	= $this->params['postCode'];
+		$booking_details->pets      		= (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
+		$booking_details->accomodation_fee= $this->params['accomodationFee'];
+		$booking_details->pet_fee     	= $this->params['petFee'];
+		$booking_details->due_today    	= $this->params['dueToday'];
+		$booking_details->guest_id		= $guestId;
+		
+		$booking_details->save();
+		
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => ["id" => $booking_id] // temporarily commented, as the reserbvation API was blocked
+        ];
+    }
 }

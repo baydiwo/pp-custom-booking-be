@@ -37,6 +37,7 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
     $router->group(['prefix' => 'booking'], function () use ($router) {
         $router->get('{id}', 'BookingController@detail');
         $router->post('', 'BookingController@create');
+        $router->post('update/{booking_id}', 'BookingController@update');
     });
 	
     $router->group(['prefix' => 'property'], function () use ($router) {
