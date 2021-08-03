@@ -182,7 +182,7 @@ class PaymentController
 			return [
 				'code'    => 0,
 				'status'  => 'error',
-				'message' => 'Payment Failed. '.$windCaveDetail['transactions'][0]['responseText']
+				'message' => $windCaveDetail['transactions'][0]['responseText']
 			];
 		}
     }
