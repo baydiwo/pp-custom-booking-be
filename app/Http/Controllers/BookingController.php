@@ -239,6 +239,7 @@ class BookingController
 		$reservation['town']			= $booking_details['town'];
 		$reservation['accomodation']	= $booking_details['accomodation_fee'];
 		$reservation['petFee']			= $booking_details['pet_fee'];
+		$reservation['pets']			= $booking_details['pets'];
 		$reservation['totalAmount']		= $booking_details['accomodation_fee'] + $booking_details['pet_fee'];
 		$reservation['dueToday']		= $booking_details['due_today'];
 		
