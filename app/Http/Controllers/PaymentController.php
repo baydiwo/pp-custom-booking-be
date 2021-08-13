@@ -17,6 +17,7 @@ use LVR\CreditCard\CardExpirationYear;
 use LVR\CreditCard\CardNumber;
 use LVR\CreditCard\Cards\Card;
 use App\Models\BookingDetails;
+use App\Models\ModelPaymentDetails;
 
 class PaymentController
 {
@@ -35,8 +36,8 @@ class PaymentController
     {
         $api = new ApiController($this->authToken, $this->request);
 		
-		/*$booking_details = BookingDetails::where('booking_id', $reservationId)->orWhere('id', $reservationId)->first();
-		$paramDetails = [
+		$booking_details = BookingDetails::where('booking_id', $reservationId)->orWhere('id', $reservationId)->first();
+		/*$paramDetails = [
 							'arrivalDate'   => $this->params['dateFrom'],
 							'departureDate' => $this->params['dateTo'],
 							'surname'		=> $this->params['surname'],
@@ -82,10 +83,6 @@ class PaymentController
             $this->params,
             [
                 'cardHolderName' => 'required',
-                // 'cardNumber' => ['required', new CardNumber],
-                // 'dateExpiryMonth' => ['required', new CardExpirationMonth($this->request->get('dateExpiryYear'))],
-                // 'dateExpiryYear' => ['required', new CardExpirationYear($this->request->get('dateExpiryMonth'))],
-                // 'cvc' => ['required', new CardCvc($this->request->get('card_number'))],
                 'cardNumber'        => 'required',
                 'dateExpiryMonth'   => 'required',
                 'dateExpiryYear'    => 'required',
@@ -95,7 +92,26 @@ class PaymentController
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
         
-		$booking_details = BookingDetails::select('pets', 'accomodation_fee', 'pet_fee', 'booking_id', 'email')->where('booking_id', $reservationId)->orWhere('id', $reservationId)->first();
+		
+		$paramMinNight = [
+            'categoryIds' => [$booking_details['category_id']],
+            'dateFrom'    => $booking_details['arrival_date'],
+            'dateTo'      => $booking_details['departure_date'],
+            'propertyId'  => 1,
+            'rateIds'     => [$booking_details['rate_type_id']]
+        ];
+		
+
+        $minNight = $api->availabilityrategrid($paramMinNight);
+        if (!$minNight) {
+            throw new Exception(ucwords('Minimum Night Not Found'));
+        } elseif (isset($minNight['Message'])) {
+            throw new Exception(ucwords($minNight['Message']));
+        }
+        if (empty($minNight['categories'][0]['rates'])) {
+            throw new Exception(ucwords('Rate Not Found'));
+        }
+
 		if(!$booking_details)
 			throw new Exception(ucwords('Booking details not found!'));
 		else
@@ -110,13 +126,10 @@ class PaymentController
             "storeCard"           => false,
             "storeCardIndicator"  => "single",
             "callbackUrls" => [
-                "approved" => "https://pp-booking-apidev.herokuapp.com/success",
-                "declined" => "https://pp-booking-apidev.herokuapp.com/fail", 
-                "cancelled" => "https://pp-booking-apidev.herokuapp.com/cancel", 
-                //"approved" => "https://pp-booking-staging.netlify.app/success",
-                //"declined" => "https://pp-booking-staging.netlify.app/fail", 
-                //"cancelled" => "https://pp-booking-staging.netlify.app/cancel", 
-            ],
+                "approved" => "https://pp-booking-apidev.herokuapp.com/transaction/success",
+                "declined" => "https://pp-booking-apidev.herokuapp.com/transaction/fail", 
+                "cancelled" => "https://pp-booking-apidev.herokuapp.com/transaction/cancel"
+            ], 
             "notificationUrl" => "https://pp-booking-apidev.herokuapp.com/success"
         ];
 		
@@ -142,18 +155,25 @@ class PaymentController
         ];
 
         //get account property guest
-        /*$accountProperty = $api->guestAccountProperty($detailReservation['guestId']);
+        $accountProperty = $api->guestAccountProperty($booking_details->guest_id);//$detailReservation['guestId']);
         if ((isset($accountProperty['Message'])) || (count($accountProperty) == 0)) {
             throw new Exception('Account Property Guest Not Found');
         }
-
-        $accountPropertyId = $accountProperty[0]['id'];*/
+		
+        $accountPropertyId = $accountProperty[0]['id'];
 
         //do payment
         $postCardData = $api->windCavePostCardData($ajaxPostUrl, $paramPostCardData);
 		
 		if(isset($postCardData['links'][0]['rel']) && $postCardData['links'][0]['rel'] == '3DSecure')
 		{
+			$payment_record = new ModelPaymentDetails();
+			$payment_record->session_id = $postCardData['id'];
+			$payment_record->account_id = $accountPropertyId;
+			$payment_record->amount 	= $amount;
+			$payment_record->booking_id = $reservationId;
+			$payment_record->save();
+			
 			return [
 				'code'    => 1,
 				'status'  => 'success',
@@ -161,6 +181,11 @@ class PaymentController
 				'message' => "Waiting for 3D Secure Code verification"
 			];
 		}
+		
+		if(!isset($postCardData['id'])) {
+            throw new Exception('Wind Cave Transaction Detail Not Found');
+        }
+		
         $cardId = $postCardData['id'];
         $windCaveDetail = $api->windCaveTransactionDetail($cardId);
         if(isset($windCaveDetail['errors'])) {
@@ -168,6 +193,14 @@ class PaymentController
         }
 		
 		if($windCaveDetail['transactions'][0]['responseText'] == 'APPROVED') {
+			$payment_record = new ModelPaymentDetails();
+			$payment_record->session_id = $postCardData['id'];
+			$payment_record->account_id = $accountPropertyId;
+			$payment_record->amount 	= $amount;
+			$payment_record->booking_id = $reservationId;
+			$payment_record->payment_status = '1';
+			$payment_record->save();
+			
 			return [
 				'code'    => 1,
 				'status'  => 'success',
@@ -179,6 +212,12 @@ class PaymentController
 		}
 		else
 		{
+			$payment_record = new ModelPaymentDetails();
+			$payment_record->session_id = $postCardData['id'];
+			$payment_record->account_id = $accountPropertyId;
+			$payment_record->amount = $amount;
+			$payment_record->payment_status = '3';
+			$payment_record->save();
 			return [
 				'code'    => 0,
 				'status'  => 'error',
@@ -211,5 +250,42 @@ class PaymentController
             ];
             $api->transactionReceipt($paramTransactionReceipt);
         }	
+	}
+	
+	public function paymentSuccess(Request $request)
+	{
+        $session_id = (isset($request['sessionId']) && $request['sessionId'] != '') ? $request['sessionId'] : 0;
+		
+		$txn_details = ModelPaymentDetails::where('session_id', $request['sessionId'])->first();
+		if($txn_details)
+		{
+			$booking_id = $txn_details['booking_id'];
+			
+			$txn_details->payment_status = '1';
+			$txn_details->save();
+			
+			$booking_details = BookingDetails::select('email')->where('booking_id', $booking_id)->orWhere('id', $booking_id)->first();
+			return redirect(env('BOOKING_URL').'/#/thank-you/'.$booking_id.'/'.$booking_details['email']);
+		}
+		else
+		{
+			return redirect('https://privateproperties.com.au');
+		}
+	}
+	
+	public function paymentCancelled(Request $request)
+	{
+		$txn_details = ModelPaymentDetails::where('session_id', $request['sessionId'])->first();
+		$txn_details->payment_status = '2';
+		$txn_details->save();
+		return redirect(env('BOOKING_URL').'/#/payment/'.$booking_id);
+	}
+	
+	public function paymentFailed(Request $request)
+	{
+		$txn_details = ModelPaymentDetails::where('session_id', $request['sessionId'])->first();
+		$txn_details->payment_status = '3';
+		$txn_details->save();
+		return redirect(env('BOOKING_URL').'/#/payment/'.$booking_id);
 	}
 }

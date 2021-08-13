@@ -57,7 +57,7 @@ class BookingController
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 
-        /*$paramSearchGuest = [
+        $paramSearchGuest = [
             "surname" => $this->params['surname'],
             "given"   => $this->params['given'],
             "mobile"  => $this->params['phone'],
@@ -86,8 +86,7 @@ class BookingController
         } else {
             $searchGuest = collect($searchGuest)->first();
             $guestId = $searchGuest['id'];
-        }*/
-		$guestId = 19439;//temporarily added when Guest API was blocked
+        }
 		
 		$paramDetails = [
 							'arrivalDate'   => $this->params['dateFrom'],
@@ -240,7 +239,7 @@ class BookingController
 		$reservation['accomodation']	= $booking_details['accomodation_fee'];
 		$reservation['petFee']			= $booking_details['pet_fee'];
 		$reservation['pets']			= $booking_details['pets'];
-		$reservation['totalAmount']		= $booking_details['accomodation_fee'] + $booking_details['pet_fee'];
+		$reservation['totalAmount']		= $booking_details['accomodation_fee'] + ($booking_details['pets'] * $booking_details['pet_fee']);
 		$reservation['dueToday']		= $booking_details['due_today'];
 		
 		$areaData = PropertyAreaDetails::where('area_id', $booking_details['area_id'])
@@ -301,8 +300,38 @@ class BookingController
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 		
+		$paramSearchGuest = [
+            "surname" => $this->params['surname'],
+            "given"   => $this->params['given'],
+            "mobile"  => $this->params['phone'],
+        ];
+		
+        $searchGuest = $api->guestSearch($paramSearchGuest);
+        if((count($searchGuest) == 0) || (isset($searchGuest['Message']))) {
+            $paramCreateGuest = [
+                'addressLine1' => $this->params['address'],
+                'postCode'     => $this->params['postCode'],
+                'state'        => $this->params['state'],
+                'town'         => $this->params['town'],
+                'countryId'    => $this->params['countryId'],
+                'email'        => $this->params['email'],
+                'guestGiven'   => $this->params['given'],
+                'guestSurname' => $this->params['surname'],
+                'mobile'       => $this->params['phone'],
+                'propertyId'   => 1
+            ];
+
+            $createGuest = $api->createGuest($paramCreateGuest);
+            if(isset($createGuest['Message'])) {
+                throw new Exception(ucwords($createGuest['Message']));
+            }
+            $guestId = $createGuest['id'];
+        } else {
+            $searchGuest = collect($searchGuest)->first();
+            $guestId = $searchGuest['id'];
+        }
+		
 		$booking_details = BookingDetails::where('booking_id', $booking_id)->first();
-		$guestId = 19439;//temporarily added when Guest API was blocked
 
 		$booking_details->arrival_date   	= $this->params['dateFrom'];
 		$booking_details->departure_date 	= $this->params['dateTo'];
