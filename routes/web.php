@@ -18,15 +18,6 @@ $router->get('/', function () {
     $p = Redis::incr('p');
     return $p;
 });
-$router->get('fail/', function () {
-    return 'failed';
-});
-$router->get('success/', function () {
-    return 'Success';
-});
-$router->get('cancel/', function () {
-    return 'Cancelled';
-});
 
 $router->get('users_with_query', "UserController@getUser");
 $router->get('users_with_cache', "UserController@index");
@@ -55,20 +46,22 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
 		$router->get('get-availability-areas', 'PropertyController@getAvailabilityAreasByDate');
         $router->get('{id}', 'PropertyController@detail');
     });
-
-    $router->group(['prefix' => 'webhooks'], function () use ($router) {
-        $router->get('', 'WebhookController@getResponse');
-        $router->post('', 'WebhookController@getResponse');
-    });
 	
     $router->group(['prefix' => 'property-details'], function () use ($router) {
         $router->get('{id}', 'PropertyController@propertyAreaDetail');
     });
 	
-    $router->post('payment/{reservationId}', 'PaymentController@payment');
+	$router->post('payment/{reservationId}', 'PaymentController@payment');
     $router->get('countries', 'CountryController@list');
     $router->group(['prefix' => 'rate'], function () use ($router) {
         $router->get('', 'RateController@rateList');
     });
+	
+	$router->group(['prefix' => 'transaction'], function () use ($router) {
+		$router->get('success', 'PaymentController@paymentSuccess');
+		$router->get('fail', 'PaymentController@paymentFailed');
+		$router->get('cancel', 'PaymentController@paymentCancelled');
+	});
+
 });
 
