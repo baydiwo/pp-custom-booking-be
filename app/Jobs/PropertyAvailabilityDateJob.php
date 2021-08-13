@@ -35,7 +35,7 @@ class PropertyAvailabilityDateJob implements ShouldQueue
      *
      * @return void
      */
-    public $tries = 2;
+    public $tries = 1;
     public $timeout = 0;
     public function __construct($propertyId)
     {
