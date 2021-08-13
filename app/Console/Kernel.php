@@ -36,8 +36,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        //$schedule->job(new PropertyAvailabilityDateJob(env('PROPERTY_ID')))->everyFifteenMinutes();
-		$schedule->job(new PropertyAvailabilityDateJob(env('PROPERTY_ID')))->everyThirtyMinutes();
+        $schedule->job(new PropertyAvailabilityDateJob(env('PROPERTY_ID')))->everyFifteenMinutes();
+		//$schedule->job(new PropertyAvailabilityDateJob(env('PROPERTY_ID')))->everyThirtyMinutes();
         $schedule->job(new PropertyDetailsJob())->dailyAt('00:00');
 		
 		//12AM schedule - Perth Time
