@@ -44,7 +44,6 @@ class BookingController
                 'children'      => 'required|integer',
                 'infants'       => 'required|integer',
                 'address'       => 'required',
-                'rateTypeId'    => 'required|integer',
                 'state'         => 'required',
                 'town'          => 'required',
                 'countryId'     => 'required|integer',
@@ -88,6 +87,10 @@ class BookingController
             $guestId = $searchGuest['id'];
         }
 		
+		$from = Carbon::parse($this->params['dateFrom']);
+        $to = Carbon::parse($this->params['dateTo']);
+		$rate_type_id = $this->rateByDate($from, $to);
+		
 		$paramDetails = [
 							'arrivalDate'   => $this->params['dateFrom'],
 							'departureDate' => $this->params['dateTo'],
@@ -101,7 +104,7 @@ class BookingController
 							'infants'       => $this->params['infants'],
 							'notes'      	=> $this->params['notes'],
 							'address'       => $this->params['address'],
-							'rateTypeId'  	=> $this->params['rateTypeId'],
+							'rateTypeId'  	=> $rate_type_id,
 							'state'         => $this->params['state'],
 							'town'          => $this->params['town'],
 							'countryId'    	=> $this->params['countryId'],
@@ -127,7 +130,7 @@ class BookingController
 		$model->infants       	= $this->params['infants'];
 		$model->notes     		= $this->params['notes'];
 		$model->address       	= $this->params['address'];
-		$model->rate_type_id  	= $this->params['rateTypeId'];
+		$model->rate_type_id  	= $rate_type_id;
 		$model->state         	= $this->params['state'];
 		$model->town         	= $this->params['town'];
 		$model->country_id    	= $this->params['countryId'];
@@ -197,8 +200,8 @@ class BookingController
 						"categoryId" => $this->params['categoryId'],
 						"departureDate" => $this->params['dateTo']." 10:30:00",
 						"guestId" => 19439,
-						"rateTypeId" => $this->params['rateTypeId'],
-						"rateTypeName" => ($this->params['rateTypeId']+1)." Night OTA",
+						"rateTypeId" => $rate_type_id,
+						"rateTypeName" => ($rate_type_id+1)." Night OTA",
 						"status" => "Unconfirmed"
 					];
 		// End - temporarily added when reserbvation API was blocked
@@ -362,5 +365,36 @@ class BookingController
             'status' => 'success',
             'data' => ["id" => $booking_id] // temporarily commented, as the reserbvation API was blocked
         ];
+    }
+
+    public function rateByDate($dateFrom, $dateTo)
+    {
+        $diff = $dateFrom->diffInDays($dateTo);
+
+        if ($diff == 1 || $diff == 2) {
+            $rateId = 12;
+        }
+
+        if ($diff == 3) {
+            $rateId = 2;
+        }
+
+        if ($diff == 4) {
+            $rateId = 3;
+        }
+
+        if ($diff == 5) {
+            $rateId = 4;
+        }
+
+        if ($diff == 6) {
+            $rateId = 5;
+        }
+
+        if ($diff >= 7) {
+            $rateId = 6;
+        }
+
+        return $rateId;
     }
 }
