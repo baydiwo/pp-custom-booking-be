@@ -126,11 +126,11 @@ class PaymentController
             "storeCard"           => false,
             "storeCardIndicator"  => "single",
             "callbackUrls" => [
-                "approved" => "https://pp-booking-apidev.herokuapp.com/transaction/success",
-                "declined" => "https://pp-booking-apidev.herokuapp.com/transaction/fail", 
-                "cancelled" => "https://pp-booking-apidev.herokuapp.com/transaction/cancel"
+                "approved" => env('API_URL')."/transaction/success",
+                "declined" => env('API_URL')."/transaction/fail", 
+                "cancelled" => env('API_URL')."/transaction/cancel"
             ], 
-            "notificationUrl" => "https://pp-booking-apidev.herokuapp.com/success"
+            "notificationUrl" => env('API_URL')."/success"
         ];
 		
         $createPurchaseSessions = $api->windCaveCreatePurchaseSessions($paramsCreatePurchaseSessions);
