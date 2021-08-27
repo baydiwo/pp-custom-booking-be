@@ -104,7 +104,7 @@ class PaymentController
 
         $minNight = $api->availabilityrategrid($paramMinNight);
         if (!$minNight) {
-            throw new Exception(ucwords('Minimum Night Not Found'));
+            throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
         } elseif (isset($minNight['Message'])) {
             throw new Exception(ucwords($minNight['Message']));
         }
@@ -157,7 +157,7 @@ class PaymentController
         //get account property guest
         $accountProperty = $api->guestAccountProperty($booking_details->guest_id);//$detailReservation['guestId']);
         if ((isset($accountProperty['Message'])) || (count($accountProperty) == 0)) {
-            throw new Exception('Account Property Guest Not Found');
+            throw new Exception('Account Property of Guest Not Found');
         }
 		
         $accountPropertyId = $accountProperty[0]['id'];
@@ -278,7 +278,7 @@ class PaymentController
 		$txn_details = ModelPaymentDetails::where('session_id', $request['sessionId'])->first();
 		$txn_details->payment_status = '2';
 		$txn_details->save();
-		return redirect(env('BOOKING_URL').'/#/payment/'.$booking_id);
+		return redirect(env('BOOKING_URL').'/#/payment/'.$booking_id.'?stat=2');
 	}
 	
 	public function paymentFailed(Request $request)
@@ -286,6 +286,6 @@ class PaymentController
 		$txn_details = ModelPaymentDetails::where('session_id', $request['sessionId'])->first();
 		$txn_details->payment_status = '3';
 		$txn_details->save();
-		return redirect(env('BOOKING_URL').'/#/payment/'.$booking_id);
+		return redirect(env('BOOKING_URL').'/#/payment/'.$booking_id.'?stat=3');
 	}
 }
