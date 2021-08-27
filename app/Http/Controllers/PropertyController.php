@@ -100,7 +100,7 @@ class PropertyController
         $from = Carbon::createFromFormat('Y-m-d', $this->params['departureDate']);
         $data['categoryId']      = $areaData['category_id'];
         $data['areaName']    	 = $areaData['name'];
-        $data['town']    	 	 = $areaData['town'];
+        $data['town']    	 	 = $areaData['external_ref'];
         $data['description']     = $areaData['long_description'];
         $data['imageUrl']     	 = $areaData['image_link'];
         $data['bond']    	 	 = $areaData['bond'];
