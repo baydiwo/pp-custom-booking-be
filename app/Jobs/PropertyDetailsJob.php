@@ -223,7 +223,7 @@ class PropertyDetailsJob implements ShouldQueue
 	public static function requestCategoryDetails($id, $dataToken)
 	{
         $value = Cache::remember('category_' . $id, 10 * 60, function () use ($id, $dataToken) {
-            $endpoint = 'categories/' . $id;
+            $endpoint = 'categories/' . $id.'?modelType=full';
             $response = Http::withHeaders([
                 'authToken' => $dataToken
             ])->get(env('BASE_URL_RMS') . $endpoint);
