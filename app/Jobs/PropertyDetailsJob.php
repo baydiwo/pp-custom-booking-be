@@ -123,6 +123,23 @@ class PropertyDetailsJob implements ShouldQueue
 				$dataToken['token']
 			);
 			
+			$saveAreaAttribute = self::requestAreaAttribute(
+				$areaId,
+				$dataToken['token']
+			);
+			
+			$bathrooms = $bedrooms = 0;
+			$bed_list = ['1' => '165', '2' => '166', '3' => '167', '4' => '168', '5' => '169', '6' => '170', '8' => '177'];
+			$bath_list = ['1' => '171', '2' => '172', '3' => '173', '4' => '174', '5' => '175', '6' => '166', '7' => '178'];
+			foreach($saveAreaAttribute as $areaAttr)
+			{
+				if(in_array($areaAttr['id'], $bath_list))
+					$bathrooms = array_search($areaAttr['id'], $bath_list);
+					
+				if(in_array($areaAttr['id'], $bed_list))
+					$bedrooms = array_search($areaAttr['id'], $bed_list);
+			}
+			
 			$petsAllowed = (isset($saveAreaConfigDetails['petsAllowed']) && $saveAreaConfigDetails['petsAllowed'] == 'True') ? 1 : 0;
 			if(!$saveData){
 				$saveData = new PropertyAreaDetails();
@@ -145,8 +162,8 @@ class PropertyDetailsJob implements ShouldQueue
 			$saveData->long_description = $saveCategoryDetails['longDescription'];
 			$saveData->image_link 		= (isset($saveCategoryImage[0]['url']) && $saveCategoryImage[0]['url'] != '') ? $saveCategoryImage[0]['url'] : '';
 			$saveData->pets_allowed 	= $petsAllowed;
-			$saveData->total_bedrooms 	= $saveAreaConfigDetails['numberOfBedrooms'];
-			$saveData->total_baths 		= $saveAreaConfigDetails['numberOfFullBaths'];
+			$saveData->total_bedrooms 	= $bedrooms;//$saveAreaConfigDetails['numberOfBedrooms'];
+			$saveData->total_baths 		= $bathrooms;//$saveAreaConfigDetails['numberOfFullBaths'];
 			$saveData->created_date 	= $saveAreaDetails['createdDate'];
 			$saveData->property_id 		= $saveAreaDetails['propertyId'];
 			$saveData->bond 			= $saveAreaDetails['keyNumber2'];
@@ -154,7 +171,7 @@ class PropertyDetailsJob implements ShouldQueue
 			$saveData->created_date		= date('Y-m-d H:i:s');
 			$ss = $saveData;
 			$saveData->save();
-			sleep(1);
+			sleep(1); 
 		}
 
 		return [
@@ -238,6 +255,20 @@ class PropertyDetailsJob implements ShouldQueue
 	{
         $value = Cache::remember('category_images_' . $id, 10 * 60, function () use ($id, $dataToken) {
             $endpoint = 'categories/' . $id .'/images';
+            $response = Http::withHeaders([
+                'authToken' => $dataToken
+            ])->get(env('BASE_URL_RMS') . $endpoint);
+
+            return $response->json();
+        });
+
+        return $value;
+    }
+	
+	public static function requestAreaAttribute($id, $dataToken)
+	{
+        $value = Cache::remember('area_attributes' . $id, 10 * 60, function () use ($id, $dataToken) {
+            $endpoint = 'areas/'.$id.'/attributes';
             $response = Http::withHeaders([
                 'authToken' => $dataToken
             ])->get(env('BASE_URL_RMS') . $endpoint);
