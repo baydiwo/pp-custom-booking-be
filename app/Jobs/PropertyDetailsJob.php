@@ -130,7 +130,7 @@ class PropertyDetailsJob implements ShouldQueue
 			
 			$bathrooms = $bedrooms = 0;
 			$bed_list = ['1' => '165', '2' => '166', '3' => '167', '4' => '168', '5' => '169', '6' => '170', '8' => '177'];
-			$bath_list = ['1' => '171', '2' => '172', '3' => '173', '4' => '174', '5' => '175', '6' => '166', '7' => '178'];
+			$bath_list = ['1' => '171', '2' => '172', '3' => '173', '4' => '174', '5' => '175', '6' => '176', '7' => '178'];
 			foreach($saveAreaAttribute as $areaAttr)
 			{
 				if(in_array($areaAttr['id'], $bath_list))
