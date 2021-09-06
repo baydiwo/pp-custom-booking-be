@@ -42,6 +42,7 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
 		$router->get('cancel', 'PaymentController@paymentCancelled');
 	});
 
+    $router->get('countries', 'CountryController@list');
 });
 	
     $router->group(['prefix' => 'property'], function () use ($router) {
@@ -64,4 +65,3 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
         $router->get('{id}', 'PropertyController@propertyAreaDetail');
     });
 
-    $router->get('countries', 'CountryController@list');
