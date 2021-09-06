@@ -464,8 +464,12 @@ class PropertyController
             ->where('property_id', $this->params['propertyId'])
             ->where('date_from', '=', $from)
             ->first();
-        $api           = new ApiController($this->authToken, $this->request);
-        $detailArea = $api->detailArea($this->params['areaId']);
+			
+        //$api           = new ApiController($this->authToken, $this->request);
+        //$detailArea = $api->detailArea($this->params['areaId']);
+        
+		$checkAreaDetail =  PropertyAreaDetails::where('area_id', $this->params['areaId'])->first();
+		$detailArea['categoryId'] =  $checkAreaDetail->category_id;
 
         $new = json_decode($result->response);
         $tempRate = [];

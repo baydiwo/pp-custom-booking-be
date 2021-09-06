@@ -210,7 +210,7 @@ class BookingController
         return [
             'code' => 1,
             'status' => 'success',
-            'data' => $response//->json() // temporarily commented, as the reserbvation API was blocked
+            'data' => $response
         ];
     }
 	
