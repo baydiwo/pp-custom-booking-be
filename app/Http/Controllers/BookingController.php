@@ -115,7 +115,7 @@ class BookingController
 							'guestId'		=> $guestId,
 							'bookingSourceId' => 200
 						];
-		$booking_id = rand(6,100000);
+		//$booking_id = rand(6,100000);
 
 		$model = new BookingDetails();
 		$model->arrival_date   	= $this->params['dateFrom'];
@@ -156,7 +156,9 @@ class BookingController
 		$model->booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;*/
 		
 		// Start - temporarily added when reserbvation API was blocked
-		$model->booking_id = $booking_id;
+		$model->booking_id = 0;
+		$model->save();
+		$booking_details_id = $model->id;
 		$response = array();
 		$response = [
 						"adults" => $this->params['adults'],
@@ -192,7 +194,7 @@ class BookingController
 						"userDefined15" => "1900-01-01 00:00:00",
 						"voucherId" => "",
 						"wholesalerId" => 0,
-						"id" => $booking_id,
+						"id" => $booking_details_id,
 						"accountId" => 55262,
 						"areaId" => $this->params['areaId'],
 						"arrivalDate" => $this->params['dateFrom']." 15:00:00",
@@ -204,8 +206,6 @@ class BookingController
 						"rateTypeName" => ($rate_type_id+1)." Night OTA",
 						"status" => "Unconfirmed"
 					];
-		// End - temporarily added when reserbvation API was blocked
-		$model->save();
 		
         return [
             'code' => 1,
@@ -218,7 +218,7 @@ class BookingController
     {
         $api = new ApiController($this->authToken, $this->request);
 		$reservation = array();
-		$booking_details = BookingDetails::where('booking_id', $id)->orWhere('id', $id)->first();
+		$booking_details = BookingDetails::where('id', $id)->first();
 		
 		$reservation['arrivalDate'] 	= $booking_details['arrival_date'];
 		$reservation['departureDate']	= $booking_details['departure_date'];
@@ -334,7 +334,7 @@ class BookingController
             $guestId = $searchGuest['id'];
         }
 		
-		$booking_details = BookingDetails::where('booking_id', $booking_id)->first();
+		$booking_details = BookingDetails::where('id', $booking_id)->first();
 
 		$booking_details->arrival_date   	= $this->params['dateFrom'];
 		$booking_details->departure_date 	= $this->params['dateTo'];
@@ -363,7 +363,7 @@ class BookingController
         return [
             'code' => 1,
             'status' => 'success',
-            'data' => ["id" => $booking_id] // temporarily commented, as the reserbvation API was blocked
+            'data' => ["id" => $booking_id]
         ];
     }
 

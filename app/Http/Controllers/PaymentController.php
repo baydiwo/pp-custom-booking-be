@@ -34,30 +34,43 @@ class PaymentController
 
     public function payment($reservationId)
     {
+        $validator = Validator::make(
+            $this->params,
+            [
+                'cardHolderName' 	=> 'required',
+                'cardNumber'        => 'required',
+                'dateExpiryMonth'   => 'required',
+                'dateExpiryYear'    => 'required',
+                'cvc'               => 'required'
+            ]
+        );
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+        
         $api = new ApiController($this->authToken, $this->request);
 		
-		$booking_details = BookingDetails::where('booking_id', $reservationId)->orWhere('id', $reservationId)->first();
-		/*$paramDetails = [
-							'arrivalDate'   => $this->params['dateFrom'],
-							'departureDate' => $this->params['dateTo'],
-							'surname'		=> $this->params['surname'],
-							'given'         => $this->params['given'],
-							'email'         => $this->params['email'],
-							'adults'        => $this->params['adults'],
-							'areaId'       	=> $this->params['areaId'],
-							'categoryId'   	=> $this->params['categoryId'],
-							'children'      => $this->params['children'],
-							'infants'       => $this->params['infants'],
-							'notes'      	=> $this->params['notes'],
-							'address'       => $this->params['address'],
-							'rateTypeId'  	=> $this->params['rateTypeId'],
-							'state'         => $this->params['state'],
-							'town'          => $this->params['town'],
-							'countryId'    	=> $this->params['countryId'],
-							'nights'        => $this->params['nights'],
-							'phone'         => $this->params['phone'],
-							'postCode'     	=> $this->params['postCode'],
-							'pets'      	=> (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0,
+		$booking_details = BookingDetails::where('id', $reservationId)->first();
+		$paramDetails = [
+							'arrivalDate'   => $booking_details->dateFrom,
+							'departureDate' => $booking_details->dateTo,
+							'surname'		=> $booking_details->surname,
+							'given'         => $booking_details->given,
+							'email'         => $booking_details->email,
+							'adults'        => $booking_details->adults,
+							'areaId'       	=> $booking_details->areaId,
+							'categoryId'   	=> $booking_details->categoryId,
+							'children'      => $booking_details->children,
+							'infants'       => $booking_details->infants,
+							'notes'      	=> $booking_details->notes,
+							'address'       => $booking_details->address,
+							'rateTypeId'  	=> $booking_details->rateTypeId,
+							'state'         => $booking_details->state,
+							'town'          => $booking_details->town,
+							'countryId'    	=> $booking_details->countryId,
+							'nights'        => $booking_details->nights,
+							'phone'         => $booking_details->phone,
+							'postCode'     	=> $booking_details->postCode,
+							'pets'      	=> (isset($booking_details->pets) && $booking_details->pets != '') ? $booking_details->pets : 0,
 							'guestId'		=> $guestId,
 							'bookingSourceId' => 200
 						];
@@ -72,26 +85,14 @@ class PaymentController
             throw new Exception(ucwords($response['Message']));
         }
 		
-		$model->booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+		$booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+		$booking_details->booking_id = $booking_id;
+		$booking_details->save();
 		
-		
-        /*$detailReservation = $api->detailReservation($reservationId);
+        $detailReservation = $api->detailReservation($booking_id);
         if (isset($detailReservation['Message'])) {
             throw new Exception('Data Reservation Not Found');
-        }*/
-        $validator = Validator::make(
-            $this->params,
-            [
-                'cardHolderName' => 'required',
-                'cardNumber'        => 'required',
-                'dateExpiryMonth'   => 'required',
-                'dateExpiryYear'    => 'required',
-                'cvc'               => 'required'
-            ]
-        );
-        if ($validator->fails())
-            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
-        
+        }
 		
 		$paramMinNight = [
             'categoryIds' => [$booking_details['category_id']],
@@ -206,7 +207,7 @@ class PaymentController
 				'status'  => 'success',
 				'data'    => $postCardData['links'][0]['href'],
 				'email'	  => $booking_details['email'],
-				'booking_id' => $booking_details['booking_id'],
+				'booking_id' => $booking_id,
 				'message' => $windCaveDetail['transactions'][0]['responseText']
 			];
 		}
@@ -264,7 +265,7 @@ class PaymentController
 			$txn_details->payment_status = '1';
 			$txn_details->save();
 			
-			$booking_details = BookingDetails::select('email')->where('booking_id', $booking_id)->orWhere('id', $booking_id)->first();
+			$booking_details = BookingDetails::select('email')->where('id', $booking_id)->first();
 			return redirect(env('BOOKING_URL').'/#/thank-you/'.$booking_id.'/'.$booking_details['email']);
 		}
 		else
