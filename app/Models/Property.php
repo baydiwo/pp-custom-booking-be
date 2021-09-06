@@ -12,7 +12,7 @@ class Property extends Model
         'detail' => [
             'categoryId'      => 'required|integer',
             'areaId'          => 'required|integer',
-            'rateTypeId'      => 'required|integer',
+            //'rateTypeId'      => 'required|integer',
             'adults'          => 'required|integer',
             'children'        => 'required|integer',
             'infants'         => 'required|integer',
