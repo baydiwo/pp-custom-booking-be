@@ -55,7 +55,9 @@ class PropertyController
 	
     public function detail($id)
     {
+		$this->authToken = Cache::get('authToken')['token'];
         $api = new ApiController($this->authToken, $this->request);
+		
         $validator = Validator::make(
             $this->params,
             Property::$rules['detail']
@@ -91,7 +93,7 @@ class PropertyController
 		
 		$diffWeek = $now->diffInWeeks($from);
 		$petCount = (isset($this->params['pets']) && $this->params['pets'] > 0) ? $this->params['pets'] : 0;
-        $rateQuote = $api->rateQuote($paramsRateQuote);
+		$rateQuote = $api->rateQuote($paramsRateQuote);
 		
         if (isset($rateQuote['Message'])) {
             throw new Exception(ucwords($rateQuote['Message']));
