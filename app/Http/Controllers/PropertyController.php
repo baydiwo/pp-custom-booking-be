@@ -37,7 +37,7 @@ class PropertyController
 
     public function __construct(Request $request)
     {
-        $this->authToken = '';//Cache::get('authToken')['token'];
+        $this->authToken = Cache::get('authToken')['token'];
         $this->request = $request;
         $this->params  = $request->all();
     }
@@ -63,49 +63,19 @@ class PropertyController
 
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
-
-        $detailProperty = $api->detailProperty($id);
-
-        if ((count($detailProperty) == 0) || isset($detailProperty['Message'])) {
-            throw new Exception(ucwords('Detail Property Not Found'));
-        }
-
-        /*$paramMinNight = [
-            'categoryIds' => [$this->params['categoryId']],
-            'dateFrom'    => $this->params['arrivalDate'],
-            'dateTo'      => $this->params['departureDate'],
-            'propertyId'  => $id,
-            'rateIds'     => [$this->params['rateTypeId']]
-        ];
-
-        $minNight = $api->availabilityrategrid($paramMinNight);
-        if (!$minNight) {
-            throw new Exception(ucwords('Minimum Night Not Found'));
-        } elseif (isset($minNight['Message'])) {
-            throw new Exception(ucwords($minNight['Message']));
-        }
-        if (empty($minNight['categories'][0]['rates'])) {
-            throw new Exception(ucwords('Rate Not Found'));
-        }*/
-
-        $detailSetting = $api->detailPropertySetting($id);
-        if (isset($detailSetting['Message'])) {
-            throw new Exception(ucwords($detailSetting['Message']));
-        }
-
-        $detailCategory = $api->detailCategory($this->params['categoryId']);
-        if (isset($detailCategory['Message'])) {
-            throw new Exception(ucwords($detailCategory['Message']));
-        }
-
-        if (($this->params['adults'] + $this->params['infants'] + $this->params['children']) > $detailCategory['maxOccupantsPerCategory']) {
-            throw new Exception(ucwords('Occupants over limit'));
-        }
-
-        $areaConfiguration = $api->areaConfiguration($this->params['categoryId']);
-        if (isset($areaConfiguration['Message'])) {
-            throw new Exception(ucwords($areaConfiguration['Message']));
-        }
+		
+		$propertyData = PropertyDetails::select('name')->where('property_id', $id)
+            ->first();
+		
+		$areaData = PropertyAreaDetails::where('property_id', $id)
+            ->where('area_id', $this->params['areaId'])
+            ->where('category_id', $this->params['categoryId'])
+            ->first();
+		
+		$from = Carbon::parse($this->params['arrivalDate']);
+        $to = Carbon::parse($this->params['departureDate']);
+		$now = Carbon::now();
+        $this->params['rateTypeId'] = $this->rateByDate($from, $to);
 
         $paramsRateQuote = [
             'adults'        => $this->params['adults'],
@@ -118,35 +88,44 @@ class PropertyController
             'propertyId'    => $id,
             'rateTypeId'    => $this->params['rateTypeId'],
         ];
-
+		
+		$diffWeek = $now->diffInWeeks($from);
+		$petCount = (isset($this->params['pets']) && $this->params['pets'] > 0) ? $this->params['pets'] : 0;
         $rateQuote = $api->rateQuote($paramsRateQuote);
-
+		
         if (isset($rateQuote['Message'])) {
             throw new Exception(ucwords($rateQuote['Message']));
         }
         $to   = Carbon::createFromFormat('Y-m-d', $this->params['arrivalDate']);
         $from = Carbon::createFromFormat('Y-m-d', $this->params['departureDate']);
-        $data['propertyId']      = $id;
-        $data['propertyName']    = $detailProperty[0]['name'];
-        $data['petAllowed']      = $detailSetting['petsAllowed'];
-        $data['maxOccupants']    = $detailCategory['maxOccupantsPerCategory'];
+        $data['categoryId']      = $areaData['category_id'];
+        $data['areaName']    	 = $areaData['name'];
+        $data['town']    	 	 = $areaData['external_ref'];
+        $data['description']     = $areaData['long_description'];
+        $data['imageUrl']     	 = $areaData['image_link'];
+        $data['bond']    	 	 = $areaData['bond'];
+        $data['petAllowed']      = $areaData['pets_allowed'] == 0 ? false : true;
+        $data['petFee']          = $areaData['pets_allowed'] == 0 ? 0 : 150;
+        $data['maxOccupants']    = (integer)$areaData['max_occupants'];
+        $data['totalRooms']      = (integer)$areaData['total_rooms'];
         $data['totalGuests']     = $this->params['adults'] . ' adults, ' . $this->params['children'] . ' children, ' . $this->params['infants'] . ' infants';
-        $data['totalRooms']      = $detailCategory['numberOfAreas'];
-        $data['totalBedrooms']   = $areaConfiguration['numberOfBedrooms'];
-        $data['totalBaths']      = $areaConfiguration['numberOfFullBaths'];
+        $data['totalBedrooms']   = (integer)$areaData['total_bedrooms'];
+        $data['totalBaths']      = (integer)$areaData['total_baths'];
         $data['nights']          = $to->diffInDays($from);
         $data['accomodation']    = collect($rateQuote['rateBreakdown'])->sum('totalRate');
-        $data['petFee']          = $detailSetting['petsAllowed'] == false ? 0 : 150;
-        $data['totalAmount']     = $data['accomodation'] + $data['petFee'];
-        $data['dueToday']        = $rateQuote['firstNightRate'];
-
+        $data['totalAmount']     = $data['accomodation'] + ($petCount * $data['petFee']);
+		if($diffWeek > 3)
+        	$data['dueToday']        = number_format((0.3* $data['accomodation']) * 1.012,2);
+		else
+        	$data['dueToday']        = number_format($data['accomodation'] * 1.012,2);
+		
         return [
             'code' => 1,
             'status' => 'success',
             'data' => $data
         ];
     }
-
+	
     public function availabilityGrid()
     {
         $validator = Validator::make(
@@ -156,11 +135,6 @@ class PropertyController
 
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
-
-        // Cache::flush();
-        // Queue::pushOn(
-        // 'import-talent-queue',new PropertyJob()
-        // );
 
         dispatch(new PropertyJob($this->params['propertyId']));
         return [
@@ -183,8 +157,6 @@ class PropertyController
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
         $client = new Client([
             'http_errors'     => false,
-            // 'connect_timeout' => 1.50, //////////////// 0.50
-            // 'timeout'         => 2.00, //////////////// 1.00
             'headers' => [
                 'User-Agent' => 'Test/1.0',
                 'authToken' => $this->authToken,
@@ -197,125 +169,7 @@ class PropertyController
             $uris = env('BASE_URL_RMS') . $endpoint;
             $paramMinNight = [
                 'categoryIds' => [
-                    3,
-                    6,
-                    7,
-                    8,
-                    9,
-                    10,
-                    11,
-                    20,
-                    23,
-                    24,
-                    25,
-                    26,
-                    27,
-                    28,
-                    29,
-                    31,
-                    32,
-                    33,
-                    34,
-                    35,
-                    36,
-                    37,
-                    41,
-                    42,
-                    43,
-                    44,
-                    45,
-                    47,
-                    48,
-                    49,
-                    50,
-                    51,
-                    52,
-                    64,
-                    65,
-                    66,
-                    68,
-                    70,
-                    103,
-                    104,
-                    105,
-                    106,
-                    107,
-                    108,
-                    109,
-                    110,
-                    111,
-                    114,
-                    115,
-                    116,
-                    117,
-                    118,
-                    119,
-                    120,
-                    122,
-                    123,
-                    124,
-                    125,
-                    126,
-                    127,
-                    128,
-                    130,
-                    131,
-                    132,
-                    133,
-                    134,
-                    136,
-                    144,
-                    145,
-                    146,
-                    147,
-                    148,
-                    149,
-                    150,
-                    156,
-                    157,
-                    158,
-                    159,
-                    160,
-                    161,
-                    162,
-                    163,
-                    164,
-                    165,
-                    166,
-                    167,
-                    168,
-                    169,
-                    170,
-                    171,
-                    173,
-                    174,
-                    175,
-                    176,
-                    177,
-                    178,
-                    179,
-                    181,
-                    183,
-                    184,
-                    185,
-                    186,
-                    187,
-                    188,
-                    189,
-                    216,
-                    217,
-                    219,
-                    220,
-                    221,
-                    222,
-                    263,
-                    264,
-                    265,
-                    266,
-                    267,
-                    268,
-                    269,
-                    270
+                    3, 6, 7, 8, 9, 10, 11, 20, 23, 24, 25, 26, 27, 28, 29, 31, 32, 33, 34, 35, 36, 37, 41, 42, 43, 44, 45, 47, 48, 49, 50, 51, 52, 64, 65, 66, 68, 70, 103, 104, 105, 106, 107, 108, 109, 110, 111, 114, 115, 116, 117, 118, 119, 120, 122, 123, 124, 125, 126, 127, 128, 130, 131, 132, 133, 134, 136, 144, 145, 146, 147, 148, 149, 150, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 173, 174, 175, 176, 177, 178, 179, 181, 183, 184, 185, 186, 187, 188, 189, 216, 217, 219, 220, 221, 222, 263, 264, 265, 266, 267, 268, 269, 270
                 ],
                 'dateFrom'    => "2021-01-01",
                 'dateTo'      => "2021-01-15",
@@ -336,10 +190,7 @@ class PropertyController
         $pool = new Pool($client, $requests($concurrent), [
             'concurrency' => $concurrent,
             'fulfilled' => function ($response, $index) use ($responses) {
-                // $body = $response->getBody();
-
                 $content = $response->getReasonPhrase();
-                // $content = $body->getContents();
                 $responses[$index] = $content;
             },
             'rejected' => function (ConnectException $reason, $index) use ($responses) {
@@ -353,8 +204,6 @@ class PropertyController
         // Force the pool of requests to complete.
         $promise->wait();
 
-        // foreach ($promise as $key => $value) {
-        // }
         return [
             'code' => 1,
             'status' => 'success',
@@ -416,7 +265,6 @@ class PropertyController
         $result = Property::select('response')
             ->where('property_id', $this->params['propertyId'])
             ->where('area_id', $this->params['areaId'])
-            // ->whereBetween('date_from', [$from, $to])
             ->where('date_from', '<=', $from)
             ->orderBy('date_from', 'DESC')
             ->first();
@@ -436,7 +284,6 @@ class PropertyController
                     $result2 = Property::select('response')
                     ->where('property_id', $this->params['propertyId'])
                     ->where('area_id', $this->params['areaId'])
-                    // ->whereBetween('date_from', [$from, $to])
                     ->where('date_from', '<=', $to)
                     ->orderBy('date_from', 'DESC')
                     ->first();        
@@ -451,23 +298,6 @@ class PropertyController
             $merge = $dayBreakDown->merge($dayBreakDown2)->all();
             $collect->dayBreakdown = $merge;
         }
-        // $name = "prop1_area_".$this->params['areaId']."_from_".$this->params['dateFrom'].
-        // "_to_". $this->params['dateTo'];
-
-        // $redis = Cache::getRedis();
-        // $keys = $redis->keys("*{$name}*");
-        // // $count = 0;
-        // $result = [];
-
-        // foreach ($keys as $key) {
-        //     $result[] = $red
-
-        // }      
-
-        // $newResult  = [];
-        // foreach ($result as $value) {
-        //     $newResult[] = unserialize($value);
-        // }
 
         return [
             'code' => $collect == NULL ? 0 : 1,
@@ -480,52 +310,8 @@ class PropertyController
                 ]
             ]
         ];
-
-
+		
         return $result;
-
-        // $api = new ApiController($this->authToken, $this->request);
-        // $listProperty = $api->listProperty();
-
-        // $dateInYear = $this->getDateInYear(date("Y")."-01-01", date("Y")."-12-31");
-        // $chunck = array_chunk($dateInYear, 14);
-        // $push = [];
-        // $temp = "";
-        // for ($i=0; $i <= count($chunck[0]) ; $i++) { 
-        //     for ($j=0; $j < $i; $j++) { 
-        //         $push[$i][$j] = $chunck[0][$j];
-        //     }
-        // }
-
-        // $push2 = [];
-        // foreach ($push as $key => $value) {
-        //     if($key != 1) {
-        //         $push2[$key]['first']= reset($value);
-        //         $push2[$key]['last']= end($value);
-        //     }
-        // }
-
-        // $newArrayValue = array_values($push2);
-        // if($listProperty) {
-        //     foreach ($listProperty as $keyProp => $valueProp) {
-        //         foreach ($newArrayValue as $keyNew => $valueNew) {
-        //             $paramMinNight = [
-        //                 'categoryIds' => [$this->params['categoryId']],
-        //                 'dateFrom'    => $valueNew['first'],
-        //                 'dateTo'      => $valueNew['last'],
-        //                 'propertyId'  => $valueProp['id'],
-        //                 'rateIds'     => [$this->params['rateIds']]
-        //             ];    
-
-        //             Cache::remember('min_night_prop'.$valueProp['id']."from {$valueNew['first']} - to {$valueNew['last']}"
-        //             , 10 * 60, function () use ($api, $paramMinNight) {
-        //                 return $api->availabilityrategrid($paramMinNight);
-        //             });
-        //         }
-        //     }
-        // }
-
-        // return "Data Has Been Saved in Cache";
     }
 
     public function checkAvailabilityConcurrent()
@@ -549,24 +335,12 @@ class PropertyController
             throw new Exception("Date from Cannot Greater From One Year");
         }
         $diff = $from->diffInDays($to);
-        // if ($diff > 14) {
-        //     throw new Exception("Different Days Cannot Greater Than 14 Days");
-        // }
-        // if ($fromYear != date('Y')) {
-        //     throw new Exception("Date from  Cannot Greater From This Year");
-        // }
-
-        // if ($fromTo != date('Y')) {
-        //     throw new Exception("Date to  Cannot Greater From This Year");
-        // }
 
         $getRate = $this->rateByDate($from, $to);
 
         $result = ModelPropertyJob::select('response')
             ->where('property_id', $this->params['propertyId'])
-            // ->whereBetween('date_from', [$from, $to])
             ->where('date_from', '=', $from)
-            // ->where('date_from', '<=', $to)
             ->first();
         $api           = new ApiController($this->authToken, $this->request);
         $detailArea = $api->detailArea($this->params['areaId']);
@@ -579,76 +353,75 @@ class PropertyController
             array_push($tempRate, $dataRate);
         }
 
-            foreach ($tempRate as $valuetempRate) {
-                foreach ($valuetempRate['rates'] as $valueDatatempRate) {
-                    $countBreakDown = count($valueDatatempRate['dayBreakdown']);
-                    $getRate = $this->rateByDate($from, $to);
-                        if($diff <= 7) {
-                            if($diff == $countBreakDown) {
-                                if($getRate == $valueDatatempRate['rateId']) { 
-                                    return [
-                                        'code' => 1,
-                                        'status' => 'success',
-                                        'data' => [
-                                            "categories" => [
-                                                "categoryId" => $valuetempRate['categoryId'],
-                                                "name" => $valuetempRate['name'],
-                                                "rates" => $valueDatatempRate
-                                            ]
-                                        ]
-                                    ];
-                                } 
-                            }							
-                        } else {
-                            $return = [];
-                            if($valueDatatempRate['rateId'] == 6) {
-                                $dateInYear = $this->getDateInYear($from, $to);
-                                $getLast = collect($valueDatatempRate['dayBreakdown'])->last();
-                                foreach ($dateInYear as $keydateInYear => $valuedateInYear) {
-                                        $dateValueRate = Carbon::parse($valuedateInYear);
-                                        $dateValueRateNow = Carbon::parse($getLast['theDate']);
-                                        if($dateValueRate->gt($dateValueRateNow)){
-                                            if($dateValueRate != $to) {
+		foreach ($tempRate as $valuetempRate) {
+			foreach ($valuetempRate['rates'] as $valueDatatempRate) {
+				$countBreakDown = count($valueDatatempRate['dayBreakdown']);
+				$getRate = $this->rateByDate($from, $to);
+					if($diff <= 7) {
+						if($diff == $countBreakDown) {
+							if($getRate == $valueDatatempRate['rateId']) { 
+								return [
+									'code' => 1,
+									'status' => 'success',
+									'data' => [
+										"categories" => [
+											"categoryId" => $valuetempRate['categoryId'],
+											"name" => $valuetempRate['name'],
+											"rates" => $valueDatatempRate
+										]
+									]
+								];
+							} 
+						}							
+					} else {
+						$return = [];
+						if($valueDatatempRate['rateId'] == 6) {
+							$dateInYear = $this->getDateInYear($from, $to);
+							$getLast = collect($valueDatatempRate['dayBreakdown'])->last();
+							foreach ($dateInYear as $keydateInYear => $valuedateInYear) {
+									$dateValueRate = Carbon::parse($valuedateInYear);
+									$dateValueRateNow = Carbon::parse($getLast['theDate']);
+									if($dateValueRate->gt($dateValueRateNow)){
+										if($dateValueRate != $to) {
 
-                                                $parse = [
-                                                    "availableAreas" => $getLast['availableAreas'],
-                                                    "closedOnArrival" => $getLast['closedOnArrival'],
-                                                    "closedOnDeparture" => $getLast['closedOnDeparture'],
-                                                    "dailyRate" => $getLast['dailyRate'],
-                                                    "theDate" => $dateValueRate->format('Y-m-d H:i:s'),
-                                                    "minStay" => $getLast['minStay'],
-                                                    "minStayOnArrival" => $getLast['minStayOnArrival'],
-                                                    "stopSell" => false,
-                                                ];
-    
-                                                array_push($valueDatatempRate['dayBreakdown'], $parse);
-                                            }
-                                        }
-                                    }
+											$parse = [
+												"availableAreas" => $getLast['availableAreas'],
+												"closedOnArrival" => $getLast['closedOnArrival'],
+												"closedOnDeparture" => $getLast['closedOnDeparture'],
+												"dailyRate" => $getLast['dailyRate'],
+												"theDate" => $dateValueRate->format('Y-m-d H:i:s'),
+												"minStay" => $getLast['minStay'],
+												"minStayOnArrival" => $getLast['minStayOnArrival'],
+												"stopSell" => false,
+											];
 
-                                return [
-                                    'code' => 1,
-                                    'status' => 'success',
-                                    'data' => [
-                                        "categories" => [
-                                            "categoryId" => $valuetempRate['categoryId'],
-                                            "name" => $valuetempRate['name'],
-                                            "rates" => $valueDatatempRate
-                                        ]
-                                    ]
-                                ];
+											array_push($valueDatatempRate['dayBreakdown'], $parse);
+										}
+									}
+								}
 
-                            }
-                    }
+							return [
+								'code' => 1,
+								'status' => 'success',
+								'data' => [
+									"categories" => [
+										"categoryId" => $valuetempRate['categoryId'],
+										"name" => $valuetempRate['name'],
+										"rates" => $valueDatatempRate
+									]
+								]
+							];
+
+						}
+				}
 
 
-                }
-            }
+			}
+		}
     }
 	
     public function checkAvailabilityConcurrentNew($areaID = 0, $propertyID = 0, $dateFrom = '', $dateTo = '', $postParams = array())
     {
-		
         $nonFeePackageArea = [221, 124, 66, 67, 68, 70];
 
         $feePackage = 66;
@@ -666,7 +439,7 @@ class PropertyController
 				$this->params['dateFrom'] = $dateFrom;
 			if($dateTo != '')
 				$this->params['dateTo'] = $dateTo;
-		}
+		}			
 
         $validator = Validator::make(
             $this->params,
@@ -941,7 +714,6 @@ class PropertyController
                     $result2 = Property::select('response')
                     ->where('property_id', $this->params['propertyId'])
                     ->where('area_id', $this->params['areaId'])
-                    // ->whereBetween('date_from', [$from, $to])
                     ->where('date_from', '<=', $to)
                     ->orderBy('date_from', 'DESC')
                     ->first();   
@@ -1000,7 +772,8 @@ class PropertyController
             }
 
             $rest = [];
-        if($dayBreakDown){
+        	
+			if($dayBreakDown){
                 //check another date to
                 $dateMin1 = Carbon::parse($to)->subDays(1);
 
@@ -1058,10 +831,8 @@ class PropertyController
             });
             $collect->dayBreakdown = $return;
 
-            return $collect;    
-
+            return $collect;
         }
-
     }
 
     public function getDateInYear($first, $last, $step = '+1 day', $output_format = 'Y-m-d')
@@ -1155,6 +926,8 @@ class PropertyController
 			
 		if(isset($this->params['jobId']) && $this->params['jobId'] == 1)
 			dispatch(new PropertyAvailabilityDateJob($this->params['propertyId']));
+		else if(isset($this->params['jobId']) && $this->params['jobId'] == 2)
+			dispatch(new PropertyDetailsJob($this->params['propertyId']));
 		else
 			dispatch(new PropertyConcurrentJob($this->params['propertyId']));
 		
@@ -1165,34 +938,6 @@ class PropertyController
             'message' => "Data Has Been Saved in Cache"
         ];
     }
-	
-	public function detail_bkp($id)
-	{
-		$from = Carbon::parse($this->params['arrivalDate'])->format('Y-m-d');
-		$to = Carbon::parse($this->params['departureDate'])->format('Y-m-d');
-		$priceData = $this->checkAvailabilityConcurrentNew($this->params['areaId'], $id, $from, $to);
-
-		$price = 0;
-		foreach($priceData as $data)
-		{
-			$price+=$data['dailyRate'];
-		}
-		$check = PropertyDetails::where('property_id', $id)
-								->first();
-		if(isset($check->pets_allowed) && $check->pets_allowed == 1)
-			$pet_fee = env('PET_PRICE');
-		else
-			$pet_fee = 0;
-
-		return [
-				'code' => 1,
-				'status' => 'success',
-				'data' => [
-					"accomodation_fee" => $price,
-					"pet_fee" => $pet_fee
-					]
-				];
-	}
 	
 	public function propertyAreaDetail($id)
 	{
@@ -1338,21 +1083,21 @@ class PropertyController
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 		
-	$this->params['dateTo'] = Carbon::createFromFormat('Y-m-d', $this->params['dateTo'])->addDays(-1)->format('Y-m-d');
+		$this->params['dateTo'] = Carbon::createFromFormat('Y-m-d', $this->params['dateTo'])->addDays(-1)->format('Y-m-d');
 			
-	$dateAvail = AvailabilityDate::select('area_details.area_id', 'availability_date.date_from')->whereBetween('availability_date.date_from', [$this->params['dateFrom'],$this->params['dateTo']])
-									->leftJoin('area_details', 'area_details.category_id', '=', 'availability_date.category_id')
-									->where('availability_date.available_area', 1)
-									->orderBy('area_details.area_id','ASC')
-									->get();
-
-
-	$availCategories = $availAreas = [];
-	foreach($dateAvail as $dateResult)
-	{
-		$availCategories[$dateResult['area_id']][] = $dateResult['date_from'];
-	}
-	$from = Carbon::parse($this->params['dateFrom']);
+		$dateAvail = AvailabilityDate::select('area_details.area_id', 'availability_date.date_from')->whereBetween('availability_date.date_from', [$this->params['dateFrom'],$this->params['dateTo']])
+										->leftJoin('area_details', 'area_details.category_id', '=', 'availability_date.category_id')
+										->where('availability_date.available_area', 1)
+										->orderBy('area_details.area_id','ASC')
+										->get();
+		
+			
+		$availCategories = $availAreas = [];
+		foreach($dateAvail as $dateResult)
+		{
+			$availCategories[$dateResult['area_id']][] = $dateResult['date_from'];
+		}
+		$from = Carbon::parse($this->params['dateFrom']);
         $to = Carbon::parse($this->params['dateTo']);
         $diff = $from->diffInDays($to) + 1;
 
