@@ -43,6 +43,10 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
 	});
 
     $router->get('countries', 'CountryController@list');
+    $router->group(['prefix' => 'properties'], function () use ($router) {
+        $router->get('{id}', 'PropertyController@detail');
+    });
+
 });
 	
     $router->group(['prefix' => 'property'], function () use ($router) {
@@ -58,7 +62,7 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
 		$router->get('get-availability-dates', 'PropertyController@getAvailabilityDatesByArea');
 		$router->get('get-availability-dates-arrival', 'PropertyController@getAvailabilityDatesADByArea');
 		$router->get('get-availability-areas', 'PropertyController@getAvailabilityAreasByDate');
-        $router->get('{id}', 'PropertyController@detail');
+        //$router->get('{id}', 'PropertyController@detail');
     });
 	
     $router->group(['prefix' => 'property-details'], function () use ($router) {
