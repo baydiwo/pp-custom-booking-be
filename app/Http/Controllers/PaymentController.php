@@ -59,11 +59,11 @@ class PaymentController
             'rateIds'     => [$booking_details['rate_type_id']]
         ];
 		
-		print_r($paramMinNight);
-		die;
-		
 
         $minNight = $api->availabilityrategrid($paramMinNight);
+		
+		print_r($paramMinNight);
+		die;
         if (!$minNight) {
             throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
         } elseif (isset($minNight['Message'])) {
