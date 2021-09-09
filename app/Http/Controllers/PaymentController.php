@@ -59,6 +59,9 @@ class PaymentController
             'rateIds'     => [$booking_details['rate_type_id']]
         ];
 		
+		print_r($paramMinNight);
+		die;
+		
 
         $minNight = $api->availabilityrategrid($paramMinNight);
         if (!$minNight) {
