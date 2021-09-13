@@ -73,8 +73,16 @@ class PaymentController
 		if(!$booking_details)
 			throw new Exception(ucwords('Booking details not found!'));
 		else
-			$amount = $booking_details['accomodation_fee'] + ($booking_details['pets'] * $booking_details['pet_fee']);
-		$amount = number_format($amount,2);
+		{
+			$now = Carbon::now();
+			$from_date = Carbon::parse($booking_details['arrival_date']);
+			$diffWeek = $now->diffInWeeks($from);
+			
+			if($diffWeek > 3)
+				$amount        = number_format((0.3* $booking_details['accomodation_fee']) * 1.012, 2);
+			else
+				$amount        = number_format($booking_details['accomodation_fee'] * 1.012, 2);
+		}
 		
         $paramsCreatePurchaseSessions = [
             "type"                => "purchase",
