@@ -60,7 +60,6 @@ class PaymentController
         ];
 		
         $minNight = $api->availabilityrategrid($paramMinNight);
-		print_r($minNight);
 		
         if (!$minNight) {
             throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
@@ -162,7 +161,8 @@ class PaymentController
 			$payment_record->payment_status = '1';
 			$payment_record->save();
 			
-			$booking_id = $this->updateTransactionDetails($postCardData['id']);
+			//$booking_id = $this->updateTransactionDetails($postCardData['id']);
+			$booking_id = 1;
 			
 			return [
 				'code'    => 1,
@@ -259,7 +259,8 @@ class PaymentController
 			
 			$txn_details->payment_status = '1';
 			$txn_details->save();
-			$booking_id = $this->updateTransactionDetails($request['sessionId']);
+			//$booking_id = $this->updateTransactionDetails($request['sessionId']);
+			$booking_id = 1;
 			
 			$booking_details = BookingDetails::select('email')->where('id', $booking_details_id)->first();
 			return redirect(env('BOOKING_URL').'/#/thank-you/'.$booking_id.'/'.$booking_details['email']);
