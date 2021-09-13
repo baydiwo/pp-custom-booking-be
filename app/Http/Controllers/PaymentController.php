@@ -246,6 +246,7 @@ class PaymentController
 			if($result)
 			{
 				$payment_details->rms_updated = 1;
+				$payment_details->booking_id = $booking_id;
 				$payment_details->save();
 			}
 			return $booking_id;
