@@ -60,7 +60,6 @@ class PaymentController
         ];
 		
         $minNight = $api->availabilityrategrid($paramMinNight);
-		print_r($minNight);
 		
         if (!$minNight) {
             throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
@@ -101,8 +100,6 @@ class PaymentController
             }
             throw new Exception($messageErrorPurchaseSessions);
         }
-		print_r($createPurchaseSessions);
-		die;
 		
         $ajaxPostUrl = $createPurchaseSessions['links'][2]['href'];
         $paramPostCardData = [
