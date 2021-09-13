@@ -193,27 +193,27 @@ class PaymentController
 			
 			$booking_details = BookingDetails::where('id', $payment_details['booking_details_id'])->first();
 			$paramDetails = [
-								'arrivalDate'   => $booking_details->dateFrom,
-								'departureDate' => $booking_details->dateTo,
+								'arrivalDate'   => $booking_details->arrival_date,
+								'departureDate' => $booking_details->departure_date,
 								'surname'		=> $booking_details->surname,
 								'given'         => $booking_details->given,
 								'email'         => $booking_details->email,
 								'adults'        => $booking_details->adults,
-								'areaId'       	=> $booking_details->areaId,
-								'categoryId'   	=> $booking_details->categoryId,
+								'areaId'       	=> $booking_details->area_id,
+								'categoryId'   	=> $booking_details->category_id,
 								'children'      => $booking_details->children,
 								'infants'       => $booking_details->infants,
 								'notes'      	=> $booking_details->notes,
 								'address'       => $booking_details->address,
-								'rateTypeId'  	=> $booking_details->rateTypeId,
+								'rateTypeId'  	=> $booking_details->rate_type_id,
 								'state'         => $booking_details->state,
 								'town'          => $booking_details->town,
-								'countryId'    	=> $booking_details->countryId,
+								'countryId'    	=> $booking_details->country_id,
 								'nights'        => $booking_details->nights,
 								'phone'         => $booking_details->phone,
-								'postCode'     	=> $booking_details->postCode,
+								'postCode'     	=> $booking_details->post_code,
 								'pets'      	=> (isset($booking_details->pets) && $booking_details->pets != '') ? $booking_details->pets : 0,
-								'guestId'		=> $guestId,
+								'guestId'		=> $booking_details->guest_id,
 								'bookingSourceId' => 200
 							];
 							
@@ -241,6 +241,12 @@ class PaymentController
                 'useRmsAccountingDateForPostingDate' => "true",
             ];
             $result = $api->transactionReceipt($paramTransactionReceipt);
+			
+			if($result)
+			{
+				$payment_details->rms_updated = 1;
+				$payment_details->save();
+			}
 			return $booking_id;
         }	
 	}
