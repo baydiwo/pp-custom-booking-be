@@ -59,7 +59,6 @@ class PaymentController
             'rateIds'     => [$booking_details['rate_type_id']]
         ];
 		
-		print_r($paramMinNight);
         $minNight = $api->availabilityrategrid($paramMinNight);
 		
         if (!$minNight) {
@@ -101,8 +100,6 @@ class PaymentController
             }
             throw new Exception($messageErrorPurchaseSessions);
         }
-		print_r($createPurchaseSessions);
-		die;
 		
         $ajaxPostUrl = $createPurchaseSessions['links'][2]['href'];
         $paramPostCardData = [
