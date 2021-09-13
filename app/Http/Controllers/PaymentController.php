@@ -60,6 +60,7 @@ class PaymentController
         ];
 		
         $minNight = $api->availabilityrategrid($paramMinNight);
+		print_r($minNight);
 		
         if (!$minNight) {
             throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
