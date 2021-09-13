@@ -188,6 +188,7 @@ class PaymentController
 	
 	private function updateTransactionDetails($sessionID)
 	{
+		$api = new ApiController($this->authToken, $this->request);
 		$payment_details = ModelPaymentDetails::where('session_id', $sessionID)->first();
         if($payment_details) {
 			
