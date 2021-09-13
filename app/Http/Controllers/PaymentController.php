@@ -161,8 +161,7 @@ class PaymentController
 			$payment_record->payment_status = '1';
 			$payment_record->save();
 			
-			//$booking_id = $this->updateTransactionDetails($postCardData['id']);
-			$booking_id = 1;
+			$booking_id = $this->updateTransactionDetails($postCardData['id']);
 			
 			return [
 				'code'    => 1,
@@ -259,8 +258,7 @@ class PaymentController
 			
 			$txn_details->payment_status = '1';
 			$txn_details->save();
-			//$booking_id = $this->updateTransactionDetails($request['sessionId']);
-			$booking_id = 1;
+			$booking_id = $this->updateTransactionDetails($request['sessionId']);
 			
 			$booking_details = BookingDetails::select('email')->where('id', $booking_details_id)->first();
 			return redirect(env('BOOKING_URL').'/#/thank-you/'.$booking_id.'/'.$booking_details['email']);
