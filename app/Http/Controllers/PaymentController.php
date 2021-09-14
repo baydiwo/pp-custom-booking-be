@@ -164,6 +164,7 @@ class PaymentController
 			$payment_record->account_id = $accountPropertyId;
 			$payment_record->amount 	= $amount;
 			$payment_record->booking_details_id = $reservationId;
+			$payment_record->txn_refno = $windCaveDetail['transactions'][0]['id'];
 			$payment_record->payment_status = '1';
 			$payment_record->save();
 			
@@ -247,8 +248,11 @@ class PaymentController
                 'dateOfTransaction'                  => Carbon::now(),
                 'receiptType'                        => "CreditCard",
                 'source'                             => "Standard",
-                'useRmsAccountingDateForPostingDate' => "true",
+                'useRmsAccountingDateForPostingDate' => "true"
             ];
+			if($payment_details['txn_refno'] != '')
+				$paramTransactionReceipt['transactionReference'] = $payment_details['txn_refno'];
+			
             $result = $api->transactionReceipt($paramTransactionReceipt);
 			
 			if($result)
