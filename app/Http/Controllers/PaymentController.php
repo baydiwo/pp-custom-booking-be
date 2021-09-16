@@ -159,13 +159,12 @@ class PaymentController
             ]
         ];
 
-        //get account property guest
-        $accountProperty = $api->guestAccountProperty($booking_details->guest_id);//$detailReservation['guestId']);
-        if ((isset($accountProperty['Message'])) || (count($accountProperty) == 0)) {
-            throw new Exception('Account Property of Guest Not Found');
-        }
-		
-        $accountPropertyId = $accountProperty[0]['id'];
+        //get account property based on Booking ID
+		$reservationDetails = $api->getReservationDetails($booking_id);
+		if(isset($reservationDetails['Message'])) {
+			throw new Exception(ucwords($reservationDetails['Message']));
+		}
+        $accountPropertyId = $reservationDetails['accountId'];
 
         //do payment
         $postCardData = $api->windCavePostCardData($ajaxPostUrl, $paramPostCardData);
@@ -262,7 +261,7 @@ class PaymentController
 				//$payment_details->booking_id = $booking_id;
 				$payment_details->save();
 			}
-			return $booking_id;
+			return $payment_details['booking_id'];
         }	
 	}
 	
