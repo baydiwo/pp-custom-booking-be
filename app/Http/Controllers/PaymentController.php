@@ -84,6 +84,45 @@ class PaymentController
 				$amount        = number_format($booking_details['accomodation_fee'] * 1.012, 2);
 		}
 		
+		$paramDetails = [
+							'arrivalDate'   => $booking_details['arrival_date'],
+							'departureDate' => $booking_details['departure_date'],
+							'surname'		=> $booking_details['surname'],
+							'given'         => $booking_details['given'],
+							'email'         => $booking_details['email'],
+							'adults'        => $booking_details['adults'],
+							'areaId'       	=> $booking_details['area_id'],
+							'categoryId'   	=> $booking_details['category_id'],
+							'children'      => $booking_details['children'],
+							'infants'       => $booking_details['infants'],
+							'notes'      	=> $booking_details['notes'],
+							'address'       => $booking_details['address'],
+							'rateTypeId'  	=> $booking_details['rate_type_id'],
+							'state'         => $booking_details['state'],
+							'town'          => $booking_details['town'],
+							'countryId'    	=> $booking_details['country_id'],
+							'nights'        => $booking_details['nights'],
+							'phone'         => $booking_details['phone'],
+							'postCode'     	=> $booking_details['post_code'],
+							'pets'      	=> (isset($booking_details['pets']) && $booking_details['pets'] != '') ? $booking_details['pets'] : 0,
+							'guestId'		=> $booking_details['guest_id'],
+							'bookingSourceId' => 200
+						];
+						
+		$endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
+
+		$response = Http::withHeaders([
+			'authtoken' => $this->authToken
+		])->post(env('BASE_URL_RMS') . $endpoint, $paramDetails);
+
+		if(isset($response['Message'])) {
+			throw new Exception(ucwords($response['Message']));
+		}
+		
+		$booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+		$booking_details->booking_id = $booking_id;
+		$booking_details->save();
+		
         $paramsCreatePurchaseSessions = [
             "type"                => "purchase",
             "amount"              => $amount,
@@ -138,6 +177,7 @@ class PaymentController
 			$payment_record->account_id = $accountPropertyId;
 			$payment_record->amount 	= $amount;
 			$payment_record->booking_details_id = $reservationId;
+			$payment_record->booking_id = $booking_id;
 			$payment_record->save();
 			
 			return [
@@ -164,11 +204,12 @@ class PaymentController
 			$payment_record->account_id = $accountPropertyId;
 			$payment_record->amount 	= $amount;
 			$payment_record->booking_details_id = $reservationId;
+			$payment_record->booking_id = $booking_id;
 			$payment_record->txn_refno = $windCaveDetail['transactions'][0]['id'];
 			$payment_record->payment_status = '1';
 			$payment_record->save();
 			
-			$booking_id = $this->updateTransactionDetails($postCardData['id']);
+			$booking_ref_id = $this->updateTransactionDetails($postCardData['id']);
 			
 			return [
 				'code'    => 1,
@@ -186,6 +227,7 @@ class PaymentController
 			$payment_record->account_id = $accountPropertyId;
 			$payment_record->amount = $amount;
 			$payment_record->payment_status = '3';
+			$payment_record->booking_id = $booking_id;
 			$payment_record->save();
 			return [
 				'code'    => 0,
@@ -197,51 +239,9 @@ class PaymentController
 	
 	private function updateTransactionDetails($sessionID)
 	{
-		$api = new ApiController($this->authToken, $this->request);
 		$payment_details = ModelPaymentDetails::where('session_id', $sessionID)->first();
         if($payment_details) {
-			
-			$booking_details = BookingDetails::where('id', $payment_details['booking_details_id'])->first();
-			$paramDetails = [
-								'arrivalDate'   => $booking_details->arrival_date,
-								'departureDate' => $booking_details->departure_date,
-								'surname'		=> $booking_details->surname,
-								'given'         => $booking_details->given,
-								'email'         => $booking_details->email,
-								'adults'        => $booking_details->adults,
-								'areaId'       	=> $booking_details->area_id,
-								'categoryId'   	=> $booking_details->category_id,
-								'children'      => $booking_details->children,
-								'infants'       => $booking_details->infants,
-								'notes'      	=> $booking_details->notes,
-								'address'       => $booking_details->address,
-								'rateTypeId'  	=> $booking_details->rate_type_id,
-								'state'         => $booking_details->state,
-								'town'          => $booking_details->town,
-								'countryId'    	=> $booking_details->country_id,
-								'nights'        => $booking_details->nights,
-								'phone'         => $booking_details->phone,
-								'postCode'     	=> $booking_details->post_code,
-								'pets'      	=> (isset($booking_details->pets) && $booking_details->pets != '') ? $booking_details->pets : 0,
-								'guestId'		=> $booking_details->guest_id,
-								'bookingSourceId' => 200
-							];
-							
-			$endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
-	
-			$response = Http::withHeaders([
-				'authtoken' => $this->authToken
-			])->post(env('BASE_URL_RMS') . $endpoint, $paramDetails);
-	
-			if(isset($response['Message'])) {
-				throw new Exception(ucwords($response['Message']));
-			}
-			
-			$booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
-			$booking_details->booking_id = $booking_id;
-			$booking_details->save();
-			
-            $paramTransactionReceipt = [
+			$paramTransactionReceipt = [
                 'accountId'                          => $payment_details['account_id'],
                 'amount'                             => $payment_details['amount'],
                 'cardId'                             => $payment_details['session_id'],
@@ -253,12 +253,13 @@ class PaymentController
 			if($payment_details['txn_refno'] != '')
 				$paramTransactionReceipt['transactionReference'] = $payment_details['txn_refno'];
 			
+			$api = new ApiController($this->authToken, $this->request);
             $result = $api->transactionReceipt($paramTransactionReceipt);
 			
 			if($result)
 			{
 				$payment_details->rms_updated = 1;
-				$payment_details->booking_id = $booking_id;
+				//$payment_details->booking_id = $booking_id;
 				$payment_details->save();
 			}
 			return $booking_id;
@@ -276,10 +277,10 @@ class PaymentController
 			
 			$txn_details->payment_status = '1';
 			$txn_details->save();
-			$booking_id = $this->updateTransactionDetails($request['sessionId']);
+			$booking_ref_id = $this->updateTransactionDetails($request['sessionId']);
 			
 			$booking_details = BookingDetails::select('email')->where('id', $booking_details_id)->first();
-			return redirect(env('BOOKING_URL').'/#/thank-you/'.$booking_id.'/'.$booking_details['email']);
+			return redirect(env('BOOKING_URL').'/#/thank-you/'.$booking_details['booking_id'].'/'.$booking_details['email']);
 		}
 		else
 		{
@@ -292,7 +293,7 @@ class PaymentController
 		$txn_details = ModelPaymentDetails::where('session_id', $request['sessionId'])->first();
 		$txn_details->payment_status = '2';
 		$txn_details->save();
-		return redirect(env('BOOKING_URL').'/#/payment/'.$booking_id.'?stat=2');
+		return redirect(env('BOOKING_URL').'/#/payment/'.$txn_details['booking_details_id'].'?stat=2');
 	}
 	
 	public function paymentFailed(Request $request)
@@ -300,6 +301,6 @@ class PaymentController
 		$txn_details = ModelPaymentDetails::where('session_id', $request['sessionId'])->first();
 		$txn_details->payment_status = '3';
 		$txn_details->save();
-		return redirect(env('BOOKING_URL').'/#/payment/'.$booking_id.'?stat=3');
+		return redirect(env('BOOKING_URL').'/#/payment/'.$txn_details['booking_details_id'].'?stat=3');
 	}
 }
