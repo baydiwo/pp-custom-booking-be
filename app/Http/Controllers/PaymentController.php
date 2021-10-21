@@ -128,7 +128,7 @@ class PaymentController
             "amount"              => $amount,
             "currency"            => env('CURRENCY'),
             "merchantReference"   => "Private Properties",
-            "storeCard"           => false,
+            "storeCard"           => true,
             "storeCardIndicator"  => "single",
             "callbackUrls" => [
                 "approved" => env('API_URL')."/transaction/success",
@@ -198,6 +198,15 @@ class PaymentController
         }
 		
 		if($windCaveDetail['transactions'][0]['responseText'] == 'APPROVED') {
+			$windCaveTxn = $api->windCavePaymentToken($windCaveDetail['transactions'][0]['id']);
+			
+			if(isset($windcaveTxn['card']['id'])){
+				$payment_token = $windcaveTxn['card']['id'];
+			}
+			else
+			{
+				$payment_token = 0;
+			}
 			$payment_record = new ModelPaymentDetails();
 			$payment_record->session_id = $postCardData['id'];
 			$payment_record->account_id = $accountPropertyId;
@@ -205,10 +214,11 @@ class PaymentController
 			$payment_record->booking_details_id = $reservationId;
 			$payment_record->booking_id = $booking_id;
 			$payment_record->txn_refno = $windCaveDetail['transactions'][0]['id'];
+			$payment_record->payment_token = $payment_token;
 			$payment_record->payment_status = '1';
 			$payment_record->save();
 			
-			//$booking_ref_id = $this->updateTransactionDetails($postCardData['id']);
+			$booking_ref_id = $this->updateTransactionDetails($postCardData['id']);
 			
 			return [
 				'code'    => 1,
@@ -247,18 +257,25 @@ class PaymentController
                 'dateOfTransaction'                  => Carbon::now(),
                 'receiptType'                        => "CreditCard",
                 'source'                             => "Standard",
-                'useRmsAccountingDateForPostingDate' => "true"
+                'useRmsAccountingDateForPostingDate' => "true",
+				'transactionReference'				 => $payment_details['txn_refno'],
+				'comment'							 => 'Property Booking Payment',
+				'description'						 => 'Payment for Booking - '.$payment_details['booking_id'],
+				'token'								 => $payment_details['payment_token'],
+				'useSecondaryCurrency'				 => 'useDefault'
             ];
+
 			if($payment_details['txn_refno'] != '')
 				$paramTransactionReceipt['transactionReference'] = $payment_details['txn_refno'];
 			
 			$api = new ApiController($this->authToken, $this->request);
             $result = $api->transactionReceipt($paramTransactionReceipt);
+
+            $result = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Confirmed']);
 			
 			if($result)
 			{
 				$payment_details->rms_updated = 1;
-				//$payment_details->booking_id = $booking_id;
 				$payment_details->save();
 			}
 			return $payment_details['booking_id'];
@@ -276,7 +293,7 @@ class PaymentController
 			
 			$txn_details->payment_status = '1';
 			$txn_details->save();
-			//$booking_ref_id = $this->updateTransactionDetails($request['sessionId']);
+			$booking_ref_id = $this->updateTransactionDetails($request['sessionId']);
 			
 			$booking_details = BookingDetails::select('email')->where('id', $booking_details_id)->first();
 			return redirect(env('BOOKING_URL').'/#/thank-you/'.$booking_details['booking_id'].'/'.$booking_details['email']);

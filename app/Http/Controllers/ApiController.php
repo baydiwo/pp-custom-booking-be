@@ -197,6 +197,16 @@ class ApiController
         return $value;
     }
 
+    public function reservationStatus($id, $param)
+    {
+		$endpoint = 'reservations/' . $id . '/status';
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->put(env('BASE_URL_RMS') . $endpoint, $param);
+
+        return $response->json();
+    }
+
     public function listArea($propertyId)
     {
         $value = Cache::remember('list_areas_' . $propertyId, 10 * 60, function () use ($propertyId) {
@@ -277,6 +287,17 @@ class ApiController
     public function windCaveTransactionDetail($cardId)
     {
         $endpoint = 'sessions/'.$cardId;
+        $auth = base64_encode(env('WINDCAVE_USERNAME').':'.env('WINDCAVE_API_KEY'));
+        $response = Http::withHeaders([
+            'Authorization' => 'Basic '.$auth
+        ])->get(env('BASE_URL_WINDCAVE') . $endpoint);
+
+        return $response->json();
+    }
+    
+    public function windCavePaymentToken($txnid)
+    {
+        $endpoint = 'transactions/'.$txnid;
         $auth = base64_encode(env('WINDCAVE_USERNAME').':'.env('WINDCAVE_API_KEY'));
         $response = Http::withHeaders([
             'Authorization' => 'Basic '.$auth
