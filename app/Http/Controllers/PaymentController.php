@@ -244,6 +244,14 @@ class PaymentController
 	{
 		$payment_details = ModelPaymentDetails::where('session_id', $sessionID)->first();
         if($payment_details) {
+			$api = new ApiController($this->authToken, $this->request);
+			
+			//Fetching Payment token from Windcave and update it in Database
+			$windCaveTxn = $api->windCavePaymentToken($payment_details['txn_refno']);
+			$payment_token = $windcaveTxn['card']['id'];
+			$payment_details->payment_token = $payment_token;
+			$payment_details->save();
+			
 			$paramTransactionReceipt = [
                 'accountId'                          => $payment_details['account_id'],
                 'amount'                             => $payment_details['amount'],
@@ -255,14 +263,13 @@ class PaymentController
 				'transactionReference'				 => $payment_details['txn_refno'],
 				'comment'							 => 'Property Booking Payment',
 				'description'						 => 'Payment for Booking - '.$payment_details['booking_id'],
-				'token'								 => $payment_details['payment_token'],
+				'token'								 => $payment_token,
 				'useSecondaryCurrency'				 => 'useDefault'
             ];
 
 			if($payment_details['txn_refno'] != '')
 				$paramTransactionReceipt['transactionReference'] = $payment_details['txn_refno'];
 			
-			$api = new ApiController($this->authToken, $this->request);
             $result = $api->transactionReceipt($paramTransactionReceipt);
 
             $result = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Confirmed']);
