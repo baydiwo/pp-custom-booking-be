@@ -85,38 +85,32 @@ class PaymentController
 		}
 		
 		$paramDetails = [
-							'arrivalDate'   => $booking_details['arrival_date'],
-							'departureDate' => $booking_details['departure_date'],
-							'surname'		=> $booking_details['surname'],
-							'given'         => $booking_details['given'],
-							'email'         => $booking_details['email'],
-							'adults'        => $booking_details['adults'],
-							'areaId'       	=> $booking_details['area_id'],
-							'categoryId'   	=> $booking_details['category_id'],
-							'children'      => $booking_details['children'],
-							'infants'       => $booking_details['infants'],
-							'notes'      	=> $booking_details['notes'],
-							'address'       => $booking_details['address'],
-							'rateTypeId'  	=> $booking_details['rate_type_id'],
-							'state'         => $booking_details['state'],
-							'town'          => $booking_details['town'],
-							'countryId'    	=> $booking_details['country_id'],
-							'nights'        => $booking_details['nights'],
-							'phone'         => $booking_details['phone'],
-							'postCode'     	=> $booking_details['post_code'],
-							'pets'      	=> (isset($booking_details['pets']) && $booking_details['pets'] != '') ? $booking_details['pets'] : 0,
-							'guestId'		=> $booking_details['guest_id'],
-							'bookingSourceId' => 200
+							"id"			=> 0,
+							"accountId"		=> 0,
+							"adults"		=> $booking_details['adults'],
+							"areaId"		=> $booking_details['area_id'],
+							"arrivalDate"	=> $booking_details['arrival_date'],
+							"baseRateOverride"	=> 0,
+							"bookingSourceId" => 200,
+							"categoryId"	=> $booking_details['category_id'],
+							"children"		=> $booking_details['children'],
+							"departureDate" => $booking_details['departure_date'],
+							"guestId"		=> $booking_details['guest_id'],
+							"infants"		=> $booking_details['infants'],
+							"notes"			=> $booking_details['notes'],
+							"rateTypeId"	=> $booking_details['rate_type_id'],
+							"resTypeId"		=> 0,
+							"status"		=> "Confirmed"
 						];
-						
+							
 		$endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
 
 		$response = Http::withHeaders([
 			'authtoken' => $this->authToken
 		])->post(env('BASE_URL_RMS') . $endpoint, $paramDetails);
 
-		if(isset($response['Message'])) {
-			throw new Exception(ucwords($response['Message']));
+		if(isset($response['message'])) {
+			throw new Exception(ucwords($response['message']));
 		}
 		
 		$booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
