@@ -102,6 +102,16 @@ class ApiController
         return $response->json();
     }
 
+    public function guestToken($id, $param)
+    {
+		$endpoint = 'guests/' . $id . '/token';
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->put(env('BASE_URL_RMS') . $endpoint, $param);
+
+        return $response->json();
+    }
+
     public function transactionReceipt($param)
     {
         $endpoint = 'transaction/receipt    ';

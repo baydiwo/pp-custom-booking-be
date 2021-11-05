@@ -170,6 +170,11 @@ class PaymentController
 			$payment_record->account_id = $accountPropertyId;
 			$payment_record->amount 	= $amount;
 			$payment_record->booking_details_id = $reservationId;
+			$payment_record->card_name = $this->params['cardHolderName'];
+			$payment_record->card_number = substr($this->params['cardNumber'], -4);
+			$payment_record->card_expmonth = $this->params['dateExpiryMonth'];
+			$payment_record->card_expyear = $this->params['dateExpiryYear'];
+			$payment_record->card_type = $this->params['cardType'];
 			$payment_record->booking_id = $booking_id;
 			$payment_record->save();
 			
@@ -208,6 +213,11 @@ class PaymentController
 			$payment_record->booking_details_id = $reservationId;
 			$payment_record->booking_id = $booking_id;
 			$payment_record->txn_refno = $windCaveDetail['transactions'][0]['id'];
+			$payment_record->card_name = $this->params['cardHolderName'];
+			$payment_record->card_number = substr($this->params['cardNumber'], -4);
+			$payment_record->card_expmonth = $this->params['dateExpiryMonth'];
+			$payment_record->card_expyear = $this->params['dateExpiryYear'];
+			$payment_record->card_type = $this->params['cardType'];
 			$payment_record->payment_token = $payment_token;
 			$payment_record->payment_status = '1';
 			$payment_record->save();
@@ -231,6 +241,11 @@ class PaymentController
 			$payment_record->amount = $amount;
 			$payment_record->payment_status = '3';
 			$payment_record->booking_id = $booking_id;
+			$payment_record->card_name = $this->params['cardHolderName'];
+			$payment_record->card_number = substr($this->params['cardNumber'], -4);
+			$payment_record->card_expmonth = $this->params['dateExpiryMonth'];
+			$payment_record->card_expyear = $this->params['dateExpiryYear'];
+			$payment_record->card_type = $this->params['cardType'];
 			$payment_record->save();
 			return [
 				'code'    => 0,
@@ -248,11 +263,12 @@ class PaymentController
 			
 			//Fetching Payment token from Windcave and update it in Database
 			$windCaveTxn = $api->windCavePaymentToken($payment_details['txn_refno']);
-			$payment_token = $windcaveTxn['card']['id'];
+			$payment_token = (isset($windcaveTxn['card']['id'])) ? $windcaveTxn['card']['id'] : 0;
+			
 			$payment_details->payment_token = $payment_token;
 			$payment_details->save();
 			
-			$paramTransactionReceipt = [
+			/*$paramTransactionReceipt = [
                 'accountId'                          => $payment_details['account_id'],
                 'amount'                             => $payment_details['amount'],
                 'cardId'                             => $payment_details['session_id'],
@@ -270,8 +286,20 @@ class PaymentController
 			if($payment_details['txn_refno'] != '')
 				$paramTransactionReceipt['transactionReference'] = $payment_details['txn_refno'];
 			
-            $result = $api->transactionReceipt($paramTransactionReceipt);
-
+            $result = $api->transactionReceipt($paramTransactionReceipt);*/
+			
+			$paramGuestToken = [
+											"cardHolderName" => $payment_details['card_name'],
+											"cardType" => $payment_details['card_type'],
+											"description" => "Customers credit card",
+											"expiryDate" =>$payment_details['account_id'].'/'.$payment_details['account_id'],
+											"lastFourDigitsOfCard" => $payment_details['account_id'],
+											"token" => $payment_token
+										];
+			
+			$booking_details = BookingDetails::select('email')->where('id', $payment_details['booking_details_id'])->first();
+			
+			$result = $api->guestToken($booking_details['guest_id'], $paramGuestToken);
             $result = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Confirmed']);
 			
 			if($result)
