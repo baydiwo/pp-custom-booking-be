@@ -324,7 +324,7 @@ class PaymentController
 			$txn_details->save();
 			$booking_ref_id = $this->updateTransactionDetails($request['sessionId']);
 			
-			$booking_details = BookingDetails::select('email')->where('id', $booking_details_id)->first();
+			$booking_details = BookingDetails::select('email','booking_id')->where('id', $booking_details_id)->first();
 			return redirect(env('BOOKING_URL').'/#/thank-you/'.$booking_details['booking_id'].'/'.$booking_details['email']);
 		}
 		else
