@@ -268,26 +268,6 @@ class PaymentController
 			$payment_details->payment_token = $payment_token;
 			$payment_details->save();
 			
-			/*$paramTransactionReceipt = [
-                'accountId'                          => $payment_details['account_id'],
-                'amount'                             => $payment_details['amount'],
-                'cardId'                             => $payment_details['session_id'],
-                'dateOfTransaction'                  => Carbon::now(),
-                'receiptType'                        => "CreditCard",
-                'source'                             => "Standard",
-                'useRmsAccountingDateForPostingDate' => "true",
-				'transactionReference'				 => $payment_details['txn_refno'],
-				'comment'							 => 'Property Booking Payment',
-				'description'						 => 'Payment for Booking - '.$payment_details['booking_id'],
-				'token'								 => $payment_token,
-				'useSecondaryCurrency'				 => 'useDefault'
-            ];
-
-			if($payment_details['txn_refno'] != '')
-				$paramTransactionReceipt['transactionReference'] = $payment_details['txn_refno'];
-			
-            $result = $api->transactionReceipt($paramTransactionReceipt);*/
-			
 			$paramGuestToken = [
 											"cardHolderName" => $payment_details['card_name'],
 											"cardType" => $payment_details['card_type'],
@@ -300,6 +280,26 @@ class PaymentController
 			$booking_details = BookingDetails::select('email')->where('id', $payment_details['booking_details_id'])->first();
 			
 			$result = $api->guestToken($booking_details['guest_id'], $paramGuestToken);
+			
+			// Start - Add Transaction Receipt
+			$paramTransactionReceipt = [
+                'accountId'                          => $payment_details['account_id'],
+                'amount'                             => $payment_details['amount'],
+                'cardId'                             => $payment_details['session_id'],
+                'dateOfTransaction'                  => Carbon::now(),
+                'receiptType'                        => "CreditCard",
+                'source'                             => "Standard",
+                'useRmsAccountingDateForPostingDate' => "true",
+				'transactionReference'				 => $payment_details['txn_refno'],
+				'comment'							 => 'Property Booking Payment',
+				'description'						 => 'Payment for Booking - '.$payment_details['booking_id'],
+				'token'								 => $payment_token,
+				'useSecondaryCurrency'				 => 'useDefault',
+				'uniqueId'							 => 0
+            ];			
+            $result = $api->transactionReceipt($paramTransactionReceipt);
+			// End - Add Transaction Receipt
+
             $result = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Confirmed']);
 			
 			if($result)
