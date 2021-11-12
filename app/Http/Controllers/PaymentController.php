@@ -263,7 +263,7 @@ class PaymentController
 			
 			//Fetching Payment token from Windcave and update it in Database
 			$windCaveTxn = $api->windCavePaymentToken($payment_details['txn_refno']);
-			$payment_token = (isset($windcaveTxn['card']['id'])) ? $windcaveTxn['card']['id'] : 0;
+			$payment_token = (isset($windCaveTxn['card']['id'])) ? $windCaveTxn['card']['id'] : 0;
 			
 			$payment_details->payment_token = $payment_token;
 			$payment_details->save();
