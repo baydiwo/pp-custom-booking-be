@@ -117,11 +117,19 @@ class PaymentController
 		$booking_details->booking_id = $booking_id;
 		$booking_details->save();
 		
+        //get account property based on Booking ID
+		$reservationDetails = $api->getReservationDetails($booking_id);
+		if(isset($reservationDetails['Message'])) {
+			throw new Exception(ucwords($reservationDetails['Message']));
+		}
+        $accountPropertyId = $reservationDetails['accountId'];
+
+		
         $paramsCreatePurchaseSessions = [
             "type"                => "purchase",
             "amount"              => $amount,
             "currency"            => env('CURRENCY'),
-            "merchantReference"   => "Private Properties",
+            "merchantReference"   => "Acc No: ".$accountPropertyId,
             "storeCard"           => true,
             "storeCardIndicator"  => "single",
             "callbackUrls" => [
@@ -152,13 +160,6 @@ class PaymentController
                 'cvc2'              => $this->params['cvc']
             ]
         ];
-
-        //get account property based on Booking ID
-		$reservationDetails = $api->getReservationDetails($booking_id);
-		if(isset($reservationDetails['Message'])) {
-			throw new Exception(ucwords($reservationDetails['Message']));
-		}
-        $accountPropertyId = $reservationDetails['accountId'];
 
         //do payment
         $postCardData = $api->windCavePostCardData($ajaxPostUrl, $paramPostCardData);
