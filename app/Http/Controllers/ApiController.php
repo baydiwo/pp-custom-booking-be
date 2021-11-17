@@ -114,7 +114,7 @@ class ApiController
 
     public function transactionReceipt($param)
     {
-        $endpoint = 'transaction/receipt    ';
+        $endpoint = 'transactions/receipt';
 
         $response = Http::withHeaders([
             'authToken' => $this->authToken
