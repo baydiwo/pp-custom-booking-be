@@ -131,7 +131,7 @@ class PaymentController
             "currency"            => env('CURRENCY'),
             "merchantReference"   => "Acc No: ".$accountPropertyId,
             "storeCard"           => true,
-            "storedCardIndicator" => "installmentinitial",
+            "storeCardIndicator"  => "single",
             "callbackUrls" => [
                 "approved" => env('API_URL')."/transaction/success",
                 "declined" => env('API_URL')."/transaction/fail", 
