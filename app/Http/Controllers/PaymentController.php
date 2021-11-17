@@ -286,7 +286,7 @@ class PaymentController
 			$paramTransactionReceipt = [
                 'accountId'                          => $payment_details['account_id'],
                 'amount'                             => $payment_details['amount'],
-                'cardId'                             => $payment_details['session_id'],
+                'cardId'                             => 3,
                 'dateOfTransaction'                  => Carbon::now(),
                 'receiptType'                        => "CreditCard",
                 'source'                             => "Standard",
@@ -295,9 +295,9 @@ class PaymentController
 				'comment'							 => 'Property Booking Payment',
 				'description'						 => 'Payment for Booking - '.$payment_details['booking_id'],
 				'token'								 => $payment_token,
-				'useSecondaryCurrency'				 => 'useDefault',
-				'uniqueId'							 => 0
-            ];			
+				'useSecondaryCurrency'				 => 'useDefault'
+            ];
+
             $result = $api->transactionReceipt($paramTransactionReceipt);
 			// End - Add Transaction Receipt
 
