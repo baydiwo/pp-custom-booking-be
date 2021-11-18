@@ -273,14 +273,14 @@ class PaymentController
 											"cardHolderName" => $payment_details['card_name'],
 											"cardType" => $payment_details['card_type'],
 											"description" => "Customers credit card",
-											"expiryDate" =>$payment_details['account_id'].'/'.$payment_details['account_id'],
-											"lastFourDigitsOfCard" => $payment_details['account_id'],
+											"expiryDate" =>$payment_details['card_expmonth'].'/'.$payment_details['card_expyear'],
+											"lastFourDigitsOfCard" => $payment_details['card_number'],
 											"token" => $payment_token
 										];
 			
-			$booking_details = BookingDetails::select('email')->where('id', $payment_details['booking_details_id'])->first();
+			$booking_details = BookingDetails::select('email','guest_id')->where('id', $payment_details['booking_details_id'])->first();
 			
-			$result = $api->guestToken($booking_details['guest_id'], $paramGuestToken);
+			$gtResult = $api->guestToken($booking_details['guest_id'], $paramGuestToken);
 			
 			// Start - Add Transaction Receipt
 			$paramTransactionReceipt = [
