@@ -107,7 +107,7 @@ class ApiController
 		$endpoint = 'guests/' . $id . '/token';
         $response = Http::withHeaders([
             'authToken' => $this->authToken
-        ])->put(env('BASE_URL_RMS') . $endpoint, $param);
+        ])->post(env('BASE_URL_RMS') . $endpoint, $param);
 
         return $response->json();
     }
