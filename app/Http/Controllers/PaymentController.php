@@ -223,7 +223,7 @@ class PaymentController
 			$payment_record->payment_status = '1';
 			$payment_record->save();
 			
-			$booking_ref_id = $this->updateTransactionDetails($postCardData['id']);
+			//$booking_ref_id = $this->updateTransactionDetails($postCardData['id']);
 			
 			return [
 				'code'    => 1,
