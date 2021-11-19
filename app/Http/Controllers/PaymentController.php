@@ -270,33 +270,59 @@ class PaymentController
 			$payment_details->save();
 			
 			$paramGuestToken = [
-											"cardHolderName" => $payment_details['card_name'],
-											"cardType" => $payment_details['card_type'],
-											"description" => "Customers credit card",
-											"expiryDate" =>$payment_details['card_expmonth'].'/'.$payment_details['card_expyear'],
-											"lastFourDigitsOfCard" => $payment_details['card_number'],
-											"token" => $payment_token
-										];
+									"cardHolderName"		=> $payment_details['card_name'],
+									"cardType"				=> $payment_details['card_type'],
+									"description"			=> "Customers credit card",
+									"expiryDate"			=>$payment_details['card_expmonth'].'/'.$payment_details['card_expyear'],
+									"lastFourDigitsOfCard"	=> $payment_details['card_number'],
+									"token"					=> $payment_token
+								];
 			
-			$booking_details = BookingDetails::select('email','guest_id')->where('id', $payment_details['booking_details_id'])->first();
+			$booking_details = BookingDetails::select('email', 'guest_id', 'arrival_date', 'accomodation_fee')->where('id', $payment_details['booking_details_id'])->first();
 			
 			$gtResult = $api->guestToken($booking_details['guest_id'], $paramGuestToken);
 			
+			$now = Carbon::now();
+			$from_date = Carbon::parse($booking_details['arrival_date']);
+			$diffWeek = $now->diffInWeeks($from_date);
+			
+			if($diffWeek > 3)
+				$cc_fee = number_format((0.3* $booking_details['accomodation_fee']) * 0.012, 2);
+			else
+				$cc_fee = number_format($booking_details['accomodation_fee'] * 0.012, 2);
+			
+			$paramSundries = [
+								[
+									'accountId'                          => $payment_details['account_id'],
+									'amount'                             => $cc_fee,
+									'comment'							 => 'Credit Card Transaction Fee.',
+									'dateOfTransaction'                  => Carbon::now(),
+									'description'						 => 'Payment for Booking - '.$payment_details['booking_id'],
+									'source'                             => "Standard",
+									'sundryId'							 =>	7,
+									'useRmsAccountingDateForPostingDate' => "true",
+									'useSecondaryCurrency'				 => 'useDefault'
+								]
+							];
+
+			
+			$sundriesResult = $api->addSundries($paramSundries);
+			
 			// Start - Add Transaction Receipt
 			$paramTransactionReceipt = [
-                'accountId'                          => $payment_details['account_id'],
-                'amount'                             => $payment_details['amount'],
-                'cardId'                             => 3,
-                'dateOfTransaction'                  => Carbon::now(),
-                'receiptType'                        => "CreditCard",
-                'source'                             => "Standard",
-                'useRmsAccountingDateForPostingDate' => "true",
-				'transactionReference'				 => $payment_details['txn_refno'],
-				'comment'							 => 'Property Booking Payment',
-				'description'						 => 'Payment for Booking - '.$payment_details['booking_id'],
-				'token'								 => $payment_token,
-				'useSecondaryCurrency'				 => 'useDefault'
-            ];
+											'accountId'                          => $payment_details['account_id'],
+											'amount'                             => $payment_details['amount'],
+											'cardId'                             => 3,
+											'dateOfTransaction'                  => Carbon::now(),
+											'receiptType'                        => "CreditCard",
+											'source'                             => "Standard",
+											'useRmsAccountingDateForPostingDate' => "true",
+											'transactionReference'				 => $payment_details['txn_refno'],
+											'comment'							 => 'Property Booking Payment',
+											'description'						 => 'Payment for Booking - '.$payment_details['booking_id'],
+											'token'								 => $payment_token,
+											'useSecondaryCurrency'				 => 'useDefault'
+										];
 
             $result = $api->transactionReceipt($paramTransactionReceipt);
 			// End - Add Transaction Receipt
