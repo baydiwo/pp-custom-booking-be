@@ -217,6 +217,16 @@ class ApiController
         return $response->json();
     }
 
+    public function addSundries($param)
+    {
+		$endpoint = 'transactions/charges';
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->post(env('BASE_URL_RMS') . $endpoint, $param);
+
+        return $response->json();
+    }
+
     public function listArea($propertyId)
     {
         $value = Cache::remember('list_areas_' . $propertyId, 10 * 60, function () use ($propertyId) {
