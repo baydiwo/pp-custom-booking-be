@@ -312,7 +312,7 @@ class PaymentController
 									"token"					=> $payment_token
 								];
 			
-			$booking_details = BookingDetails::select('email', 'guest_id', 'arrival_date', 'accomodation_fee')->where('id', $payment_details['booking_details_id'])->first();
+			$booking_details = BookingDetails::select('email', 'guest_id', 'arrival_date', 'accomodation_fee', 'pets', 'pet_fee')->where('id', $payment_details['booking_details_id'])->first();
 			
 			$gtResult = $api->guestToken($booking_details['guest_id'], $paramGuestToken);
 			
@@ -331,14 +331,28 @@ class PaymentController
 									'amount'                             => $cc_fee,
 									'comment'							 => 'Credit Card Transaction Fee.',
 									'dateOfTransaction'                  => Carbon::now(),
-									'description'						 => 'Payment for Booking - '.$payment_details['booking_id'],
+									'description'						 => 'Credit card Fee for Booking - '.$payment_details['booking_id'],
 									'source'                             => "Standard",
 									'sundryId'							 =>	7,
 									'useRmsAccountingDateForPostingDate' => "true",
 									'useSecondaryCurrency'				 => 'useDefault'
 								]
 							];
-
+			
+			if($booking_details['pets'] == 1 && $booking_details['pet_fee'] > 0)
+			{
+				$paramSundries[] = [
+									'accountId'                          => $payment_details['account_id'],
+									'amount'                             => $cc_fee,
+									'comment'							 => 'Pet Fee.',
+									'dateOfTransaction'                  => Carbon::now(),
+									'description'						 => 'Credit card Fee for Booking - '.$payment_details['booking_id'],
+									'source'                             => "Standard",
+									'sundryId'							 =>	8,
+									'useRmsAccountingDateForPostingDate' => "true",
+									'useSecondaryCurrency'				 => 'useDefault'
+								];
+			}
 			
 			$sundriesResult = $api->addSundries($paramSundries);
 			
