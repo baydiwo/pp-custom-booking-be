@@ -116,6 +116,7 @@ class PropertyController
         $data['nights']          = $to->diffInDays($from);
         $data['accomodation']    = collect($rateQuote['rateBreakdown'])->sum('totalRate');
         $data['totalAmount']     = $data['accomodation'] + ($petCount * $data['petFee']);
+		$data['access_id'] 		 = base64_encode($this->authToken);
 		if($diffWeek > 3)
         	$data['dueToday']        = number_format((0.3* $data['accomodation']) * 1.012,2);
 		else
