@@ -55,7 +55,52 @@ class BookingController
 		
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
-
+				
+		$from = Carbon::parse($this->params['dateFrom']);
+        $to = Carbon::parse($this->params['dateTo']);
+		$rate_type_id = $this->rateByDate($from, $to);
+		
+		$diffDays = $from->diffInDays($to);
+		
+		$loop = (int)($diffDays/13);
+		if($diffDays%13 > 0)
+			$loop++;
+			
+		for($i=1; $i <= $loop; $i++)
+		{
+			$t = 13;
+			$startdate = (string)$from;
+			$enddate = $from->addDays($t)->format('Y-m-d');
+			if($i == $loop && $enddate > $to)
+				$enddate = $to;
+			$paramMinNight = [
+				'categoryIds' => [$this->params['categoryId']],
+				'dateFrom'    => $startdate,
+				'dateTo'      => $enddate,
+				'propertyId'  => 1,
+				'rateIds'     => [$rate_type_id]
+			];
+       		$minNight = $api->availabilityrategrid($paramMinNight);
+			
+			if (isset($minNight)) {
+				if (isset($minNight['Message'])) {
+					throw new Exception(ucwords($minNight['Message']));
+				}
+				else if (empty($minNight['categories'][0]['rates'])) {
+					throw new Exception(ucwords('Rate Not Found'));
+				}
+				else {
+					foreach($minNight['categories'][0]['rates'][0]['dayBreakdown'] as $rate_check)
+					{
+						if($rate_check['availableAreas'] == 0)
+							throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
+					}
+				}
+			} else if (!$minNight) {
+				throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
+			}
+		}
+		
         $paramSearchGuest = [
             "surname" => $this->params['surname'],
             "given"   => $this->params['given'],
@@ -87,39 +132,36 @@ class BookingController
             $guestId = $searchGuest['id'];
         }
 		
-		$from = Carbon::parse($this->params['dateFrom']);
-        $to = Carbon::parse($this->params['dateTo']);
-		$rate_type_id = $this->rateByDate($from, $to);
-		
-		$paramDetails = [
-							'arrivalDate'   => $this->params['dateFrom'],
-							'departureDate' => $this->params['dateTo'],
-							'surname'		=> $this->params['surname'],
-							'given'         => $this->params['given'],
-							'email'         => $this->params['email'],
-							'adults'        => $this->params['adults'],
-							'areaId'       	=> $this->params['areaId'],
-							'categoryId'   	=> $this->params['categoryId'],
-							'children'      => $this->params['children'],
-							'infants'       => $this->params['infants'],
-							'notes'      	=> $this->params['notes'],
-							'address'       => $this->params['address'],
-							'rateTypeId'  	=> $rate_type_id,
-							'state'         => $this->params['state'],
-							'town'          => $this->params['town'],
-							'countryId'    	=> $this->params['countryId'],
-							'nights'        => $this->params['nights'],
-							'phone'         => $this->params['phone'],
-							'postCode'     	=> $this->params['postCode'],
-							'pets'      	=> (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0,
-							'guestId'		=> $guestId,
-							'bookingSourceId' => 200
+		$expiryDate = Carbon::now()->addMinutes(11);
+		$paramPencil = [
+							"id"			=> 0,
+							"areaId"		=> $this->params['areaId'],
+							"arrivalDate"	=> $this->params['dateFrom'].' 14:00:00',
+							"categoryId"	=> $this->params['categoryId'],
+							"departureDate" => $this->params['dateTo'].' 11:00:00',
+							"expiryDate" 	=> $expiryDate,
+							"guestEmail" 	=> $this->params['email'],
+							"guestGiven" 	=> $this->params['given'],
+							"guestSurname" 	=> $this->params['surname'],
+							"guestMobile" 	=> $this->params['phone'],
+							"guestId"		=> $guestId
 						];
-		//$booking_id = rand(6,100000);
+							
+		$endpoint = 'reservations/pencil';
 
+		$response = Http::withHeaders([
+			'authtoken' => $this->authToken
+		])->post(env('BASE_URL_RMS') . $endpoint, $paramPencil);
+
+		if(isset($response['message'])) {
+			throw new Exception(ucwords($response['message']));
+		}
+		
+		$booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+		
 		$model = new BookingDetails();
-		$model->arrival_date   	= $this->params['dateFrom'];
-		$model->departure_date 	= $this->params['dateTo'];
+		$model->arrival_date   	= $this->params['dateFrom'].' 14:00:00';
+		$model->departure_date 	= $this->params['dateTo'].' 11:00:00';
 		$model->surname			= $this->params['surname'];
 		$model->given         	= $this->params['given'];
 		$model->email         	= $this->params['email'];
@@ -142,23 +184,10 @@ class BookingController
 		$model->pet_fee     	= $this->params['petFee'];
 		$model->due_today    	= $this->params['dueToday'];
 		$model->guest_id		= $guestId;
-		
-        /*$endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
-
-        $response = Http::withHeaders([
-            'authtoken' => $this->authToken
-        ])->post(env('BASE_URL_RMS') . $endpoint, $paramDetails);
-
-        if(isset($response['Message'])) {
-            throw new Exception(ucwords($response['Message']));
-        }
-		
-		$model->booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;*/
-		
-		// Start - temporarily added when reserbvation API was blocked
-		$model->booking_id = 0;
+		$model->booking_id		= $booking_id;
 		$model->save();
 		$booking_details_id = $model->id;
+		
 		$response = array();
 		$response = [
 						"adults" => $this->params['adults'],
@@ -195,13 +224,13 @@ class BookingController
 						"voucherId" => "",
 						"wholesalerId" => 0,
 						"id" => $booking_details_id,
-						"accountId" => 55262,
+						"bookingId" => $booking_id,
 						"areaId" => $this->params['areaId'],
-						"arrivalDate" => $this->params['dateFrom']." 15:00:00",
+						"arrivalDate" => $this->params['dateFrom']." 14:00:00",
 						"cancelledDate" => "1900-01-01 00:00:00",
 						"categoryId" => $this->params['categoryId'],
-						"departureDate" => $this->params['dateTo']." 10:30:00",
-						"guestId" => 19439,
+						"departureDate" => $this->params['dateTo']." 11:00:00",
+						"guestId" => $guestId,
 						"rateTypeId" => $rate_type_id,
 						"rateTypeName" => ($rate_type_id+1)." Night OTA",
 						"status" => "Unconfirmed"

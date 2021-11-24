@@ -217,6 +217,16 @@ class ApiController
         return $response->json();
     }
 
+    public function reservationUpdate($param)
+    {
+		$endpoint = 'reservations';
+        $response = Http::withHeaders([
+            'authToken' => $this->authToken
+        ])->put(env('BASE_URL_RMS') . $endpoint, $param);
+
+        return $response->json();
+    }
+
     public function addSundries($param)
     {
 		$endpoint = 'transactions/charges';
