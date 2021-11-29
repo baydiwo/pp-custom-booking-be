@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\BookingDetails;
+use App\Models\SessionDetails;
 use App\Models\PropertyAreaDetails;
 
 class BookingController
@@ -25,6 +26,13 @@ class BookingController
         $this->authToken = Cache::get('authToken')['token'];
         $this->request = $request;
         $this->params  = $request->all();
+		$this->webToken = ($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
+		$now = Carbon::now();
+		$checkExpiry = SessionDetails::where('access_token', $this->webToken)->first();
+		if(!$checkExpiry || ($checkExpiry->expiry_date < $now && $checkExpiry->status == 0))
+			 throw new Exception(ucwords('Transaction Timed-out! Please try again.'));
+		else
+			$this->booking_id = $checkExpiry->booking_id;
     }
 
     public function create()
@@ -60,7 +68,7 @@ class BookingController
         $to = Carbon::parse($this->params['dateTo']);
 		$rate_type_id = $this->rateByDate($from, $to);
 		
-		$diffDays = $from->diffInDays($to);
+		/*$diffDays = $from->diffInDays($to);
 		
 		$loop = (int)($diffDays/13);
 		if($diffDays%13 > 0)
@@ -99,7 +107,7 @@ class BookingController
 			} else if (!$minNight) {
 				throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
 			}
-		}
+		}*/
 		
         $paramSearchGuest = [
             "surname" => $this->params['surname'],
@@ -132,7 +140,7 @@ class BookingController
             $guestId = $searchGuest['id'];
         }
 		
-		$expiryDate = Carbon::now()->addMinutes(11);
+		/*$expiryDate = Carbon::now()->addMinutes(11);
 		$paramPencil = [
 							"id"			=> 0,
 							"areaId"		=> $this->params['areaId'],
@@ -155,9 +163,9 @@ class BookingController
 
 		if(isset($response['message'])) {
 			throw new Exception(ucwords($response['message']));
-		}
+		}*/
 		
-		$booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+		$booking_id = $this->booking_id;//(isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
 		
 		$model = new BookingDetails();
 		$model->arrival_date   	= $this->params['dateFrom'].' 14:00:00';
@@ -185,6 +193,7 @@ class BookingController
 		$model->due_today    	= $this->params['dueToday'];
 		$model->guest_id		= $guestId;
 		$model->booking_id		= $booking_id;
+		$model->booking_status	= '0';
 		$model->save();
 		$booking_details_id = $model->id;
 		

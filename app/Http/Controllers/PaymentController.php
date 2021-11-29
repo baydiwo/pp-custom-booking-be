@@ -17,6 +17,7 @@ use LVR\CreditCard\CardExpirationYear;
 use LVR\CreditCard\CardNumber;
 use LVR\CreditCard\Cards\Card;
 use App\Models\BookingDetails;
+use App\Models\SessionDetails;
 use App\Models\ModelPaymentDetails;
 
 class PaymentController
@@ -32,8 +33,13 @@ class PaymentController
         $this->params  = $request->all();
     }
 
-    public function payment($reservationId)
+    public function payment(Request $request, $reservationId)
     {
+		$this->webToken = ($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
+		$now = Carbon::now();
+		$checkExpiry = SessionDetails::where('access_token', $this->webToken)->where('expiry_date', '>', $now)->first();
+		if(!$checkExpiry)
+			 throw new Exception(ucwords('Transaction Timed-out! Please try again.'));
         $validator = Validator::make(
             $this->params,
             [
@@ -171,8 +177,6 @@ class PaymentController
 			$payment_record->payment_status = '1';
 			$payment_record->save();
 			
-			//$booking_ref_id = $this->updateTransactionDetails($postCardData['id']);
-			
 			return [
 				'code'    => 1,
 				'status'  => 'success',
@@ -218,6 +222,19 @@ class PaymentController
 			$payment_details->save();
 			
 			$booking_details = BookingDetails::select('*')->where('id', $payment_details['booking_details_id'])->first();
+            $status_update = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Unconfirmed']);
+			if($status_update)
+			{
+				$booking_details->booking_status = '1';
+				$booking_details->save();
+				$update_expiry = SessionDetails::where('booking_id', $payment_details['booking_id'])->where('status', '1')->first();
+				if($update_expiry)
+				{
+					$update_expiry->status = '1';
+					$update_expiry->save();
+				}
+			}
+			
 			$paramBookingDetails = [
 							"id"			=> $payment_details['booking_id'],
 							"accountId"		=> $payment_details['account_id'],
@@ -310,9 +327,10 @@ class PaymentController
 			// End - Add Transaction Receipt
 
             $result = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Confirmed']);
-			
 			if($result)
 			{
+				$booking_details->booking_status = '2';
+				$booking_details->save();
 				$payment_details->rms_updated = 1;
 				$payment_details->save();
 			}
