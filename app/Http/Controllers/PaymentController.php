@@ -17,6 +17,7 @@ use LVR\CreditCard\CardExpirationYear;
 use LVR\CreditCard\CardNumber;
 use LVR\CreditCard\Cards\Card;
 use App\Models\BookingDetails;
+use App\Models\SessionDetails;
 use App\Models\ModelPaymentDetails;
 
 class PaymentController
@@ -32,8 +33,13 @@ class PaymentController
         $this->params  = $request->all();
     }
 
-    public function payment($reservationId)
+    public function payment(Request $request, $reservationId)
     {
+		$this->webToken = ($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
+		$now = Carbon::now();
+		$checkExpiry = SessionDetails::where('access_token', $this->webToken)->where('expiry_date', '>', $now)->first();
+		if(!$checkExpiry)
+			 throw new Exception(ucwords('Transaction Timed-out! Please try again.'));
         $validator = Validator::make(
             $this->params,
             [
@@ -48,61 +54,7 @@ class PaymentController
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
         
         $api = new ApiController($this->authToken, $this->request);
-		
 		$booking_details = BookingDetails::where('id', $reservationId)->first();
-		
-		$from = Carbon::parse($booking_details['arrival_date']);
-		$to = Carbon::parse($booking_details['departure_date']);
-		$diffDays = $from->diffInDays($to);
-		
-		$loop = (int)($diffDays/13);
-		if($diffDays%13 > 0)
-			$loop++;
-			
-		for($i=1; $i <= $loop; $i++)
-		{
-			$t = 13;
-			$startdate = (string)$from;
-			$enddate = $from->addDays($t)->format('Y-m-d');
-			if($i == $loop && $enddate > $to)
-				$enddate = $to;
-			$paramMinNight = [
-				'categoryIds' => [$booking_details['category_id']],
-				'dateFrom'    => $startdate,
-				'dateTo'      => $enddate,
-				'propertyId'  => 1,
-				'rateIds'     => [$booking_details['rate_type_id']]
-			];
-       		$minNight = $api->availabilityrategrid($paramMinNight);
-			
-			if (isset($minNight)) {
-				if (isset($minNight['Message'])) {
-					throw new Exception(ucwords($minNight['Message']));
-				}
-				else if (empty($minNight['categories'][0]['rates'])) {
-					throw new Exception(ucwords('Rate Not Found'));
-				}
-				else {
-					foreach($minNight['categories'][0]['rates'][0]['dayBreakdown'] as $rate_check)
-					{
-						if($rate_check['availableAreas'] == 0)
-							throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
-					}
-				}
-			} else if (!$minNight) {
-				throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
-			}
-		}
-		
-		$paramMinNight = [
-            'categoryIds' => [$booking_details['category_id']],
-            'dateFrom'    => $booking_details['arrival_date'],
-            'dateTo'      => $booking_details['departure_date'],
-            'propertyId'  => 1,
-            'rateIds'     => [$booking_details['rate_type_id']]
-        ];
-		
-        $minNight = $api->availabilityrategrid($paramMinNight);
 
 		if(!$booking_details)
 			throw new Exception(ucwords('Booking details not found!'));
@@ -118,46 +70,14 @@ class PaymentController
 				$amount        = number_format($booking_details['accomodation_fee'] * 1.012, 2);
 		}
 		
-		$paramDetails = [
-							"id"			=> 0,
-							"accountId"		=> 0,
-							"adults"		=> $booking_details['adults'],
-							"areaId"		=> $booking_details['area_id'],
-							"arrivalDate"	=> $booking_details['arrival_date'],
-							"baseRateOverride"	=> 0,
-							"bookingSourceId" => 200,
-							"categoryId"	=> $booking_details['category_id'],
-							"children"		=> $booking_details['children'],
-							"departureDate" => $booking_details['departure_date'],
-							"guestId"		=> $booking_details['guest_id'],
-							"infants"		=> $booking_details['infants'],
-							"notes"			=> $booking_details['notes'],
-							"rateTypeId"	=> $booking_details['rate_type_id'],
-							"resTypeId"		=> 0,
-							"status"		=> "Confirmed"
-						];
-							
-		$endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
-
-		$response = Http::withHeaders([
-			'authtoken' => $this->authToken
-		])->post(env('BASE_URL_RMS') . $endpoint, $paramDetails);
-
-		if(isset($response['message'])) {
-			throw new Exception(ucwords($response['message']));
-		}
-		
-		$booking_id = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
-		$booking_details->booking_id = $booking_id;
-		$booking_details->save();
+		$booking_id = $booking_details['booking_id'];
 		
         //get account property based on Booking ID
 		$reservationDetails = $api->getReservationDetails($booking_id);
 		if(isset($reservationDetails['Message'])) {
 			throw new Exception(ucwords($reservationDetails['Message']));
 		}
-        $accountPropertyId = $reservationDetails['accountId'];
-
+		$accountPropertyId = $reservationDetails['accountId'];
 		
         $paramsCreatePurchaseSessions = [
             "type"                => "purchase",
@@ -257,8 +177,6 @@ class PaymentController
 			$payment_record->payment_status = '1';
 			$payment_record->save();
 			
-			//$booking_ref_id = $this->updateTransactionDetails($postCardData['id']);
-			
 			return [
 				'code'    => 1,
 				'status'  => 'success',
@@ -303,6 +221,41 @@ class PaymentController
 			$payment_details->payment_token = $payment_token;
 			$payment_details->save();
 			
+			$booking_details = BookingDetails::select('*')->where('id', $payment_details['booking_details_id'])->first();
+            $status_update = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Unconfirmed']);
+			if($status_update)
+			{
+				$booking_details->booking_status = '1';
+				$booking_details->save();
+				$update_expiry = SessionDetails::where('booking_id', $payment_details['booking_id'])->where('status', '1')->first();
+				if($update_expiry)
+				{
+					$update_expiry->status = '1';
+					$update_expiry->save();
+				}
+			}
+			
+			$paramBookingDetails = [
+							"id"			=> $payment_details['booking_id'],
+							"accountId"		=> $payment_details['account_id'],
+							"adults"		=> $booking_details['adults'],
+							"areaId"		=> $booking_details['area_id'],
+							"arrivalDate"	=> $booking_details['arrival_date'],
+							"baseRateOverride"	=> 0,
+							"bookingSourceId" => 200,
+							"categoryId"	=> $booking_details['category_id'],
+							"children"		=> $booking_details['children'],
+							"departureDate" => $booking_details['departure_date'],
+							"guestId"		=> $booking_details['guest_id'],
+							"infants"		=> $booking_details['infants'],
+							"notes"			=> $booking_details['notes'],
+							"rateTypeId"	=> $booking_details['rate_type_id'],
+							"resTypeId"		=> 0,
+							"status"		=> "Confirmed"
+						];
+
+			$bookingResult = $api->reservationUpdate($paramBookingDetails);
+			
 			$paramGuestToken = [
 									"cardHolderName"		=> $payment_details['card_name'],
 									"cardType"				=> $payment_details['card_type'],
@@ -310,9 +263,7 @@ class PaymentController
 									"expiryDate"			=>$payment_details['card_expmonth'].'/'.$payment_details['card_expyear'],
 									"lastFourDigitsOfCard"	=> $payment_details['card_number'],
 									"token"					=> $payment_token
-								];
-			
-			$booking_details = BookingDetails::select('email', 'guest_id', 'arrival_date', 'accomodation_fee', 'pets', 'pet_fee')->where('id', $payment_details['booking_details_id'])->first();
+								];			
 			
 			$gtResult = $api->guestToken($booking_details['guest_id'], $paramGuestToken);
 			
@@ -376,9 +327,10 @@ class PaymentController
 			// End - Add Transaction Receipt
 
             $result = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Confirmed']);
-			
 			if($result)
 			{
+				$booking_details->booking_status = '2';
+				$booking_details->save();
 				$payment_details->rms_updated = 1;
 				$payment_details->save();
 			}
