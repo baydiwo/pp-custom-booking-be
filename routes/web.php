@@ -68,4 +68,8 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
     $router->group(['prefix' => 'property-details'], function () use ($router) {
         $router->get('{id}', 'PropertyController@propertyAreaDetail');
     });
+	
+    $router->group(['prefix' => 'token'], function () use ($router) {
+        $router->post('create', 'PropertyController@generateToken');
+    });
 
