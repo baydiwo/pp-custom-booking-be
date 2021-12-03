@@ -14,6 +14,7 @@ use App\Models\PropertyDetails;
 use App\Models\PropertyAreaDetails;
 use App\Models\AvailabilityDate;
 use App\Models\SessionDetails;
+use App\Models\BookingSource;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -54,8 +55,14 @@ class PropertyController
         ];
     }
 	
-    public function detail($id)
+    public function detail(Request $request, $id)
     {
+		$this->webToken = ($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
+		$now = Carbon::now();
+		$checkExpiry = SessionDetails::where('access_token', $this->webToken)->first();
+		if(!$checkExpiry)
+			 throw new Exception(ucwords('Token is missing or invalid!'));
+
 		$this->authToken = Cache::get('authToken')['token'];
         $api = new ApiController($this->authToken, $this->request);
 	   
@@ -126,7 +133,13 @@ class PropertyController
 		else
         	$data['dueToday']        = number_format($data['accomodation'] * 1.012,2);
 		
-		
+		$bs_result = BookingSource::where('status', '1')->get();
+		$bs_data = [];
+		foreach($bs_result as $bs){
+			$bs_data[] = ['id' => $bs->bs_id, 'name' => $bs->bs_name];
+		}
+		$data['bookingSourceList'] = $bs_data;
+
 		$guestGiven = 'PPB';
 		$guestSurname = 'Pending';
 		$guestPhone = '0417120000';
@@ -192,7 +205,7 @@ class PropertyController
 		$token = base64_encode(substr(md5(mt_rand()), 0, 78));
 		$data['access_id'] = $token;
 		
-		$model = new SessionDetails();
+		$model = SessionDetails::where('access_token', $this->webToken)->first();
 		$model->access_token = $token;
 		$model->booking_id = $data['bookingId'];
 		$model->expiry_date = $expiryDate;
@@ -204,6 +217,35 @@ class PropertyController
             'data' => $data
         ];
     }
+	
+	public function generateToken()
+	{
+		$validator = Validator::make(
+            $this->params,
+            [
+                'dateFrom'	=> 'required|date_format:Y-m-d',
+				'dateTo'	=> 'required|date_format:Y-m-d|after:dateFrom',
+				'userIp' 	=> 'required'
+            ]
+        );
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+			
+		$token = base64_encode(substr(md5(mt_rand()), 0, 78));
+		$data['access_token'] = $token;
+		
+		$model = new SessionDetails();
+		$model->access_token = $token;
+		$model->arrival_date = $data['dateFrom'];
+		$model->departure_date = $data['dateTo'];
+		$model->user_ip =  $this->params['userIp'];
+		$model->save();	
+        return [
+            'code' => 1,
+            'status' => 'success',
+            'data' => $data
+        ];
+	}
 	
     public function availabilityGrid()
     {

@@ -57,7 +57,8 @@ class BookingController
                 'countryId'     => 'required|integer',
                 'nights'        => 'required|integer',
                 'phone'         => 'required',
-                'postCode'      => 'required'
+                'postCode'      => 'required',
+                'bookingSource' => 'required|integer'
             ]
         );
 		
@@ -193,6 +194,7 @@ class BookingController
 		$model->due_today    	= $this->params['dueToday'];
 		$model->guest_id		= $guestId;
 		$model->booking_id		= $booking_id;
+		$model->booking_source_id = $this->params['bookingSource'];
 		$model->booking_status	= '0';
 		$model->save();
 		$booking_details_id = $model->id;
@@ -242,6 +244,7 @@ class BookingController
 						"guestId" => $guestId,
 						"rateTypeId" => $rate_type_id,
 						"rateTypeName" => ($rate_type_id+1)." Night OTA",
+						"bookingSource" => $this->params['bookingSource'],
 						"status" => "Unconfirmed"
 					];
 		
@@ -277,6 +280,7 @@ class BookingController
 		$reservation['phone']			= $booking_details['phone'];
 		$reservation['state']			= $booking_details['state'];
 		$reservation['town']			= $booking_details['town'];
+		$reservation['bookingSource']	= $booking_details['booking_source_id'];
 		$reservation['accomodation']	= $booking_details['accomodation_fee'];
 		$reservation['petFee']			= $booking_details['pet_fee'];
 		$reservation['pets']			= $booking_details['pets'];
@@ -334,7 +338,8 @@ class BookingController
                 'countryId'     => 'required|integer',
                 'nights'        => 'required|integer',
                 'phone'         => 'required',
-                'postCode'      => 'required'
+                'postCode'      => 'required',
+                'bookingSource' => 'required|integer'
             ]
         );
 		
@@ -394,6 +399,7 @@ class BookingController
 		$booking_details->accomodation_fee	= $this->params['accomodationFee'];
 		$booking_details->pet_fee     		= $this->params['petFee'];
 		$booking_details->due_today    		= $this->params['dueToday'];
+		$booking_details->booking_source_id	= $this->params['bookingSource'];
 		$booking_details->guest_id			= $guestId;
 		
 		$booking_details->save();

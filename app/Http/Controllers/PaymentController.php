@@ -242,7 +242,7 @@ class PaymentController
 							"areaId"		=> $booking_details['area_id'],
 							"arrivalDate"	=> $booking_details['arrival_date'],
 							"baseRateOverride"	=> 0,
-							"bookingSourceId" => 200,
+							"bookingSourceId" => $booking_details['booking_source_id'],
 							"categoryId"	=> $booking_details['category_id'],
 							"children"		=> $booking_details['children'],
 							"departureDate" => $booking_details['departure_date'],
@@ -251,7 +251,8 @@ class PaymentController
 							"notes"			=> $booking_details['notes'],
 							"rateTypeId"	=> $booking_details['rate_type_id'],
 							"resTypeId"		=> 0,
-							"status"		=> "Confirmed"
+							"status"		=> "Confirmed",
+							"travelAgentId"	=> 8
 						];
 
 			$bookingResult = $api->reservationUpdate($paramBookingDetails);
