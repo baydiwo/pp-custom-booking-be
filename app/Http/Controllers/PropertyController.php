@@ -57,7 +57,8 @@ class PropertyController
 	
     public function detail(Request $request, $id)
     {
-		$this->webToken = ($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
+		$this->webToken = ($request->bearerToken() !== '') ? $request->bearerToken() : '';
+		//$this->webToken = ($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
 		$now = Carbon::now();
 		$checkExpiry = SessionDetails::where('access_token', $this->webToken)->first();
 		if(!$checkExpiry)
