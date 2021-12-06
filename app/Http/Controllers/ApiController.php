@@ -219,7 +219,7 @@ class ApiController
 
     public function reservationUpdate($param)
     {
-		$endpoint = 'reservations';
+		$endpoint = 'reservations?ignoreMandatoryFieldWarnings=true';
         $response = Http::withHeaders([
             'authToken' => $this->authToken
         ])->put(env('BASE_URL_RMS') . $endpoint, $param);

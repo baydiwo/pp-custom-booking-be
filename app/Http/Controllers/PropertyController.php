@@ -281,7 +281,7 @@ class PropertyController
 			$dateNow = strtotime($now);
    			$dateExpiry   = strtotime($checkToken->expiry_date); 
 			$data['expiry_time'] = $dateExpiry - $dateNow;
-			$data['session_id'] = $model->id;
+			$data['session_id'] = $checkToken->id;
 			return [
 				'code' => 1,
 				'status' => 'success',
