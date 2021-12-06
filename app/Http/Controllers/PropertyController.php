@@ -218,7 +218,7 @@ class PropertyController
         ];
     }
 	
-	public function generateToken()
+	public function generateToken(Request $request)
 	{
 		$validator = Validator::make(
             $this->params,
@@ -233,11 +233,13 @@ class PropertyController
 			
 		$token = base64_encode(substr(md5(mt_rand()), 0, 78));
 		$data['access_token'] = $token;
+		$data['arrival_date'] = $this->params['dateFrom'];
+		$data['departure_date'] = $this->params['dateTo'];
 		
 		$model = new SessionDetails();
 		$model->access_token = $token;
-		$model->arrival_date = $data['dateFrom'];
-		$model->departure_date = $data['dateTo'];
+		$model->arrival_date = $this->params['dateFrom'];
+		$model->departure_date = $this->params['dateTo'];
 		$model->user_ip =  $this->params['userIp'];
 		$model->save();	
         return [
