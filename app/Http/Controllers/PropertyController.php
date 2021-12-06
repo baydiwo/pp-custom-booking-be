@@ -210,13 +210,21 @@ class PropertyController
 		$model->access_token = $token;
 		$model->booking_id = $data['bookingId'];
 		$model->expiry_date = $expiryDate;
-		$model->save();
-		
-        return [
-            'code' => 1,
-            'status' => 'success',
-            'data' => $data
-        ];
+		if($model->save()){
+			return [
+				'code' => 1,
+				'status' => 'success',
+				'data' => $data
+			];
+		}
+		else
+		{
+			return [
+				'code' => 1,
+				'status' => 'error',
+				'message' => 'Token not generated. Please Try Again!'
+			];
+		}
     }
 	
 	public function generateToken(Request $request)
