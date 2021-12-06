@@ -140,77 +140,83 @@ class PropertyController
 			$bs_data[] = ['id' => $bs->bs_id, 'name' => $bs->bs_name];
 		}
 		$data['bookingSourceList'] = $bs_data;
-
-		$guestGiven = 'PPB';
-		$guestSurname = 'Pending';
-		$guestPhone = '0417120000';
 		
-		$paramSearchGuest = [
-			"surname" => $guestSurname,
-			"given"   => $guestGiven,
-			"mobile"  => $guestPhone
-		];
-		
-		$searchGuest = $api->guestSearch($paramSearchGuest);
-        if((count($searchGuest) == 0) || (isset($searchGuest['Message']))) {
-            $paramCreateGuest = [
-                'addressLine1' => '60 Quandong Parkway',
-                'postCode'     => '6210',
-                'state'        => 'WA',
-                'town'         => 'Halls Head',
-                'countryId'    => 13,
-                'email'        => 'support@studiojs.com.au',
-                'guestGiven'   => $guestGiven,
-                'guestSurname' => $guestSurname,
-                'mobile'       => $guestPhone,
-                'propertyId'   => 1
-            ];
+		if($checkExpiry->booking_id == '')
+		{
+			$guestGiven = 'PPB';
+			$guestSurname = 'Pending';
+			$guestPhone = '0417120000';
 			
-			$createGuest = $api->createGuest($paramCreateGuest);
-            if(isset($createGuest['Message'])) {
-                throw new Exception(ucwords($createGuest['Message']));
-            }
-            $guestId = $createGuest['id'];
-        } else {
-            $searchGuest = collect($searchGuest)->first();
-            $guestId = $searchGuest['id'];
-        }
-
-		$expiryDate = Carbon::now()->addMinutes(11);
-		$paramPencilData = [
-								"id" => 0,
-								"areaId" => $this->params['areaId'],
-								"arrivalDate" => $datefrom." 14:00:00",
-								"categoryId" => $this->params['categoryId'],
-								"departureDate" => $dateto." 11:00:00",
-								"expiryDate" => $expiryDate,
-								"guestId" => $guestId,
-								"guestEmail" => "sasikumar@versatile-soft.com",
-								"guestGiven" => $guestGiven,
-								"guestMobile" => $guestPhone,
-								"guestSurname" => $guestSurname,
-								"notes" => "This is a note about my test pencil reservation",
-								"status" => "Pencil"
-							];
-
-		$endpoint = 'reservations/pencil';
-		$response = Http::withHeaders([
-			'authtoken' => $this->authToken
-		])->post(env('BASE_URL_RMS') . $endpoint, $paramPencilData);
-
-		if(isset($response['message'])) {
-			throw new Exception(ucwords($response['message']));
+			$paramSearchGuest = [
+				"surname" => $guestSurname,
+				"given"   => $guestGiven,
+				"mobile"  => $guestPhone
+			];
+			
+			$searchGuest = $api->guestSearch($paramSearchGuest);
+			if((count($searchGuest) == 0) || (isset($searchGuest['Message']))) {
+				$paramCreateGuest = [
+					'addressLine1' => '60 Quandong Parkway',
+					'postCode'     => '6210',
+					'state'        => 'WA',
+					'town'         => 'Halls Head',
+					'countryId'    => 13,
+					'email'        => 'support@studiojs.com.au',
+					'guestGiven'   => $guestGiven,
+					'guestSurname' => $guestSurname,
+					'mobile'       => $guestPhone,
+					'propertyId'   => 1
+				];
+				
+				$createGuest = $api->createGuest($paramCreateGuest);
+				if(isset($createGuest['Message'])) {
+					throw new Exception(ucwords($createGuest['Message']));
+				}
+				$guestId = $createGuest['id'];
+			} else {
+				$searchGuest = collect($searchGuest)->first();
+				$guestId = $searchGuest['id'];
+			}
+	
+			$expiryDate = Carbon::now()->addMinutes(11);
+			$paramPencilData = [
+									"id" => 0,
+									"areaId" => $this->params['areaId'],
+									"arrivalDate" => $datefrom." 14:00:00",
+									"categoryId" => $this->params['categoryId'],
+									"departureDate" => $dateto." 11:00:00",
+									"expiryDate" => $expiryDate,
+									"guestId" => $guestId,
+									"guestEmail" => "sasikumar@versatile-soft.com",
+									"guestGiven" => $guestGiven,
+									"guestMobile" => $guestPhone,
+									"guestSurname" => $guestSurname,
+									"notes" => "This is a note about my test pencil reservation",
+									"status" => "Pencil"
+								];
+	
+			$endpoint = 'reservations/pencil';
+			$response = Http::withHeaders([
+				'authtoken' => $this->authToken
+			])->post(env('BASE_URL_RMS') . $endpoint, $paramPencilData);
+	
+			if(isset($response['message'])) {
+				throw new Exception(ucwords($response['message']));
+			}
+			
+			$data['bookingId'] = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+			
+			$model = SessionDetails::where('access_token', $this->webToken)->first();
+			$model->booking_id = $data['bookingId'];
+			$model->expiry_date = $expiryDate;
+			$model->save();
+			$data['access_id'] = $model->access_token;
 		}
-		
-		$data['bookingId'] = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
-		$token = base64_encode(substr(md5(mt_rand()), 0, 78));
-		$data['access_id'] = $token;
-		
-		$model = SessionDetails::where('access_token', $this->webToken)->first();
-		$model->access_token = $token;
-		$model->booking_id = $data['bookingId'];
-		$model->expiry_date = $expiryDate;
-		$model->save();
+		else
+		{
+			$data['bookingId'] = (integer)$checkExpiry->booking_id;
+			$data['access_id'] = $checkExpiry->access_token;
+		}
 		return [
 			'code' => 1,
 			'status' => 'success',
@@ -231,30 +237,55 @@ class PropertyController
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 			
-		$token = base64_encode(substr(md5(mt_rand()), 0, 78));
-		$data['access_token'] = $token;
 		$data['arrival_date'] = $this->params['dateFrom'];
 		$data['departure_date'] = $this->params['dateTo'];
+		$data['user_ip'] = $this->params['userIp'];
 		
-		$model = new SessionDetails();
-		$model->access_token = $token;
-		$model->arrival_date = $this->params['dateFrom'];
-		$model->departure_date = $this->params['dateTo'];
-		$model->user_ip =  $this->params['userIp'];
-		$model->save();	
-		if($model->save()){
+		$now = Carbon::now();
+		
+		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
+									->where('departure_date', $data['departure_date'])
+									->where('user_ip', $data['user_ip'])
+									->where('expiry_date', '>', $now)
+									->where('booking_id', '!=', '')->first();
+		if(!$checkToken)
+		{
+			$model = new SessionDetails();
+			$token = base64_encode(substr(md5(mt_rand()), 0, 78));
+			$data['access_token'] = $token;
+			$model->access_token = $token;
+			$model->arrival_date = $this->params['dateFrom'];
+			$model->departure_date = $this->params['dateTo'];
+			$model->user_ip =  $this->params['userIp'];
+			$model->save();
+			$data['session_id'] = $model->id;
+			if($model->save()){
+				return [
+					'code' => 1,
+					'status' => 'success',
+					'data' => $data
+				];
+			}
+			else
+			{
+				return [
+					'code' => 1,
+					'status' => 'error',
+					'message' => 'Token not generated. Please Try Again!'
+				];
+			}
+		}
+		else
+		{
+			$data['access_token'] = $checkToken->access_token;
+			$dateNow = strtotime($now);
+   			$dateExpiry   = strtotime($checkToken->expiry_date); 
+			$data['expiry_time'] = $dateExpiry - $dateNow;
+			$data['session_id'] = $model->id;
 			return [
 				'code' => 1,
 				'status' => 'success',
 				'data' => $data
-			];
-		}
-		else
-		{
-			return [
-				'code' => 1,
-				'status' => 'error',
-				'message' => 'Token not generated. Please Try Again!'
 			];
 		}
 	}
