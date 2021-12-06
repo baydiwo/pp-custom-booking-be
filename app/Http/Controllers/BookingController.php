@@ -26,7 +26,7 @@ class BookingController
         $this->authToken = Cache::get('authToken')['token'];
         $this->request = $request;
         $this->params  = $request->all();
-		$this->webToken = ($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
+		$this->webToken = ($request->bearerToken() !== '') ? $request->bearerToken() : '';//($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
 		$now = Carbon::now();
 		$checkExpiry = SessionDetails::where('access_token', $this->webToken)->first();
 		if(!$checkExpiry || ($checkExpiry->expiry_date < $now && $checkExpiry->status == 0))

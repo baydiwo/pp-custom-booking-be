@@ -35,7 +35,7 @@ class PaymentController
 
     public function payment(Request $request, $reservationId)
     {
-		$this->webToken = ($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
+		$this->webToken = ($request->bearerToken() !== '') ? $request->bearerToken() : '';//($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
 		$now = Carbon::now();
 		$checkExpiry = SessionDetails::where('access_token', $this->webToken)->where('expiry_date', '>', $now)->first();
 		if(!$checkExpiry)
