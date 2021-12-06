@@ -210,21 +210,12 @@ class PropertyController
 		$model->access_token = $token;
 		$model->booking_id = $data['bookingId'];
 		$model->expiry_date = $expiryDate;
-		if($model->save()){
-			return [
-				'code' => 1,
-				'status' => 'success',
-				'data' => $data
-			];
-		}
-		else
-		{
-			return [
-				'code' => 1,
-				'status' => 'error',
-				'message' => 'Token not generated. Please Try Again!'
-			];
-		}
+		$model->save();
+		return [
+			'code' => 1,
+			'status' => 'success',
+			'data' => $data
+		];
     }
 	
 	public function generateToken(Request $request)
@@ -251,11 +242,21 @@ class PropertyController
 		$model->departure_date = $this->params['dateTo'];
 		$model->user_ip =  $this->params['userIp'];
 		$model->save();	
-        return [
-            'code' => 1,
-            'status' => 'success',
-            'data' => $data
-        ];
+		if($model->save()){
+			return [
+				'code' => 1,
+				'status' => 'success',
+				'data' => $data
+			];
+		}
+		else
+		{
+			return [
+				'code' => 1,
+				'status' => 'error',
+				'message' => 'Token not generated. Please Try Again!'
+			];
+		}
 	}
 	
     public function availabilityGrid()
