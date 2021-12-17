@@ -1175,8 +1175,7 @@ class PropertyController
 		$availDates = [];
 		foreach($dateAvail as $result)
 		{
-			if($result['date_from'] < '2022-12-14' || $result['date_from'] > '2023-01-09')
-				$availDates[] = $result['date_from'];
+			$availDates[] = $result['date_from'];
 		}
 		return [
 				'code' => 1,
