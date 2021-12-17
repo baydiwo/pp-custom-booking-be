@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\BookingDetails;
 use App\Models\SessionDetails;
-use App\Models\BookingSource;
+//use App\Models\BookingSource;
 use App\Models\PropertyAreaDetails;
 
 class BookingController
@@ -287,13 +287,13 @@ class BookingController
 		$reservation['pets']			= $booking_details['pets'];
 		$reservation['totalAmount']		= $booking_details['accomodation_fee'] + ($booking_details['pets'] * $booking_details['pet_fee']);
 		$reservation['dueToday']		= $booking_details['due_today'];
-		
+		/*
 		$bs_result = BookingSource::where('status', '1')->get();
 		$bs_data = [];
 		foreach($bs_result as $bs){
 			$bs_data[] = ['id' => $bs->bs_id, 'name' => $bs->bs_name];
 		}
-		$reservation['bookingSourceList'] = $bs_data;
+		$reservation['bookingSourceList'] = $bs_data;*/
 		
 		$areaData = PropertyAreaDetails::where('area_id', $booking_details['area_id'])
 										->where('category_id', $booking_details['category_id'])
