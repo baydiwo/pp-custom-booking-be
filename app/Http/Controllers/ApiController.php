@@ -225,16 +225,6 @@ class ApiController
         ])->put(env('BASE_URL_RMS') . $endpoint, $param);
 
         return $response->json();
-    }	
-
-    public function reservationRequirement($id, $param)
-    {
-		$endpoint = 'reservations/' . $id . '/requirement';
-        $response = Http::withHeaders([
-            'authToken' => $this->authToken
-        ])->post(env('BASE_URL_RMS') . $endpoint, $param);
-
-        return $response->json();
     }
 
     public function addSundries($param)
