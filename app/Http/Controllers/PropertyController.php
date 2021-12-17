@@ -1175,7 +1175,8 @@ class PropertyController
 		$availDates = [];
 		foreach($dateAvail as $result)
 		{
-			$availDates[] = $result['date_from'];
+			if($result['date_from'] < '2022-12-14' || $result['date_from'] > '2023-01-09')
+				$availDates[] = $result['date_from'];
 		}
 		return [
 				'code' => 1,
@@ -1253,6 +1254,7 @@ class PropertyController
 		$this->params['dateTo'] = Carbon::createFromFormat('Y-m-d', $this->params['dateTo'])->addDays(-1)->format('Y-m-d');
 			
 		$dateAvail = AvailabilityDate::select('area_details.area_id', 'availability_date.date_from')->whereBetween('availability_date.date_from', [$this->params['dateFrom'],$this->params['dateTo']])
+										->whereNotBetween('availability_date.date_from', ['2022-12-14','2023-01-09'])
 										->leftJoin('area_details', 'area_details.category_id', '=', 'availability_date.category_id')
 										->where('availability_date.available_area', 1)
 										->orderBy('area_details.area_id','ASC')
