@@ -291,14 +291,14 @@ class PaymentController
 								]
 							];
 			
-			if($booking_details['pets'] == 1 && $booking_details['pet_fee'] > 0)
+			if($booking_details['pets'] > 0 && $booking_details['pet_fee'] > 0)
 			{
 				$paramSundries[] = [
 									'accountId'                          => $payment_details['account_id'],
-									'amount'                             => $cc_fee,
+									'amount'                             => $booking_details['pet_fee'],
 									'comment'							 => 'Pet Fee.',
 									'dateOfTransaction'                  => Carbon::now(),
-									'description'						 => 'Credit card Fee for Booking - '.$payment_details['booking_id'],
+									'description'						 => 'Pet Fee',
 									'source'                             => "Standard",
 									'sundryId'							 =>	8,
 									'useRmsAccountingDateForPostingDate' => "true",
@@ -324,9 +324,19 @@ class PaymentController
 											'useSecondaryCurrency'				 => 'useDefault'
 										];
 
-            $result = $api->transactionReceipt($paramTransactionReceipt);
+           $result = $api->transactionReceipt($paramTransactionReceipt);
 			// End - Add Transaction Receipt
-
+			
+			$paramRequirement = [
+									"amount"		=> $booking_details['pet_fee'],
+									"dateFrom"		=> $booking_details['arrival_date'],
+									"dateTo"		=>$booking_details['departure_date'],
+									"quantity"		=>$booking_details['pets'],
+									"requirementId" => 8
+								];
+			
+			$reqResult = $api->reservationRequirement($payment_details['booking_id'], $paramRequirement);
+			
             $result = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Confirmed']);
 			if($result)
 			{

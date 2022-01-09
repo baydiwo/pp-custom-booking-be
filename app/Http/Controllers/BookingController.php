@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\BookingDetails;
 use App\Models\SessionDetails;
-//use App\Models\BookingSource;
+use App\Models\BookingSource;
 use App\Models\PropertyAreaDetails;
 
 class BookingController
@@ -69,48 +69,8 @@ class BookingController
 		$from = Carbon::parse($this->params['dateFrom']);
         $to = Carbon::parse($this->params['dateTo']);
 		$rate_type_id = $this->rateByDate($from, $to);
-		
-		/*$diffDays = $from->diffInDays($to);
-		
-		$loop = (int)($diffDays/13);
-		if($diffDays%13 > 0)
-			$loop++;
-			
-		for($i=1; $i <= $loop; $i++)
-		{
-			$t = 13;
-			$startdate = (string)$from;
-			$enddate = $from->addDays($t)->format('Y-m-d');
-			if($i == $loop && $enddate > $to)
-				$enddate = $to;
-			$paramMinNight = [
-				'categoryIds' => [$this->params['categoryId']],
-				'dateFrom'    => $startdate,
-				'dateTo'      => $enddate,
-				'propertyId'  => 1,
-				'rateIds'     => [$rate_type_id]
-			];
-       		$minNight = $api->availabilityrategrid($paramMinNight);
-			
-			if (isset($minNight)) {
-				if (isset($minNight['Message'])) {
-					throw new Exception(ucwords($minNight['Message']));
-				}
-				else if (empty($minNight['categories'][0]['rates'])) {
-					throw new Exception(ucwords('Rate Not Found'));
-				}
-				else {
-					foreach($minNight['categories'][0]['rates'][0]['dayBreakdown'] as $rate_check)
-					{
-						if($rate_check['availableAreas'] == 0)
-							throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
-					}
-				}
-			} else if (!$minNight) {
-				throw new Exception(ucwords('Booking not available for the selected dates!'));//Minimum Night Not Found'));
-			}
-		}*/
-		
+		$now = Carbon::now();
+				
         $paramSearchGuest = [
             "surname" => $this->params['surname'],
             "given"   => $this->params['given'],
@@ -142,32 +102,18 @@ class BookingController
             $guestId = $searchGuest['id'];
         }
 		
-		/*$expiryDate = Carbon::now()->addMinutes(11);
-		$paramPencil = [
-							"id"			=> 0,
-							"areaId"		=> $this->params['areaId'],
-							"arrivalDate"	=> $this->params['dateFrom'].' 14:00:00',
-							"categoryId"	=> $this->params['categoryId'],
-							"departureDate" => $this->params['dateTo'].' 11:00:00',
-							"expiryDate" 	=> $expiryDate,
-							"guestEmail" 	=> $this->params['email'],
-							"guestGiven" 	=> $this->params['given'],
-							"guestSurname" 	=> $this->params['surname'],
-							"guestMobile" 	=> $this->params['phone'],
-							"guestId"		=> $guestId
-						];
-							
-		$endpoint = 'reservations/pencil';
-
-		$response = Http::withHeaders([
-			'authtoken' => $this->authToken
-		])->post(env('BASE_URL_RMS') . $endpoint, $paramPencil);
-
-		if(isset($response['message'])) {
-			throw new Exception(ucwords($response['message']));
-		}*/
-		
-		$booking_id = $this->booking_id;//(isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+		$booking_id = $this->booking_id;
+		$areaData = PropertyAreaDetails::where('property_id', $id)
+							->where('area_id', $this->params['areaId'])
+							->where('category_id', $this->params['categoryId'])
+							->first();
+		$petCount = (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
+		$petFees = ($areaData['pets_allowed'] == 0 ) ? 0 : $petCount*150;
+		$diffWeek = $now->diffInWeeks($from);
+		if($diffWeek > 3)
+        	$dueToday        = number_format((0.3* $data['accomodation']) * 1.012,2);
+		else
+        	$dueToday       = number_format($data['totalAmount'] * 1.012,2);
 		
 		$model = new BookingDetails();
 		$model->arrival_date   	= $this->params['dateFrom'].' 14:00:00';
@@ -189,10 +135,10 @@ class BookingController
 		$model->nights        	= $this->params['nights'];
 		$model->phone         	= $this->params['phone'];
 		$model->post_code     	= $this->params['postCode'];
-		$model->pets      		= (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
+		$model->pets      		= $petCount;
 		$model->accomodation_fee= $this->params['accomodationFee'];
-		$model->pet_fee     	= $this->params['petFee'];
-		$model->due_today    	= $this->params['dueToday'];
+		$model->pet_fee     	= $petFees;
+		$model->due_today    	= $dueToday;
 		$model->guest_id		= $guestId;
 		$model->booking_id		= $booking_id;
 		$model->booking_source_id = $this->params['bookingSource'];
@@ -287,13 +233,13 @@ class BookingController
 		$reservation['pets']			= $booking_details['pets'];
 		$reservation['totalAmount']		= $booking_details['accomodation_fee'] + ($booking_details['pets'] * $booking_details['pet_fee']);
 		$reservation['dueToday']		= $booking_details['due_today'];
-		/*
+		
 		$bs_result = BookingSource::where('status', '1')->get();
 		$bs_data = [];
 		foreach($bs_result as $bs){
 			$bs_data[] = ['id' => $bs->bs_id, 'name' => $bs->bs_name];
 		}
-		$reservation['bookingSourceList'] = $bs_data;*/
+		$reservation['bookingSourceList'] = $bs_data;
 		
 		$areaData = PropertyAreaDetails::where('area_id', $booking_details['area_id'])
 										->where('category_id', $booking_details['category_id'])
@@ -386,6 +332,21 @@ class BookingController
         }
 		
 		$booking_details = BookingDetails::where('id', $booking_id)->first();
+		
+		$areaData = PropertyAreaDetails::where('property_id', $id)
+							->where('area_id', $this->params['areaId'])
+							->where('category_id', $this->params['categoryId'])
+							->first();
+		$from = Carbon::parse($this->params['dateFrom']);
+		$now = Carbon::now();
+
+		$petCount = (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
+		$petFees = ($areaData['pets_allowed'] == 0 ) ? 0 : $petCount*150;
+		$diffWeek = $now->diffInWeeks($from);
+		if($diffWeek > 3)
+        	$dueToday       = number_format((0.3* $data['accomodation']) * 1.012,2);
+		else
+        	$dueToday       = number_format($data['totalAmount'] * 1.012,2);
 
 		$booking_details->arrival_date   	= $this->params['dateFrom'];
 		$booking_details->departure_date 	= $this->params['dateTo'];
@@ -403,10 +364,10 @@ class BookingController
 		$booking_details->nights        	= $this->params['nights'];
 		$booking_details->phone         	= $this->params['phone'];
 		$booking_details->post_code     	= $this->params['postCode'];
-		$booking_details->pets      		= (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
+		$booking_details->pets      		= $petCount;
 		$booking_details->accomodation_fee	= $this->params['accomodationFee'];
-		$booking_details->pet_fee     		= $this->params['petFee'];
-		$booking_details->due_today    		= $this->params['dueToday'];
+		$booking_details->pet_fee     		= $petFees;
+		$booking_details->due_today    		= $dueToday;
 		$booking_details->booking_source_id	= $this->params['bookingSource'];
 		$booking_details->guest_id			= $guestId;
 		
