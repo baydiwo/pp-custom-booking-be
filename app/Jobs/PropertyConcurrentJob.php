@@ -46,7 +46,7 @@ class PropertyConcurrentJob implements ShouldQueue
 
     public function handle()
     {
-		$nextYear = Carbon::now()->addYear()->format('Y-m-d');
+		$nextYear = Carbon::now()->addMonth()->addYear()->format('Y-m-d');
 		$cDate = Carbon::now()->format('Y-m-d');
         $dateInYear = $this->getDateInYear($cDate, $nextYear);
 		$allGroupDate  = [];
