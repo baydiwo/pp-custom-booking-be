@@ -111,10 +111,14 @@ class BookingController
 		$petCount = (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
 		$petFees = ($areaData['pets_allowed'] == 0 ) ? 0 : $petCount*150;
 		$diffWeek = $now->diffInWeeks($from);
+		
+		$accomodationFee = $this->params['accomodationFee'];
+		$totalAmount =  $accomodationFee+$petFees;
+		
 		if($diffWeek > 3)
-        	$dueToday        = number_format((0.3* $areaData['accomodation']) * 1.012,2);
+        	$dueToday        = number_format((0.3* $accomodationFee) * 1.012,2);
 		else
-        	$dueToday       = number_format($areaData['totalAmount'] * 1.012,2);
+        	$dueToday       = number_format($totalAmount * 1.012,2);
 		
 		$model = new BookingDetails();
 		$model->arrival_date   	= $this->params['dateFrom'].' 14:00:00';
@@ -137,7 +141,7 @@ class BookingController
 		$model->phone         	= $this->params['phone'];
 		$model->post_code     	= $this->params['postCode'];
 		$model->pets      		= $petCount;
-		$model->accomodation_fee= $this->params['accomodationFee'];
+		$model->accomodation_fee= $accomodationFee;
 		$model->pet_fee     	= $petFees;
 		$model->due_today    	= $dueToday;
 		$model->guest_id		= $guestId;
@@ -345,10 +349,14 @@ class BookingController
 		$petCount = (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
 		$petFees = ($areaData['pets_allowed'] == 0 ) ? 0 : $petCount*150;
 		$diffWeek = $now->diffInWeeks($from);
+		
+		$accomodationFee = $this->params['accomodationFee'];
+		$totalAmount =  $accomodationFee+$petFees;
+		
 		if($diffWeek > 3)
-        	$dueToday       = number_format((0.3* $areaData['accomodation']) * 1.012,2);
+        	$dueToday       = number_format((0.3* $accomodationFee) * 1.012,2);
 		else
-        	$dueToday       = number_format($areaData['totalAmount'] * 1.012,2);
+        	$dueToday       = number_format($totalAmount * 1.012,2);
 
 		$booking_details->arrival_date   	= $this->params['dateFrom'];
 		$booking_details->departure_date 	= $this->params['dateTo'];
@@ -367,7 +375,7 @@ class BookingController
 		$booking_details->phone         	= $this->params['phone'];
 		$booking_details->post_code     	= $this->params['postCode'];
 		$booking_details->pets      		= $petCount;
-		$booking_details->accomodation_fee	= $this->params['accomodationFee'];
+		$booking_details->accomodation_fee	= $accomodationFee;
 		$booking_details->pet_fee     		= $petFees;
 		$booking_details->due_today    		= $dueToday;
 		$booking_details->booking_source_id	= $this->params['bookingSource'];
