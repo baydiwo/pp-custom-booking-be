@@ -38,6 +38,7 @@ class BookingController
 
     public function create()
     {
+		$id = 1;
         $api = new ApiController($this->authToken, $this->request);
         $validator = Validator::make(
             $this->params,
@@ -274,7 +275,8 @@ class BookingController
 
     public function update($booking_id)
     {
-        $api = new ApiController($this->authToken, $this->request);
+ 		$id = 1;
+       $api = new ApiController($this->authToken, $this->request);
         $validator = Validator::make(
             $this->params,
             [
