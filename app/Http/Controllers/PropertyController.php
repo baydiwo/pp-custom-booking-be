@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\PropertyConcurrentJob;
+use App\Jobs\PropertyAvailabilityDateJobNew;
 use App\Jobs\PropertyAvailabilityDateJob;
 use App\Jobs\PropertyJob;
 use App\Jobs\PropertyConcurrentOneCatJob;
@@ -132,7 +133,7 @@ class PropertyController
 		if($diffWeek > 3)
         	$data['dueToday']        = number_format((0.3* $data['accomodation']) * 1.012,2);
 		else
-        	$data['dueToday']        = number_format($data['accomodation'] * 1.012,2);
+        	$data['dueToday']        = number_format($data['totalAmount'] * 1.012,2);
 		
 		$bs_result = BookingSource::where('status', '1')->get();
 		$bs_data = [];
@@ -496,7 +497,7 @@ class PropertyController
         $to = Carbon::parse($this->params['dateTo']);
         $nowYear = $now->modify('next year');
         if ($to > $nowYear) {
-            throw new Exception("Date from Cannot Greater From One Year");
+           // throw new Exception("Date from Cannot Greater From One Year");
         }
         $diff = $from->diffInDays($to);
 
@@ -618,7 +619,7 @@ class PropertyController
         $to = Carbon::parse($this->params['dateTo']);
         $nowYear = $now->modify('next year');
         if ($to > $nowYear) {
-            throw new Exception("Date from Cannot Greater From One Year");
+           // throw new Exception("Date from Cannot Greater From One Year");
         }
 		
         $diff = $from->diffInDays($to);
@@ -1092,6 +1093,8 @@ class PropertyController
 			dispatch(new PropertyAvailabilityDateJob($this->params['propertyId']));
 		else if(isset($this->params['jobId']) && $this->params['jobId'] == 2)
 			dispatch(new PropertyDetailsJob($this->params['propertyId']));
+		else if(isset($this->params['jobId']) && $this->params['jobId'] == 3)
+			dispatch(new PropertyAvailabilityDateJobNew($this->params['propertyId']));
 		else
 			dispatch(new PropertyConcurrentJob($this->params['propertyId']));
 		
