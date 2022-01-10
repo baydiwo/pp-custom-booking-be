@@ -497,7 +497,7 @@ class PropertyController
         $to = Carbon::parse($this->params['dateTo']);
         $nowYear = $now->modify('next year');
         if ($to > $nowYear) {
-            throw new Exception("Date from Cannot Greater From One Year");
+           // throw new Exception("Date from Cannot Greater From One Year");
         }
         $diff = $from->diffInDays($to);
 
@@ -619,7 +619,7 @@ class PropertyController
         $to = Carbon::parse($this->params['dateTo']);
         $nowYear = $now->modify('next year');
         if ($to > $nowYear) {
-            throw new Exception("Date from Cannot Greater From One Year");
+           // throw new Exception("Date from Cannot Greater From One Year");
         }
 		
         $diff = $from->diffInDays($to);
