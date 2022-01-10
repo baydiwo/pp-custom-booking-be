@@ -227,7 +227,7 @@ class PaymentController
 			{
 				$booking_details->booking_status = '1';
 				$booking_details->save();
-				$update_expiry = SessionDetails::where('booking_id', $payment_details['booking_id'])->where('status', '1')->first();
+				$update_expiry = SessionDetails::where('booking_id', $payment_details['booking_id'])->where('status', '0')->first();
 				if($update_expiry)
 				{
 					$update_expiry->status = '1';
@@ -328,7 +328,7 @@ class PaymentController
 			// End - Add Transaction Receipt
 			
 			$paramRequirement = [
-									"amount"		=> $booking_details['pet_fee'],
+									"amount"		=> 0,//$booking_details['pet_fee'],
 									"dateFrom"		=> $booking_details['arrival_date'],
 									"dateTo"		=>$booking_details['departure_date'],
 									"quantity"		=>$booking_details['pets'],

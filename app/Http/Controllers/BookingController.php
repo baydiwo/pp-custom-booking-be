@@ -38,6 +38,7 @@ class BookingController
 
     public function create()
     {
+		$id = 1;
         $api = new ApiController($this->authToken, $this->request);
         $validator = Validator::make(
             $this->params,
@@ -111,9 +112,9 @@ class BookingController
 		$petFees = ($areaData['pets_allowed'] == 0 ) ? 0 : $petCount*150;
 		$diffWeek = $now->diffInWeeks($from);
 		if($diffWeek > 3)
-        	$dueToday        = number_format((0.3* $data['accomodation']) * 1.012,2);
+        	$dueToday        = number_format((0.3* $areaData['accomodation']) * 1.012,2);
 		else
-        	$dueToday       = number_format($data['totalAmount'] * 1.012,2);
+        	$dueToday       = number_format($areaData['totalAmount'] * 1.012,2);
 		
 		$model = new BookingDetails();
 		$model->arrival_date   	= $this->params['dateFrom'].' 14:00:00';
@@ -274,7 +275,8 @@ class BookingController
 
     public function update($booking_id)
     {
-        $api = new ApiController($this->authToken, $this->request);
+ 		$id = 1;
+       $api = new ApiController($this->authToken, $this->request);
         $validator = Validator::make(
             $this->params,
             [
@@ -344,9 +346,9 @@ class BookingController
 		$petFees = ($areaData['pets_allowed'] == 0 ) ? 0 : $petCount*150;
 		$diffWeek = $now->diffInWeeks($from);
 		if($diffWeek > 3)
-        	$dueToday       = number_format((0.3* $data['accomodation']) * 1.012,2);
+        	$dueToday       = number_format((0.3* $areaData['accomodation']) * 1.012,2);
 		else
-        	$dueToday       = number_format($data['totalAmount'] * 1.012,2);
+        	$dueToday       = number_format($areaData['totalAmount'] * 1.012,2);
 
 		$booking_details->arrival_date   	= $this->params['dateFrom'];
 		$booking_details->departure_date 	= $this->params['dateTo'];
