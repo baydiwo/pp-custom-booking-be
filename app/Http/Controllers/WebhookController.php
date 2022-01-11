@@ -27,7 +27,7 @@ class WebhookController
 
     public function __construct(Request $request)
     {
-        $this->authToken = Cache::get('authToken')['token'];
+        //$this->authToken = Cache::get('authToken')['token'];
         $this->request = $request;
         $this->params  = $request->all();
     }
