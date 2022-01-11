@@ -49,4 +49,30 @@ class WebhookController
             'data' => $model
         ];
     }
+
+    public function getLastData()
+    {
+		$result = ModelWebhooks::select('response','response_get','response_post')
+            ->orderBy('id', 'DESC')->get();
+		
+		$table = '<table width="900" border="1" cellspacing="0" cellpadding="5">
+					  <tr>
+						<th width="21">Id</th>
+						<th width="400">Response</th>
+						<th width="210">Response(GET Method)</th>
+						<th width="204">Response(POST Method)</th>
+					  </tr>';
+		foreach($result as $key => $res)
+		{
+			$table.='<tr>
+						<td>'.($key+1).'</td>
+						<td>'.($res['response']).'</td>
+						<td>'.($res['response_get']).'</td>
+						<td>'.($res['response_post']).'</td>
+					  </tr>';
+		}
+		$table.='</table>';
+		
+        return $table;
+    }
 }
