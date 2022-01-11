@@ -291,7 +291,7 @@ class PaymentController
 								]
 							];
 			
-			if($booking_details['pets'] > 0 && $booking_details['pet_fee'] > 0)
+			/*if($booking_details['pets'] > 0 && $booking_details['pet_fee'] > 0)
 			{
 				$paramSundries[] = [
 									'accountId'                          => $payment_details['account_id'],
@@ -304,7 +304,7 @@ class PaymentController
 									'useRmsAccountingDateForPostingDate' => "true",
 									'useSecondaryCurrency'				 => 'useDefault'
 								];
-			}
+			}*/
 			
 			$sundriesResult = $api->addSundries($paramSundries);
 			
