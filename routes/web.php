@@ -73,3 +73,7 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
         $router->post('create', 'PropertyController@generateToken');
     });
 
+
+$router->get('update-dates', "WebhookController@getResponse");
+$router->post('update-dates', "WebhookController@getResponse");
+

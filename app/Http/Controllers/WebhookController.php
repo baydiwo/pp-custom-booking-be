@@ -35,8 +35,12 @@ class WebhookController
     public function getResponse(Request $request)
     {
 		$response = json_encode($request);
+		$response_get = json_encode($_GET);
+		$response_post = json_encode($_POST);
         $model = new ModelWebhooks();
         $model->response = $response;
+        $model->response_get = $response_get;
+        $model->response_post = $response_post;
 		$model->save();
 		
         return [
