@@ -16,6 +16,7 @@ use App\Models\PropertyAreaDetails;
 use App\Models\AvailabilityDate;
 use App\Models\SessionDetails;
 use App\Models\BookingSource;
+use App\Models\ModelTiming;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -103,7 +104,9 @@ class PropertyController
 		
 		$diffWeek = $now->diffInWeeks($from);
 		$petCount = (isset($this->params['pets']) && $this->params['pets'] > 0) ? $this->params['pets'] : 0;
+		$ratestart = Carbon::now();
 		$rateQuote = $api->rateQuote($paramsRateQuote);
+		$rateend = Carbon::now();
 		
         if (isset($rateQuote['Message'])) {
             throw new Exception(ucwords($rateQuote['Message']));
@@ -198,9 +201,11 @@ class PropertyController
 								];
 	
 			$endpoint = 'reservations/pencil';
+			$pencilstart = Carbon::now();
 			$response = Http::withHeaders([
 				'authtoken' => $this->authToken
 			])->post(env('BASE_URL_RMS') . $endpoint, $paramPencilData);
+			$pencilend = Carbon::now();
 	
 			if(isset($response['message'])) {
 				throw new Exception(ucwords($response['message']));
@@ -213,6 +218,14 @@ class PropertyController
 			$model->expiry_date = $expiryDate;
 			$model->save();
 			$data['access_id'] = $model->access_token;
+			
+			$modelTiming = new ModelTiming();
+			$modelTiming->token = $this->webToken;
+			$modelTiming->rate_start = $ratestart;
+			$modelTiming->rate_end = $rateend;
+			$modelTiming->pencil_start = $pencilstart;
+			$modelTiming->pencil_end = $pencilend;
+			$modelTiming->save();
 		}
 		else
 		{
