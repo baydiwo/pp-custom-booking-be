@@ -147,8 +147,9 @@ class PropertyController
 			$guestGiven = 'PPB';
 			$guestSurname = 'Pending';
 			$guestPhone = '0417120000';
+			$guestId = 21899;
 			
-			$paramSearchGuest = [
+			/*$paramSearchGuest = [
 				"surname" => $guestSurname,
 				"given"   => $guestGiven,
 				"mobile"  => $guestPhone
@@ -177,7 +178,7 @@ class PropertyController
 			} else {
 				$searchGuest = collect($searchGuest)->first();
 				$guestId = $searchGuest['id'];
-			}
+			}*/
 	
 			$expiryDate = Carbon::now()->addMinutes(11);
 			$paramPencilData = [
