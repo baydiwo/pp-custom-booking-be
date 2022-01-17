@@ -225,6 +225,7 @@ class PropertyController
 			$modelTiming->rate_end = $rateend;
 			$modelTiming->pencil_start = $pencilstart;
 			$modelTiming->pencil_end = $pencilend;
+			$modelTiming->status = '1';
 			$modelTiming->save();
 		}
 		else
