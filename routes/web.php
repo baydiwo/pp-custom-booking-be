@@ -62,6 +62,7 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
 		$router->get('get-availability-dates', 'PropertyController@getAvailabilityDatesByArea');
 		$router->get('get-availability-dates-arrival', 'PropertyController@getAvailabilityDatesADByArea');
 		$router->get('get-availability-areas', 'PropertyController@getAvailabilityAreasByDate');
+		$router->get('test-ac', 'PropertyController@test');
         //$router->get('{id}', 'PropertyController@detail');
     });
 	
