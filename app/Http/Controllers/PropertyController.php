@@ -1297,22 +1297,4 @@ class PropertyController
 					]
 				];
 	}
-	
-	public function test()
-	{
-		$paramData = [
-										"contact" => [
-																	"email" => "sasikumar@versatile-soft.com",
-																	"firstName" => "Sasi",
-																	"lastName" => "Kumar",
-																	"phone" => "0417123010"
-																]
-								];
-		$endpoint = 'https://privateproperties.api-us1.com/api/3/contacts';
-		$response = Http::withHeaders([
-			'Api-Token' => 'f7f7f7d0870e23659fb522b332627d277e00d32114b891b5c8788e9d3009700b0de72322'
-		])->post($endpoint, $paramData);
-		
-		print_r($response);
-	}
 }
