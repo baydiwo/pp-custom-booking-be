@@ -70,6 +70,24 @@ class PaymentController
 				$amount        = number_format($booking_details['accomodation_fee'] * 1.012, 2);
 		}
 		
+		//Start - Active Campaign API
+		if($this->params['newsletterFlag'] == 'true')
+		{
+			$paramAcData = [
+											"contact" => [
+																		"email" => $booking_details['email'],
+																		"firstName" => $booking_details['given'],
+																		"lastName" => $booking_details['surname'],
+																		"phone" => $booking_details['phone']
+																	]
+									];
+			$endpointAc = 'https://privateproperties.api-us1.com/api/3/contacts';
+			$responseAc = Http::withHeaders([
+				'Api-Token' => 'f7f7f7d0870e23659fb522b332627d277e00d32114b891b5c8788e9d3009700b0de72322'
+			])->post($endpointAc, $paramAcData);
+		}
+		// End - Active Campaign API
+
 		$booking_id = $booking_details['booking_id'];
 		
         //get account property based on Booking ID
