@@ -280,7 +280,7 @@ class BookingController
     public function update($booking_id)
     {
  		$id = 1;
-       $api = new ApiController($this->authToken, $this->request);
+		$api = new ApiController($this->authToken, $this->request);
         $validator = Validator::make(
             $this->params,
             [
@@ -306,6 +306,13 @@ class BookingController
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 		
+		$from = Carbon::parse($this->params['dateFrom']);
+		$now = Carbon::now();
+		$dateDiff = $now->diffInDays($from);
+		
+		if($dateDiff < 5)
+			throw new Exception(ucwords('Contact our Booking Consultant for last minute bookings'));
+
 		$paramSearchGuest = [
             "surname" => $this->params['surname'],
             "given"   => $this->params['given'],
@@ -343,8 +350,6 @@ class BookingController
 							->where('area_id', $this->params['areaId'])
 							->where('category_id', $this->params['categoryId'])
 							->first();
-		$from = Carbon::parse($this->params['dateFrom']);
-		$now = Carbon::now();
 
 		$petCount = (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
 		$petFees = ($areaData['pets_allowed'] == 0 ) ? 0 : $petCount*150;
