@@ -159,9 +159,9 @@ class PropertyController
 			$paramPencilData = [
 									"id" => 0,
 									"areaId" => $this->params['areaId'],
-									"arrivalDate" => $datefrom." 14:00:00",
+									"arrivalDate" => $datefrom." 15:00:00",
 									"categoryId" => $this->params['categoryId'],
-									"departureDate" => $dateto." 11:00:00",
+									"departureDate" => $dateto." 11:30:00",
 									"expiryDate" => $expiryDate,
 									"guestId" => $guestId,
 									"guestEmail" => "sasikumar@versatile-soft.com",

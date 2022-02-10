@@ -121,8 +121,8 @@ class BookingController
         	$dueToday       = number_format($totalAmount * 1.012,2);
 		
 		$model = new BookingDetails();
-		$model->arrival_date   	= $this->params['dateFrom'].' 14:00:00';
-		$model->departure_date 	= $this->params['dateTo'].' 11:00:00';
+		$model->arrival_date   	= $this->params['dateFrom'].' 15:00:00';
+		$model->departure_date 	= $this->params['dateTo'].' 10:30:00';
 		$model->surname			= $this->params['surname'];
 		$model->given         	= $this->params['given'];
 		$model->email         	= $this->params['email'];
@@ -189,10 +189,10 @@ class BookingController
 						"id" => $booking_details_id,
 						"bookingId" => $booking_id,
 						"areaId" => $this->params['areaId'],
-						"arrivalDate" => $this->params['dateFrom']." 14:00:00",
+						"arrivalDate" => $this->params['dateFrom']." 15:00:00",
 						"cancelledDate" => "1900-01-01 00:00:00",
 						"categoryId" => $this->params['categoryId'],
-						"departureDate" => $this->params['dateTo']." 11:00:00",
+						"departureDate" => $this->params['dateTo']." 10:30:00",
 						"guestId" => $guestId,
 						"rateTypeId" => $rate_type_id,
 						"rateTypeName" => ($rate_type_id+1)." Night OTA",
