@@ -121,8 +121,8 @@ class BookingController
         	$dueToday       = number_format($totalAmount * 1.012,2);
 		
 		$model = new BookingDetails();
-		$model->arrival_date   	= $this->params['dateFrom'].' 14:00:00';
-		$model->departure_date 	= $this->params['dateTo'].' 11:00:00';
+		$model->arrival_date   	= $this->params['dateFrom'].' 15:00:00';
+		$model->departure_date 	= $this->params['dateTo'].' 10:30:00';
 		$model->surname			= $this->params['surname'];
 		$model->given         	= $this->params['given'];
 		$model->email         	= $this->params['email'];
@@ -189,10 +189,10 @@ class BookingController
 						"id" => $booking_details_id,
 						"bookingId" => $booking_id,
 						"areaId" => $this->params['areaId'],
-						"arrivalDate" => $this->params['dateFrom']." 14:00:00",
+						"arrivalDate" => $this->params['dateFrom']." 15:00:00",
 						"cancelledDate" => "1900-01-01 00:00:00",
 						"categoryId" => $this->params['categoryId'],
-						"departureDate" => $this->params['dateTo']." 11:00:00",
+						"departureDate" => $this->params['dateTo']." 10:30:00",
 						"guestId" => $guestId,
 						"rateTypeId" => $rate_type_id,
 						"rateTypeName" => ($rate_type_id+1)." Night OTA",
@@ -280,7 +280,7 @@ class BookingController
     public function update($booking_id)
     {
  		$id = 1;
-       $api = new ApiController($this->authToken, $this->request);
+		$api = new ApiController($this->authToken, $this->request);
         $validator = Validator::make(
             $this->params,
             [
@@ -306,6 +306,13 @@ class BookingController
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
 		
+		$from = Carbon::parse($this->params['dateFrom']);
+		$now = Carbon::now();
+		$dateDiff = $now->diffInDays($from);
+		
+		if($dateDiff < 5)
+			throw new Exception(ucwords('Contact our Booking Consultant for last minute bookings'));
+
 		$paramSearchGuest = [
             "surname" => $this->params['surname'],
             "given"   => $this->params['given'],
@@ -343,8 +350,6 @@ class BookingController
 							->where('area_id', $this->params['areaId'])
 							->where('category_id', $this->params['categoryId'])
 							->first();
-		$from = Carbon::parse($this->params['dateFrom']);
-		$now = Carbon::now();
 
 		$petCount = (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
 		$petFees = ($areaData['pets_allowed'] == 0 ) ? 0 : $petCount*150;

@@ -60,11 +60,19 @@ class PropertyController
     public function detail(Request $request, $id)
     {
 		$this->webToken = ($request->bearerToken() !== '') ? $request->bearerToken() : '';
-		//$this->webToken = ($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
 		$now = Carbon::now();
 		$checkExpiry = SessionDetails::where('access_token', $this->webToken)->first();
 		if(!$checkExpiry)
 			 throw new Exception(ucwords('Token is missing or invalid!'));
+		
+		$from = Carbon::parse($this->params['arrivalDate']);
+        $to = Carbon::parse($this->params['departureDate']);
+		$now = Carbon::now();
+		$dateDiff = $now->diffInDays($from);
+        $this->params['rateTypeId'] = $this->rateByDate($from, $to);
+		
+		if($dateDiff < 5)
+			throw new Exception(ucwords('Contact our Booking Consultant for last minute bookings'));
 
 		$this->authToken = Cache::get('authToken')['token'];
         $api = new ApiController($this->authToken, $this->request);
@@ -84,11 +92,6 @@ class PropertyController
             ->where('area_id', $this->params['areaId'])
             ->where('category_id', $this->params['categoryId'])
             ->first();
-		
-		$from = Carbon::parse($this->params['arrivalDate']);
-        $to = Carbon::parse($this->params['departureDate']);
-		$now = Carbon::now();
-        $this->params['rateTypeId'] = $this->rateByDate($from, $to);
 
         $paramsRateQuote = [
             'adults'        => $this->params['adults'],
@@ -152,44 +155,13 @@ class PropertyController
 			$guestPhone = '0417120000';
 			$guestId = 21899;
 			
-			/*$paramSearchGuest = [
-				"surname" => $guestSurname,
-				"given"   => $guestGiven,
-				"mobile"  => $guestPhone
-			];
-			
-			$searchGuest = $api->guestSearch($paramSearchGuest);
-			if((count($searchGuest) == 0) || (isset($searchGuest['Message']))) {
-				$paramCreateGuest = [
-					'addressLine1' => '60 Quandong Parkway',
-					'postCode'     => '6210',
-					'state'        => 'WA',
-					'town'         => 'Halls Head',
-					'countryId'    => 13,
-					'email'        => 'support@studiojs.com.au',
-					'guestGiven'   => $guestGiven,
-					'guestSurname' => $guestSurname,
-					'mobile'       => $guestPhone,
-					'propertyId'   => 1
-				];
-				
-				$createGuest = $api->createGuest($paramCreateGuest);
-				if(isset($createGuest['Message'])) {
-					throw new Exception(ucwords($createGuest['Message']));
-				}
-				$guestId = $createGuest['id'];
-			} else {
-				$searchGuest = collect($searchGuest)->first();
-				$guestId = $searchGuest['id'];
-			}*/
-	
 			$expiryDate = Carbon::now()->addMinutes(11);
 			$paramPencilData = [
 									"id" => 0,
 									"areaId" => $this->params['areaId'],
-									"arrivalDate" => $datefrom." 14:00:00",
+									"arrivalDate" => $datefrom." 15:00:00",
 									"categoryId" => $this->params['categoryId'],
-									"departureDate" => $dateto." 11:00:00",
+									"departureDate" => $dateto." 11:30:00",
 									"expiryDate" => $expiryDate,
 									"guestId" => $guestId,
 									"guestEmail" => "sasikumar@versatile-soft.com",
