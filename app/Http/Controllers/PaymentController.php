@@ -65,9 +65,9 @@ class PaymentController
 			$diffWeek = $now->diffInWeeks($from_date);
 			
 			if($diffWeek > 3)
-				$amount        = number_format((0.3* $booking_details['accomodation_fee']) * 1.012, 2);
+				$amount        = number_format((0.3* $booking_details['accomodation_fee']) * 1.012, 2, '.', '');
 			else
-				$amount        = number_format($booking_details['accomodation_fee'] * 1.012, 2);
+				$amount        = number_format($booking_details['accomodation_fee'] * 1.012, 2), '.', '';
 		}
 		
 		//Start - Active Campaign API
@@ -291,9 +291,9 @@ class PaymentController
 			$diffWeek = $now->diffInWeeks($from_date);
 			
 			if($diffWeek > 3)
-				$cc_fee = number_format((0.3* $booking_details['accomodation_fee']) * 0.012, 2);
+				$cc_fee = number_format((0.3* $booking_details['accomodation_fee']) * 0.012, 2, '.', '');
 			else
-				$cc_fee = number_format($booking_details['accomodation_fee'] * 0.012, 2);
+				$cc_fee = number_format($booking_details['accomodation_fee'] * 0.012, 2, '.', '');
 			
 			$paramSundries = [
 								[
