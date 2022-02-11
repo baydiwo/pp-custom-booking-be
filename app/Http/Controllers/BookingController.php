@@ -116,9 +116,9 @@ class BookingController
 		$totalAmount =  $accomodationFee+$petFees;
 		
 		if($diffWeek > 3)
-        	$dueToday        = number_format((0.3* $accomodationFee) * 1.012,2);
+        	$dueToday        = number_format((0.3* $accomodationFee) * 1.012,2, '.', '');
 		else
-        	$dueToday       = number_format($totalAmount * 1.012,2);
+        	$dueToday       = number_format($totalAmount * 1.012,2, '.', '');
 		
 		$model = new BookingDetails();
 		$model->arrival_date   	= $this->params['dateFrom'].' 15:00:00';
@@ -359,9 +359,9 @@ class BookingController
 		$totalAmount =  $accomodationFee+$petFees;
 		
 		if($diffWeek > 3)
-        	$dueToday       = number_format((0.3* $accomodationFee) * 1.012,2);
+        	$dueToday       = number_format((0.3* $accomodationFee) * 1.012,2, '.', '');
 		else
-        	$dueToday       = number_format($totalAmount * 1.012,2);
+        	$dueToday       = number_format($totalAmount * 1.012,2, '.', '');
 
 		$booking_details->arrival_date   	= $this->params['dateFrom'];
 		$booking_details->departure_date 	= $this->params['dateTo'];
