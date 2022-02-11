@@ -65,9 +65,9 @@ class PaymentController
 			$diffWeek = $now->diffInWeeks($from_date);
 			
 			if($diffWeek > 3)
-				$amount        = number_format((0.3* $booking_details['accomodation_fee']) * 1.012, 2, '.', '');
+				$amount        = number_format((0.3* $booking_details['accomodation_fee']) * 1.012, 2,'.','');
 			else
-				$amount        = number_format($booking_details['accomodation_fee'] * 1.012, 2), '.', '';
+				$amount        = number_format($booking_details['accomodation_fee'] * 1.012, 2,'.','');
 		}
 		
 		//Start - Active Campaign API
@@ -277,7 +277,7 @@ class PaymentController
 			
 			$paramGuestToken = [
 									"cardHolderName"		=> $payment_details['card_name'],
-									"cardType"				=> $payment_details['card_type'],
+									"cardType"				=> str_replace(' ','',$payment_details['card_type']),
 									"description"			=> "Customers credit card",
 									"expiryDate"			=>$payment_details['card_expmonth'].'/'.$payment_details['card_expyear'],
 									"lastFourDigitsOfCard"	=> $payment_details['card_number'],
@@ -291,9 +291,9 @@ class PaymentController
 			$diffWeek = $now->diffInWeeks($from_date);
 			
 			if($diffWeek > 3)
-				$cc_fee = number_format((0.3* $booking_details['accomodation_fee']) * 0.012, 2, '.', '');
+				$cc_fee = number_format((0.3* $booking_details['accomodation_fee']) * 0.012, 2);
 			else
-				$cc_fee = number_format($booking_details['accomodation_fee'] * 0.012, 2, '.', '');
+				$cc_fee = number_format($booking_details['accomodation_fee'] * 0.012, 2);
 			
 			$paramSundries = [
 								[
@@ -326,11 +326,19 @@ class PaymentController
 			
 			$sundriesResult = $api->addSundries($paramSundries);
 			
+			//Check for card type and set cardID
+			$card_type = strtolower($payment_details['card_type']);
+			$mc_cards = ['master', 'mastercard', 'master card'];
+			if( in_array($card_type,$mc_cards))
+				$card_id = 2;
+			else
+				$card_id = 3;
+			
 			// Start - Add Transaction Receipt
 			$paramTransactionReceipt = [
 											'accountId'                          => $payment_details['account_id'],
 											'amount'                             => $payment_details['amount'],
-											'cardId'                             => 3,
+											'cardId'                             => $card_id,
 											'dateOfTransaction'                  => Carbon::now(),
 											'receiptType'                        => "CreditCard",
 											'source'                             => "Standard",
