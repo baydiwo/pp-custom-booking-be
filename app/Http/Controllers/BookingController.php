@@ -110,12 +110,12 @@ class BookingController
 							->first();
 		$petCount = (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
 		$petFees = ($areaData['pets_allowed'] == 0 ) ? 0 : $petCount*150;
-		$diffWeek = $now->diffInWeeks($from);
+		$diffWeek = $now->diffIndays($from);
 		
 		$accomodationFee = $this->params['accomodationFee'];
 		$totalAmount =  $accomodationFee+$petFees;
 		
-		if($diffWeek > 3)
+		if($diffWeek > 20)
         	$dueToday        = number_format((0.3* $accomodationFee) * 1.012,2, '.', '');
 		else
         	$dueToday       = number_format($totalAmount * 1.012,2, '.', '');
@@ -353,12 +353,12 @@ class BookingController
 
 		$petCount = (isset($this->params['pets']) && $this->params['pets'] != '') ? $this->params['pets'] : 0;
 		$petFees = ($areaData['pets_allowed'] == 0 ) ? 0 : $petCount*150;
-		$diffWeek = $now->diffInWeeks($from);
+		$diffWeek = $now->diffIndays($from);
 		
 		$accomodationFee = $this->params['accomodationFee'];
 		$totalAmount =  $accomodationFee+$petFees;
 		
-		if($diffWeek > 3)
+		if($diffWeek > 20)
         	$dueToday       = number_format((0.3* $accomodationFee) * 1.012,2, '.', '');
 		else
         	$dueToday       = number_format($totalAmount * 1.012,2, '.', '');
