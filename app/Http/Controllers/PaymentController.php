@@ -62,9 +62,9 @@ class PaymentController
 		{
 			$now = Carbon::now();
 			$from_date = Carbon::parse($booking_details['arrival_date']);
-			$diffWeek = $now->diffInWeeks($from_date);
+			$diffWeek = $now->diffIndays($from_date);
 			
-			if($diffWeek > 3)
+			if($diffWeek > 20)
 				$amount        = number_format((0.3* $booking_details['accomodation_fee']) * 1.012, 2,'.','');
 			else
 				$amount        = number_format($booking_details['accomodation_fee'] * 1.012, 2,'.','');
@@ -288,9 +288,9 @@ class PaymentController
 			
 			$now = Carbon::now();
 			$from_date = Carbon::parse($booking_details['arrival_date']);
-			$diffWeek = $now->diffInWeeks($from_date);
+			$diffWeek = $now->diffIndays($from_date);
 			
-			if($diffWeek > 3)
+			if($diffWeek > 20)
 				$cc_fee = number_format((0.3* $booking_details['accomodation_fee']) * 0.012, 2);
 			else
 				$cc_fee = number_format($booking_details['accomodation_fee'] * 0.012, 2);
