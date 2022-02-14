@@ -1151,7 +1151,7 @@ class PropertyController
 		$cDate = Carbon::now()->format('Y-m-01');
 		$startDate = Carbon::createFromFormat('Y-m-d', $cDate)->addDays(-1)->format('Y-m-d');
 		$nxtYear = Carbon::now()->addYear()->format('Y-m-d');
-		$nextYear = Carbon::parse($nxtYear)->endOfMonth()->format('Y-m-d');
+		$nextYear = $nxtYear; //Carbon::parse($nxtYear)->endOfMonth()->format('Y-m-d');
 		$dateAvail = AvailabilityDate::select('date_from')->where('category_id', $category_id)
 									->where('date_from', '>=', $startDate)
 									->where('date_from', '<=', $nextYear)
@@ -1200,7 +1200,7 @@ class PropertyController
 			
 		$startDate = Carbon::now()->format('Y-m-01');
 		$nxtYear = Carbon::now()->addYear()->format('Y-m-d');
-		$nextYear = Carbon::parse($nxtYear)->endOfMonth()->format('Y-m-d');
+		$nextYear = $nxtYear;//Carbon::parse($nxtYear)->endOfMonth()->format('Y-m-d');
 		$dateAvail = AvailabilityDate::select('date_from')->where('category_id', $category_id)
 									->where('date_from', '>=', $startDate)
 									->where('date_from', '<=', $nextYear)
