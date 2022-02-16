@@ -115,8 +115,13 @@ class PropertyController
             throw new Exception(ucwords($rateQuote['Message']));
         }
 		
-        $datefrom = $this->params['arrivalDate'];
-        $dateto = $this->params['departureDate'];
+        //$datefrom = $this->params['arrivalDate'];
+       // $dateto = $this->params['departureDate'];
+		
+		$fDate = strtotime($this->params['arrivalDate']);
+		$datefrom = date('Y-m-d', $fDate);
+		$tDate = strtotime($this->params['departureDate']);
+		$dateto = date('Y-m-d', $tDate);
 		
 		$to   = Carbon::createFromFormat('Y-m-d', $this->params['arrivalDate']);
 		$from = Carbon::createFromFormat('Y-m-d', $this->params['departureDate']);
@@ -148,14 +153,17 @@ class PropertyController
 		}
 		$data['bookingSourceList'] = $bs_data;
 		
-		if($checkExpiry->booking_id == '')
+		if($checkExpiry->booking_id == '' || $checkExpiry->booking_id == 0)
 		{
 			$guestGiven = 'PPB';
 			$guestSurname = 'Pending';
 			$guestPhone = '0417120000';
 			$guestId = 21899;
 			
-			$expiryDate = Carbon::now()->addMinutes(11);
+			$expiryDate = date('Y-m-d h:i:s',strtotime('+11 minutes', time()));
+
+			//$expiryDate = Carbon::now()->addMinutes(11);
+			//$expiryDate = Carbon::createFromFormat('Y-m-d h:i:s', $expiryDate);
 			$paramPencilData = [
 									"id" => 0,
 									"areaId" => $this->params['areaId'],
