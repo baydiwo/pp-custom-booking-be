@@ -257,7 +257,7 @@ class BookingController
         $areaDetails['imageUrl']     	= $areaData['image_link'];
 		$areaDetails['bond']        	= $areaData['bond'];
         $areaDetails['petAllowed']      = $areaData['pets_allowed'] == 0 ? false : true;
-        $areaDetails['petFee']          = $booking_details['pet_fee'];
+        $areaDetails['petFee']          = 150;//$booking_details['pet_fee'];
         $areaDetails['maxOccupants']    = (integer)$areaData['max_occupants'];
         $areaDetails['totalRooms']      = (integer)$areaData['total_rooms'];
         $areaDetails['totalGuests']     = $booking_details['adults'] . ' adults, ' . $booking_details['children'] . ' children, ' . $booking_details['infants'] . ' infants';
