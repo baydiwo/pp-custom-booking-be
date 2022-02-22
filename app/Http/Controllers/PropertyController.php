@@ -162,7 +162,7 @@ class PropertyController
 			
 			$date = new \DateTime("now", new \DateTimeZone('Australia/Perth'));
 			$date_time = $date->format('Y-m-d H:i:s');
-			$expiryDate = date('Y-m-d h:i:s',strtotime('+11 minutes', strtotime($date_time)));
+			$expiryDate = date('Y-m-d H:i:s',strtotime('+11 minutes', strtotime($date_time)));
 
 			$paramPencilData = [
 									"id" => 0,
