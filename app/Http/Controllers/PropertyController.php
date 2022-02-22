@@ -160,10 +160,10 @@ class PropertyController
 			$guestPhone = '0417120000';
 			$guestId = 21899;
 			
-			$expiryDate = date('Y-m-d h:i:s',strtotime('+11 minutes', time()));
+			$date = new DateTime("now", new DateTimeZone('Australia/Perth'));
+			$date_time = $date->format('Y-m-d H:i:s');
+			$expiryDate = date('Y-m-d h:i:s',strtotime('+11 minutes', strtotime($date_time)));
 
-			//$expiryDate = Carbon::now()->addMinutes(11);
-			//$expiryDate = Carbon::createFromFormat('Y-m-d h:i:s', $expiryDate);
 			$paramPencilData = [
 									"id" => 0,
 									"areaId" => $this->params['areaId'],
