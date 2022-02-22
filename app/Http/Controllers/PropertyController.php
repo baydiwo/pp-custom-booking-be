@@ -237,7 +237,8 @@ class PropertyController
 		$data['departure_date'] = $this->params['dateTo'];
 		$data['user_ip'] = $this->params['userIp'];
 		
-		$now = Carbon::now();
+		$date_checker = new \DateTime("now", new \DateTimeZone('Australia/Perth'));
+		$now = $date_checker->format('Y-m-d H:i:s');
 		
 		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
 									->where('departure_date', $data['departure_date'])
