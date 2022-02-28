@@ -387,6 +387,7 @@ class PaymentController
 			
 			$txn_details->payment_status = '1';
 			$txn_details->save();
+			$booking_details_data = BookingDetails::select('email','booking_id')->where('id', $booking_details_id)->first();
 			
 			$ctime = Carbon::now();
 			$modelTiming = new ModelTiming();
@@ -395,7 +396,7 @@ class PaymentController
 			$modelTiming->rate_end = $ctime;
 			$modelTiming->pencil_start = $ctime;
 			$modelTiming->pencil_end = $ctime;
-			$modelTiming->booking_id = $booking_details['booking_id'];
+			$modelTiming->booking_id = $booking_details_data['booking_id'];
 			$modelTiming->process_type = 'PaymentSuccess';
 			$modelTiming->status = '1';
 			$modelTiming->save();
