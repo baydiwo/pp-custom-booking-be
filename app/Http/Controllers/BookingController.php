@@ -363,8 +363,8 @@ class BookingController
 		else
         	$dueToday       = number_format($totalAmount * 1.012,2, '.', '');
 
-		$booking_details->arrival_date   	= $this->params['dateFrom'];
-		$booking_details->departure_date 	= $this->params['dateTo'];
+		$booking_details->arrival_date   	= $this->params['dateFrom']." 15:00:00";
+		$booking_details->departure_date 	= $this->params['dateTo']." 10:30:00";
 		$booking_details->surname			= $this->params['surname'];
 		$booking_details->given         	= $this->params['given'];
 		$booking_details->email         	= $this->params['email'];
