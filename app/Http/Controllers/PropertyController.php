@@ -205,6 +205,8 @@ class PropertyController
 			$modelTiming->rate_end = $rateend;
 			$modelTiming->pencil_start = $pencilstart;
 			$modelTiming->pencil_end = $pencilend;
+			$modelTiming->booking_id = $data['bookingId'];
+			$modelTiming->process_type = 'Pencil';
 			$modelTiming->status = '1';
 			$modelTiming->save();
 		}
@@ -770,7 +772,24 @@ class PropertyController
 				if($areaID > 0)
 					return $resultData['data']['categories']['rates']['dayBreakdown'];
 				else
+				{
+					$cid = $resultData['data']['categories']['categoryId'];
+					$dataStopSell = AvailabilityDate::select('*')->where('category_id', $cid)
+									->where('date_from', '>=', $this->params['dateFrom'])
+									->where('date_from', '<=', $this->params['dateTo'])
+									->where('available_area', 1)
+									->where('stop_sell', '1')
+									->get();
+					
+					// Start - Checking StopSell for selected dates
+					if(count($dataStopSell) > 0)
+						$resultData['stopSell'] = 1;
+					else
+						$resultData['stopSell'] = 0;
+					// End - Checking StopSell for selected dates
+					
 					return $resultData;
+				}
 			}
 			else
 				throw new Exception("Minimum stay allowed is ".$resultData['data']['categories']['rates']['dayBreakdown'][0]['minStay']." Nights");

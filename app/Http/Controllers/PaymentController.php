@@ -19,6 +19,7 @@ use LVR\CreditCard\Cards\Card;
 use App\Models\BookingDetails;
 use App\Models\SessionDetails;
 use App\Models\ModelPaymentDetails;
+use App\Models\ModelTiming;
 
 class PaymentController
 {
@@ -386,6 +387,19 @@ class PaymentController
 			
 			$txn_details->payment_status = '1';
 			$txn_details->save();
+			
+			$ctime = Carbon::now();
+			$modelTiming = new ModelTiming();
+			$modelTiming->token = 'Payment Success - Booking details Updation';
+			$modelTiming->rate_start = $ctime;
+			$modelTiming->rate_end = $ctime;
+			$modelTiming->pencil_start = $ctime;
+			$modelTiming->pencil_end = $ctime;
+			$modelTiming->booking_id = $booking_details['booking_id'];
+			$modelTiming->process_type = 'PaymentSuccess';
+			$modelTiming->status = '1';
+			$modelTiming->save();
+			
 			$booking_ref_id = $this->updateTransactionDetails($request['sessionId']);
 			
 			$booking_details = BookingDetails::select('email','booking_id')->where('id', $booking_details_id)->first();
