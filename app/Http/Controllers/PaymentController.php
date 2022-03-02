@@ -123,7 +123,7 @@ class PaymentController
             throw new Exception($messageErrorPurchaseSessions);
         }
 		
-        $ajaxPostUrl = $createPurchaseSessions['links'][2]['href'];
+        $ajaxPostUrl = $createPurchaseSessions['links'][3]['href'];
         $paramPostCardData = [
             'card' => [
                 'cardHolderName'    => $this->params['cardHolderName'],
