@@ -160,8 +160,9 @@ class PropertyController
 			$guestPhone = '0417120000';
 			$guestId = 21899;
 			
-			$date = new \DateTime("now", new \DateTimeZone('Australia/Perth'));
-			$date_time = $date->format('Y-m-d H:i:s');
+			//$date = new \DateTime("now", new \DateTimeZone('Australia/Perth'));
+			//$date_time = $date->format('Y-m-d H:i:s');
+			$date_time = Carbon::now('Australia/Perth');
 			$expiryDate = date('Y-m-d H:i:s',strtotime('+11 minutes', strtotime($date_time)));
 
 			$paramPencilData = [
