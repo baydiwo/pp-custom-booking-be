@@ -300,9 +300,9 @@ class PaymentController
 			else
 				$cc_fee = number_format($booking_details['accomodation_fee'] * 0.012, 2);
 			
-			if($payment_details['txn_receipt_updated'] == 0)
+			if($payment_details['txn_receipt_updated'] == '0')
 			{				
-				$payment_details->txn_receipt_updated = 1;
+				$payment_details->txn_receipt_updated = '1';
 				$payment_details->save();
 				
 			$paramSundries = [
