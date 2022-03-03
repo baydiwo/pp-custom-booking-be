@@ -378,7 +378,7 @@ class PaymentController
 			{
 				$booking_details->booking_status = '2';
 				$booking_details->save();
-				$payment_details->rms_updated = 1;
+				$payment_details->rms_updated = '1';
 				$payment_details->save();
 			}
 			}
