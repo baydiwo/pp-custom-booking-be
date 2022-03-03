@@ -243,6 +243,12 @@ class PaymentController
 			
 			$payment_details->payment_token = $payment_token;
 			$payment_details->save();
+
+			if($payment_details['txn_receipt_updated'] == '0')
+			{				
+				$payment_details->txn_receipt_updated = '1';
+				$payment_details->save();
+				
 			
 			$booking_details = BookingDetails::select('*')->where('id', $payment_details['booking_details_id'])->first();
             $status_update = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Unconfirmed']);
@@ -274,7 +280,7 @@ class PaymentController
 							"notes"			=> $booking_details['notes'],
 							"rateTypeId"	=> $booking_details['rate_type_id'],
 							"resTypeId"		=> 0,
-							"status"		=> "Confirmed",
+							//"status"		=> "Confirmed",
 							"travelAgentId"	=> 8
 						];
 
@@ -300,11 +306,6 @@ class PaymentController
 			else
 				$cc_fee = number_format($booking_details['accomodation_fee'] * 0.012, 2);
 			
-			if($payment_details['txn_receipt_updated'] == '0')
-			{				
-				$payment_details->txn_receipt_updated = '1';
-				$payment_details->save();
-				
 			$paramSundries = [
 								[
 									'accountId'                          => $payment_details['account_id'],
