@@ -280,7 +280,7 @@ class PaymentController
 							"notes"			=> $booking_details['notes'],
 							"rateTypeId"	=> $booking_details['rate_type_id'],
 							"resTypeId"		=> 0,
-							//"status"		=> "Confirmed",
+							"status"		=> "Unconfirmed",
 							"travelAgentId"	=> 8
 						];
 
