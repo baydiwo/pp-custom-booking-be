@@ -123,7 +123,11 @@ class PaymentController
             throw new Exception($messageErrorPurchaseSessions);
         }
 		
-        $ajaxPostUrl = $createPurchaseSessions['links'][2]['href'];
+		if(env('BASE_URL_WINDCAVE') == 'https://sec.windcave.com/api/v1/')
+			$ajaxPostUrl = $createPurchaseSessions['links'][2]['href'];	
+		else
+			$ajaxPostUrl = $createPurchaseSessions['links'][3]['href'];
+		
         $paramPostCardData = [
             'card' => [
                 'cardHolderName'    => $this->params['cardHolderName'],
@@ -239,6 +243,12 @@ class PaymentController
 			
 			$payment_details->payment_token = $payment_token;
 			$payment_details->save();
+
+			if($payment_details['txn_receipt_updated'] == '0')
+			{				
+				$payment_details->txn_receipt_updated = '1';
+				$payment_details->save();
+				
 			
 			$booking_details = BookingDetails::select('*')->where('id', $payment_details['booking_details_id'])->first();
             $status_update = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Unconfirmed']);
@@ -270,7 +280,7 @@ class PaymentController
 							"notes"			=> $booking_details['notes'],
 							"rateTypeId"	=> $booking_details['rate_type_id'],
 							"resTypeId"		=> 0,
-							"status"		=> "Confirmed",
+							"status"		=> "Unconfirmed",
 							"travelAgentId"	=> 8
 						];
 
@@ -369,8 +379,9 @@ class PaymentController
 			{
 				$booking_details->booking_status = '2';
 				$booking_details->save();
-				$payment_details->rms_updated = 1;
+				$payment_details->rms_updated = '1';
 				$payment_details->save();
+			}
 			}
 			return $payment_details['booking_id'];
         }	
