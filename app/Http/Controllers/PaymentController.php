@@ -300,6 +300,11 @@ class PaymentController
 			else
 				$cc_fee = number_format($booking_details['accomodation_fee'] * 0.012, 2);
 			
+			if($payment_details['txn_receipt_updated'] == 0)
+			{				
+				$payment_details->txn_receipt_updated = 1;
+				$payment_details->save();
+				
 			$paramSundries = [
 								[
 									'accountId'                          => $payment_details['account_id'],
@@ -376,6 +381,7 @@ class PaymentController
 				$payment_details->rms_updated = 1;
 				$payment_details->save();
 			}
+			}
 			return $payment_details['booking_id'];
         }	
 	}
@@ -405,17 +411,7 @@ class PaymentController
 			$modelTiming->status = '1';
 			$modelTiming->save();
 			
-			if($txn_details->rms_updated == 0)
-			{
-				$txn_details->rms_updated = '2';
-				$txn_details->save();
-				
-				$booking_ref_id = $this->updateTransactionDetails($request['sessionId']);
-			}
-			else if($txn_details->rms_updated == 2)
-			{
-				sleep(5);	
-			}
+			$booking_ref_id = $this->updateTransactionDetails($request['sessionId']);
 			
 			$booking_details = BookingDetails::select('email','booking_id')->where('id', $booking_details_id)->first();
 			return redirect(env('BOOKING_URL').'/#/thank-you/'.$booking_details['booking_id'].'/'.$booking_details['email']);
