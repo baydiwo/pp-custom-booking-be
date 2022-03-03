@@ -123,7 +123,11 @@ class PaymentController
             throw new Exception($messageErrorPurchaseSessions);
         }
 		
-        $ajaxPostUrl = $createPurchaseSessions['links'][3]['href'];
+		if(env('BASE_URL_WINDCAVE') == 'https://sec.windcave.com/api/v1/')
+			$ajaxPostUrl = $createPurchaseSessions['links'][2]['href'];	
+		else
+			$ajaxPostUrl = $createPurchaseSessions['links'][3]['href'];
+		
         $paramPostCardData = [
             'card' => [
                 'cardHolderName'    => $this->params['cardHolderName'],
@@ -401,7 +405,17 @@ class PaymentController
 			$modelTiming->status = '1';
 			$modelTiming->save();
 			
-			$booking_ref_id = $this->updateTransactionDetails($request['sessionId']);
+			if($txn_details->rms_updated == 0)
+			{
+				$txn_details->rms_updated = '2';
+				$txn_details->save();
+				
+				$booking_ref_id = $this->updateTransactionDetails($request['sessionId']);
+			}
+			else if($txn_details->rms_updated == 2)
+			{
+				sleep(5);	
+			}
 			
 			$booking_details = BookingDetails::select('email','booking_id')->where('id', $booking_details_id)->first();
 			return redirect(env('BOOKING_URL').'/#/thank-you/'.$booking_details['booking_id'].'/'.$booking_details['email']);
