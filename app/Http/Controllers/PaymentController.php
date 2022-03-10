@@ -368,7 +368,7 @@ class PaymentController
 				$result = $api->transactionReceipt($paramTransactionReceipt);
 				if($result && $modelTiming)
 				{
-					$modelTiming->unconfirmed_at = Carbon::now();
+					$modelTiming->txn_receipt = Carbon::now();
 					$modelTiming->save();
 				}
 				
