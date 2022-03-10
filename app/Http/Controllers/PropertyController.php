@@ -205,6 +205,7 @@ class PropertyController
 			else{
 				$newExpiryDate = $expiryDate;
 			}
+			$pencil_date = $pencilDetails['createdDate'];
 			
 			$model = SessionDetails::where('access_token', $this->webToken)->first();
 			$model->booking_id = $data['bookingId'];
@@ -218,7 +219,8 @@ class PropertyController
 			$modelTiming->rate_end = $rateend;
 			$modelTiming->pencil_start = $pencilstart;
 			$modelTiming->pencil_end = $pencilend;
-			$modelTiming->expiry_date = $newExpiryDate;
+			$modelTiming->pencil_created = $newExpiryDate;
+			$modelTiming->expiry_date = $pencil_date;
 			$modelTiming->booking_id = $data['bookingId'];
 			$modelTiming->process_type = 'Pencil';
 			$modelTiming->status = '1';
