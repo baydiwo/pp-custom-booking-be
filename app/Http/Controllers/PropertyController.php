@@ -257,7 +257,7 @@ class PropertyController
 		
 		//$date_checker = new \DateTime("now", new \DateTimeZone('Australia/Perth'));
 		//$now = $date_checker->format('Y-m-d H:i:s');
-		$now = Carbon:now();
+		$now = Carbon::now();
 		
 		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
 									->where('departure_date', $data['departure_date'])
