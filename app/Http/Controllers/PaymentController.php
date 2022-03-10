@@ -249,139 +249,155 @@ class PaymentController
 				$payment_details->txn_receipt_updated = '1';
 				$payment_details->save();
 				
+				$modelTiming = ModelTiming::where('booking_id', $payment_details['booking_id'])->where('process_type', 'Pencil')->first();
+				
 			
-			$booking_details = BookingDetails::select('*')->where('id', $payment_details['booking_details_id'])->first();
-            $status_update = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Unconfirmed']);
-			if($status_update)
-			{
-				$booking_details->booking_status = '1';
-				$booking_details->save();
-				$update_expiry = SessionDetails::where('booking_id', $payment_details['booking_id'])->where('status', '0')->first();
-				if($update_expiry)
+				$booking_details = BookingDetails::select('*')->where('id', $payment_details['booking_details_id'])->first();
+				
+				$status_update = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Unconfirmed']);
+				if($status_update)
 				{
-					$update_expiry->status = '1';
-					$update_expiry->save();
+					if($modelTiming)
+					{
+						$modelTiming->unconfirmed_status = Carbon::now();
+						$modelTiming->save();
+					}
+					$booking_details->booking_status = '1';
+					$booking_details->save();
+					$update_expiry = SessionDetails::where('booking_id', $payment_details['booking_id'])->where('status', '0')->first();
+					if($update_expiry)
+					{
+						$update_expiry->status = '1';
+						$update_expiry->save();
+					}
 				}
-			}
-			
-			$paramBookingDetails = [
-							"id"			=> $payment_details['booking_id'],
-							"accountId"		=> $payment_details['account_id'],
-							"adults"		=> $booking_details['adults'],
-							"areaId"		=> $booking_details['area_id'],
-							"arrivalDate"	=> $booking_details['arrival_date'],
-							"baseRateOverride"	=> 0,
-							"bookingSourceId" => $booking_details['booking_source_id'],
-							"categoryId"	=> $booking_details['category_id'],
-							"children"		=> $booking_details['children'],
-							"departureDate" => $booking_details['departure_date'],
-							"guestId"		=> $booking_details['guest_id'],
-							"infants"		=> $booking_details['infants'],
-							"notes"			=> $booking_details['notes'],
-							"rateTypeId"	=> $booking_details['rate_type_id'],
-							"resTypeId"		=> 0,
-							"status"		=> "Unconfirmed",
-							"travelAgentId"	=> 8
-						];
-
-			$bookingResult = $api->reservationUpdate($paramBookingDetails);
-			
-			$paramGuestToken = [
-									"cardHolderName"		=> $payment_details['card_name'],
-									"cardType"				=> str_replace(' ','',$payment_details['card_type']),
-									"description"			=> "Customers credit card",
-									"expiryDate"			=>$payment_details['card_expmonth'].'/'.$payment_details['card_expyear'],
-									"lastFourDigitsOfCard"	=> $payment_details['card_number'],
-									"token"					=> $payment_token
-								];			
-			
-			$gtResult = $api->guestToken($booking_details['guest_id'], $paramGuestToken);
-			
-			$now = Carbon::now();
-			$from_date = Carbon::parse($booking_details['arrival_date']);
-			$diffWeek = $now->diffIndays($from_date);
-			
-			if($diffWeek > 20)
-				$cc_fee = number_format((0.3* $booking_details['accomodation_fee']) * 0.012, 2);
-			else
-				$cc_fee = number_format($booking_details['accomodation_fee'] * 0.012, 2);
-			
-			$paramSundries = [
-								[
-									'accountId'                          => $payment_details['account_id'],
-									'amount'                             => $cc_fee,
-									'comment'							 => 'Credit Card Transaction Fee.',
-									'dateOfTransaction'                  => Carbon::now(),
-									'description'						 => 'Credit card Fee for Booking - '.$payment_details['booking_id'],
-									'source'                             => "Standard",
-									'sundryId'							 =>	7,
-									'useRmsAccountingDateForPostingDate' => "true",
-									'useSecondaryCurrency'				 => 'useDefault'
-								]
+				
+				$paramBookingDetails = [
+								"id"			=> $payment_details['booking_id'],
+								"accountId"		=> $payment_details['account_id'],
+								"adults"		=> $booking_details['adults'],
+								"areaId"		=> $booking_details['area_id'],
+								"arrivalDate"	=> $booking_details['arrival_date'],
+								"baseRateOverride"	=> 0,
+								"bookingSourceId" => $booking_details['booking_source_id'],
+								"categoryId"	=> $booking_details['category_id'],
+								"children"		=> $booking_details['children'],
+								"departureDate" => $booking_details['departure_date'],
+								"guestId"		=> $booking_details['guest_id'],
+								"infants"		=> $booking_details['infants'],
+								"notes"			=> $booking_details['notes'],
+								"rateTypeId"	=> $booking_details['rate_type_id'],
+								"resTypeId"		=> 0,
+								"status"		=> "Unconfirmed",
+								"travelAgentId"	=> 8
 							];
-			
-			/*if($booking_details['pets'] > 0 && $booking_details['pet_fee'] > 0)
-			{
-				$paramSundries[] = [
-									'accountId'                          => $payment_details['account_id'],
-									'amount'                             => $booking_details['pet_fee'],
-									'comment'							 => 'Pet Fee.',
-									'dateOfTransaction'                  => Carbon::now(),
-									'description'						 => 'Pet Fee',
-									'source'                             => "Standard",
-									'sundryId'							 =>	8,
-									'useRmsAccountingDateForPostingDate' => "true",
-									'useSecondaryCurrency'				 => 'useDefault'
-								];
-			}*/
-			
-			$sundriesResult = $api->addSundries($paramSundries);
-			
-			//Check for card type and set cardID
-			$card_type = strtolower($payment_details['card_type']);
-			$mc_cards = ['master', 'mastercard', 'master card'];
-			if( in_array($card_type,$mc_cards))
-				$card_id = 2;
-			else
-				$card_id = 3;
-			
-			// Start - Add Transaction Receipt
-			$paramTransactionReceipt = [
-											'accountId'                          => $payment_details['account_id'],
-											'amount'                             => $payment_details['amount'],
-											'cardId'                             => $card_id,
-											'dateOfTransaction'                  => Carbon::now(),
-											'receiptType'                        => "CreditCard",
-											'source'                             => "Standard",
-											'useRmsAccountingDateForPostingDate' => "true",
-											'transactionReference'				 => $payment_details['txn_refno'],
-											'comment'							 => 'Property Booking Payment',
-											'description'						 => 'Payment for Booking - '.$payment_details['booking_id'],
-											'token'								 => $payment_token,
-											'useSecondaryCurrency'				 => 'useDefault'
-										];
+	
+				$bookingResult = $api->reservationUpdate($paramBookingDetails);
+				if($bookingResult && $modelTiming)
+				{
+					$modelTiming->reservation_update = Carbon::now();
+					$modelTiming->save();
+				}
+				
+				$paramGuestToken = [
+										"cardHolderName"		=> $payment_details['card_name'],
+										"cardType"				=> str_replace(' ','',$payment_details['card_type']),
+										"description"			=> "Customers credit card",
+										"expiryDate"			=>$payment_details['card_expmonth'].'/'.$payment_details['card_expyear'],
+										"lastFourDigitsOfCard"	=> $payment_details['card_number'],
+										"token"					=> $payment_token
+									];			
+				
+				$gtResult = $api->guestToken($booking_details['guest_id'], $paramGuestToken);
+				
+				$now = Carbon::now();
+				$from_date = Carbon::parse($booking_details['arrival_date']);
+				$diffWeek = $now->diffIndays($from_date);
+				if($modelTiming)
+				{
+					$modelTiming->guest_token = Carbon::now();
+					$modelTiming->save();
+				}
 
-           $result = $api->transactionReceipt($paramTransactionReceipt);
-			// End - Add Transaction Receipt
-			
-			$paramRequirement = [
-									"amount"		=> 0,//$booking_details['pet_fee'],
-									"dateFrom"		=> $booking_details['arrival_date'],
-									"dateTo"		=>$booking_details['departure_date'],
-									"quantity"		=>$booking_details['pets'],
-									"requirementId" => 8
+				
+				if($diffWeek > 20)
+					$cc_fee = number_format((0.3* $booking_details['accomodation_fee']) * 0.012, 2);
+				else
+					$cc_fee = number_format($booking_details['accomodation_fee'] * 0.012, 2);
+				
+				$paramSundries = [
+									[
+										'accountId'                          => $payment_details['account_id'],
+										'amount'                             => $cc_fee,
+										'comment'							 => 'Credit Card Transaction Fee.',
+										'dateOfTransaction'                  => Carbon::now(),
+										'description'						 => 'Credit card Fee for Booking - '.$payment_details['booking_id'],
+										'source'                             => "Standard",
+										'sundryId'							 =>	7,
+										'useRmsAccountingDateForPostingDate' => "true",
+										'useSecondaryCurrency'				 => 'useDefault'
+									]
 								];
-			
-			$reqResult = $api->reservationRequirement($payment_details['booking_id'], $paramRequirement);
-			
-            $result = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Confirmed']);
-			if($result)
-			{
-				$booking_details->booking_status = '2';
-				$booking_details->save();
-				$payment_details->rms_updated = '1';
-				$payment_details->save();
-			}
+				
+				$sundriesResult = $api->addSundries($paramSundries);
+				
+				//Check for card type and set cardID
+				$card_type = strtolower($payment_details['card_type']);
+				$mc_cards = ['master', 'mastercard', 'master card'];
+				if( in_array($card_type,$mc_cards))
+					$card_id = 2;
+				else
+					$card_id = 3;
+				
+				// Start - Add Transaction Receipt
+				$paramTransactionReceipt = [
+												'accountId'                          => $payment_details['account_id'],
+												'amount'                             => $payment_details['amount'],
+												'cardId'                             => $card_id,
+												'dateOfTransaction'                  => Carbon::now(),
+												'receiptType'                        => "CreditCard",
+												'source'                             => "Standard",
+												'useRmsAccountingDateForPostingDate' => "true",
+												'transactionReference'				 => $payment_details['txn_refno'],
+												'comment'							 => 'Property Booking Payment',
+												'description'						 => 'Payment for Booking - '.$payment_details['booking_id'],
+												'token'								 => $payment_token,
+												'useSecondaryCurrency'				 => 'useDefault'
+											];
+	
+				$result = $api->transactionReceipt($paramTransactionReceipt);
+				if($result && $modelTiming)
+				{
+					$modelTiming->txn_receipt = Carbon::now();
+					$modelTiming->save();
+				}
+				
+				// End - Add Transaction Receipt
+				
+				$paramRequirement = [
+										"amount"		=> 0,//$booking_details['pet_fee'],
+										"dateFrom"		=> $booking_details['arrival_date'],
+										"dateTo"		=>$booking_details['departure_date'],
+										"quantity"		=>$booking_details['pets'],
+										"requirementId" => 8
+									];
+				
+				$reqResult = $api->reservationRequirement($payment_details['booking_id'], $paramRequirement);
+				
+				$result = $api->reservationStatus($payment_details['booking_id'], ['status' => 'Confirmed']);
+				if($result)
+				{
+					if($modelTiming)
+					{
+						$modelTiming->confirmed_status = Carbon::now();
+						$modelTiming->save();
+					}
+					
+					$booking_details->booking_status = '2';
+					$booking_details->save();
+					$payment_details->rms_updated = '1';
+					$payment_details->save();
+				}
 			}
 			return $payment_details['booking_id'];
         }	
@@ -400,9 +416,9 @@ class PaymentController
 			$txn_details->save();
 			$booking_details_data = BookingDetails::select('email','booking_id')->where('id', $booking_details_id)->first();
 			
-			$ctime = Carbon::now();
+			/*$ctime = Carbon::now();
 			$modelTiming = new ModelTiming();
-			$modelTiming->token = 'Payment Success - Booking details Updation';
+			$modelTiming->token = 'Payment Success - Booking details Updation Initiated';
 			$modelTiming->rate_start = $ctime;
 			$modelTiming->rate_end = $ctime;
 			$modelTiming->pencil_start = $ctime;
@@ -410,7 +426,7 @@ class PaymentController
 			$modelTiming->booking_id = $booking_details_data['booking_id'];
 			$modelTiming->process_type = 'PaymentSuccess';
 			$modelTiming->status = '1';
-			$modelTiming->save();
+			$modelTiming->save();*/
 			
 			$booking_ref_id = $this->updateTransactionDetails($request['sessionId']);
 			

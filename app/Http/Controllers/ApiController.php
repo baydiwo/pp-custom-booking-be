@@ -126,7 +126,7 @@ class ApiController
     public function getReservationDetails($id)
     {
         $value = Cache::remember('reservation_details_' . $id, 10 * 60, function () use ($id) {
-            $endpoint = 'reservations/' . $id . '?modelType=basic';
+            $endpoint = 'reservations/' . $id . '?modelType=full';
             $response = Http::withHeaders([
                 'authToken' => $this->authToken
             ])->get(env('BASE_URL_RMS') . $endpoint);
