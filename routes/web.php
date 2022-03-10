@@ -78,3 +78,5 @@ $router->get('update-dates', "WebhookController@getResponse");
 $router->post('update-dates', "WebhookController@getResponse");
 $router->get('get-webhook-data', "WebhookController@getLastData");
 
+$router->get('/expiry-timing', "TimingController@index");
+$router->post('/expiry-timing', "TimingController@getTiming");

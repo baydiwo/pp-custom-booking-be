@@ -1,0 +1,234 @@
+/*
+Theme Name: Private Properties 
+Theme URI: http://privateproperties.com.au/   
+Description: Responsive Wordpress theme 
+Author: Launchpad Creative 
+Author URI: http://launchpadcreative.com.au/  
+Version: 1.0   
+*/
+* { margin: 0; padding: 0; box-sizing: border-box;-moz-box-sizing: border-box;-webkit-box-sizing: border-box; }
+html { background: #f3f3f3; height: 100%;overflow:auto; -webkit-overflow-scrolling: touch; }
+body { background: #f3f3f3; /*font-size: 62.5%;*/ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-style: normal; -webkit-font-smoothing: antialiased; height: 100%;min-height: 100%;-webkit-overflow-scrolling: touch; }/** overflow:auto; **/
+/*#loading { height: 100px; background: url(img/loading.gif) center center no-repeat; }*/
+.ldr-txt {position: absolute;top: 55%;left: 50%;font-size: 14px;margin-left: -170px;}
+h1 { color: #1A1819; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; font-weight: 300; font-style: normal; font-stretch: normal; font-size: 38px; line-height: 110%; margin: 0 0 18px 0; }
+h2 { color: #1A1819; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif; font-weight: 300; font-style: normal; font-stretch: normal; font-size: 34px; line-height: 100%; margin: 0 0 18px 0; }
+p { color: #444; font-size: 14px; font-weight: 300; line-height: 170%; margin: 0 0 12px 0; font-style: normal; }
+a { -webkit-transition: color 0.2s ease; -moz-transition: color 0.2s ease; -o-transition: color 0.2s ease; transition: color 0.2s ease; }
+.post { margin: 0 auto 50px auto; padding: 0 15px; max-width: 900px; overflow: hidden; }
+img { border: none; }
+a { outline: none; }
+.contact-fullwidth{margin:0 auto;max-width:1100px;padding:95px 40px 40px;text-align:center}
+.w-row::after,.w-row::before{content:" ";display:table}
+.w-row::after{clear:both}
+
+/****Gravity From Email Integration***/
+.agentcont{background:#F9F9F9;width:100%}
+.gfmailmodule{width:100%;max-width:800px;margin:70px auto 0;background:#FFF;padding:50px;border-radius:10px}
+.gfmailmodule .gform_wrapper li input.medium{width:100%!important;border:1px solid #979797;border-radius:3px;padding:5px;font-size:13px;color:#444}
+.gfmailmodule #loginform{max-width:500px;width:100%;margin:0 auto}
+.gfmailmodule #loginform label{width:50%;font-size:14px;color:#444;padding:0 10px}
+.gfmailmodule #loginform input{border:1px solid #979797;width:50%!important;border-radius:3px;padding:10px;font-size:13px;color:#444}
+.gfmailmodule #loginform input[type=submit]{background:#000;border:none;color:#fff;cursor:pointer;font-size:13px!important;font-weight:500;max-width:150px;float:right;padding:10px 15px;border-radius:3px;text-decoration:none;display:block;text-transform:uppercase}
+.gfmailmodule #loginform .login-submit{max-width:430px;width:100%}
+.gfmailmodule .gform_wrapper li.gncustomdet input{border:1px solid #979797;height:34px;width:100%!important;border-radius:3px;padding:5px;font-size:13px;color:#444}
+.gfmailmodule .gform_wrapper li{padding:15px 0 0}
+.gfmailmodule .gform_wrapper .top_label .gfield_label{display:none}
+.gfmailmodule .gform_wrapper li.gncustomdet label{display:none;height:0}
+.gfmailmodule .gform_wrapper li.gfmailmodulehead p{color:#444;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";font-weight:500;font-size:14px;margin:0;padding:5px 0 0}
+.gfmailmodule .gform_wrapper li div.ginput_container_date{position:relative}
+.gfmailmodule .gform_wrapper .top_label li.gfield.gf_right_half{width:48.9%}
+.gfmailmodule.gform_wrapper .top_label table.gfield_list{width:100%}
+.gfmailmodule .gform_wrapper .top_label li.prop-note .gfield_list_container td{padding:0 10px 15px 0}
+.gfmailmodule .gform_wrapper .top_label li.prop-note .gfield_list_container td input[type=text]{border:1px solid #979797;height:34px;width:100%!important;border-radius:3px;padding:5px;font-size:13px;color:#444}
+.gfmailmodule .gform_wrapper .top_label li.prop-note .gfield_list_container td textarea{border:1px solid #979797;width:100%!important;border-radius:3px;padding:5px;font-size:13px;color:#444}
+.gfmailmodule .gform_wrapper table.gfield_list td.gfield_list_cell{vertical-align:top}
+body .gfmailmodule .gform_wrapper img.ui-datepicker-trigger{height:16px!important;position:absolute;right:4px;top:8px;width:17px!important}
+body .gfmailmodule .gform_wrapper a.gform_save_link{background:#000;border:none;color:#fff;cursor:pointer;font-size:13px!important;font-weight:500;margin-right:0;float:right;padding:10px 15px;border-radius:3px;text-decoration:none;display:block;text-transform:uppercase}
+body .gfmailmodule .gform_wrapper a.gform_save_link:after{font-family:FontAwesome;content:'\f044';padding-left:5px;position:relative;font-size:15px;color:#FFF}
+.gfmailmodule .gform_wrapper .gform_button{float:left;border-radius:3px;padding:10px 15px}
+.gfmailmodule .gform_wrapper input[type=submit].gform_button::after{font-family:FontAwesome;content:'\f003';padding-left:5px;position:relative;color:#FFF}
+.gfmailmodule .gform_wrapper .gfield_checkbox li label,
+.gfmailmodule .gform_wrapper .gfield_radio li label{font-size:13px;line-height:25px}
+.gfmailmodule .gform_wrapper select[multiple=multiple] option{font-size:13px;padding:.225em}
+.gfmailmodule .gform_wrapper .top_label select.medium,
+.gfmailmodule .gform_wrapper li.prop-note table.gfield_list{width:100%}
+.gfmailmodule .gform_wrapper li.prop-note table.gfield_list_container tr:first-child th:last-child{display:none}
+.contact-fullwidth.loginagnt{padding:70px 40px}
+.aglistings_header{padding:0}
+body.page-template-page-mail-overview,
+body.page-template-page-login,
+body.page-template-page-requires-login,
+body.page-template-page-mail-overview,
+body.page-template-page-entry-detail,
+body.page-template-page-agent-emaillist,
+body.page-template-page-update-entry,
+body.page-template-page-agent-confirmation{font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";}
+.agnt-header .nav-bar {display: -webkit-box;display: -webkit-flex;display: -ms-flexbox;display: flex;-webkit-box-pack: justify;-webkit-justify-content: space-between;-ms-flex-pack: justify;justify-content: space-between;-webkit-box-align: center;-webkit-align-items: center;-ms-flex-align: center;align-items: center;background-color: #000;font-weight: 300;}
+.agnt-header .brand {margin-left: 36px;font-weight: 700;}
+.agnt-header .nav-btn {display: inline-block;margin-right: 18px;margin-left: 18px;padding-top: 18px;padding-bottom: 18px;color: #fff;text-decoration: none;font-size: 14px;text-transform: uppercase;}
+.agnt-header .nav-btn.user-name {margin-left: 24px;padding-left: 30px;border-left: 1px solid #3f3f3f;color: hsla(0, 0%, 100%, .59);text-transform: unset;}
+.agnt-cntnt.body-section {padding: 25px 12px 0 12px;background-color: #f3f3f3;font-size:14px;}
+.agnt-cntnt .heading{margin-bottom: 48px;font-size: 25px;text-align: center;font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";font-weight: bold;margin-top: 20px;line-height: 44px;color: #333;}
+.agnt-cntnt .form-container {display: block;max-width: 800px;margin-right: auto;margin-bottom: 24px;margin-left: auto;padding: 36px;border-radius: 12px;background-color: #fff;}
+.agnt-cntnt .form-container.new-email {padding-bottom: 24px;text-align: right;}
+.agnt-cntnt .btn {display: inline-block;margin-bottom: 12px;padding: 12px 24px;border-radius: 6px;background-color: #000;color: #fff;font-size: 14px;text-decoration: none;text-transform:uppercase;border: 0;cursor: pointer;}
+.agnt-cntnt .btn:hover {text-decoration: none;}
+.agnt-cntnt .btn-icon {margin-left: 12px;font-size: 16px;}
+.agnt-cntnt .heading-2 {margin-top: 0px;margin-bottom: 12px;font-size: 18px;line-height: 36px;font-weight: bold;font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";}
+.agnt-cntnt .overview-row {margin-bottom: 12px;padding-bottom: 12px;border-bottom: 1px solid #cecece;}
+.agnt-cntnt .overview-col {padding-left: 0px;}
+.agnt-cntnt .field-label {margin-bottom: 6px;font-size: 12px;font-weight: bold;}
+.agnt-cntnt .field-label.actions {text-align: right;}
+.agnt-cntnt .actions-wrapper {display: -webkit-box;display: -webkit-flex;display: -ms-flexbox;display: flex;-webkit-box-pack: end;-webkit-justify-content: flex-end;-ms-flex-pack: end;justify-content: flex-end;-webkit-box-align: center;-webkit-align-items: center;-ms-flex-align: center;align-items: center;}
+.agnt-cntnt .actions-icon {margin-left: 18px;color: #333;font-size: 16px;text-decoration: none;}
+.agnt-cntnt .pagintation{display: -webkit-box;display: -webkit-flex;display: -ms-flexbox;display: flex;margin-top: 24px;-webkit-box-pack: center;-webkit-justify-content: center;-ms-flex-pack: center;justify-content: center;-webkit-box-align: center;-webkit-align-items: center;-ms-flex-align: center;align-items: center;}
+.agnt-cntnt .pagination-btn {margin-right: 6px;margin-left: 6px;color: #333;text-decoration: none;}
+.agnt-cntnt .gform_wrapper{margin-top: 0;color:#333;}
+body .agnt-cntnt .gform_wrapper ul li.gfield{margin-top:0;}
+.agnt-cntnt .gform_wrapper .top_label .gfield_label .gfield_required,
+.agnt-cntnt .gform_wrapper .gfield_required{display:none;}
+.agnt-cntnt .gform_wrapper h2{margin-top: 0px;margin-bottom: 12px;font-size: 18px;line-height: 36px;font-weight: bold;font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";}
+.agnt-cntnt .gform_wrapper .field_sublabel_above .ginput_complex.ginput_container label, 
+.agnt-cntnt .gform_wrapper .field_sublabel_above div.ginput_container[class*="gfield_time_"] label,
+.agnt-cntnt .gform_wrapper .top_label .gfield_label{margin-bottom: 6px;font-size: 12px !important;display: block;font-weight: bold !important;margin-top: 0;line-height: 20px;font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !important;}
+.agnt-cntnt .gform_wrapper input:not([type="radio"]):not([type="checkbox"]):not([type="submit"]):not([type="button"]):not([type="image"]):not([type="file"]){padding: 8px 12px;margin-bottom: 18px;font-weight: 300;border: 1px solid #cecece;}
+.agnt-cntnt .gform_wrapper ul li.gfield.field_sublabel_above.field_description_below + li.gfield{margin-top:0;}
+.agnt-cntnt .gform_wrapper .top_label input.medium{width: 100% !important;height: 38px;border: 1px solid #cccccc;}
+.agnt-cntnt .gform_wrapper .top_label textarea.textarea{min-height: 120px;margin-bottom: 18px;font-weight: 300;width: 100% !important;padding: 8px 12px;font-size: 14px;line-height: 1.428571429;border: 1px solid #cccccc;height: 50px;}
+.agnt-cntnt .gform_wrapper li.gfield.field_description_below + li.gsection{padding-top: 60px;border: 0;}
+.agnt-cntnt .gform_wrapper h2.gsection_title{display:none;}
+.instruction-text {margin-bottom: 9px;color: #8d8d8d;font-size: 13px;font-style: italic;font-weight: 300;}
+.instruction-text.enquiry-details {font-style: normal;}
+.instruction-text.intro {margin-bottom: 48px;font-style: normal;text-align: center;}
+.important-text {color: #6d6d6d;}
+.agnt-cntnt .gform_wrapper li.gfield.gf_list_3col ul.gfield_checkbox li label{margin-left: 5px;font-size:14px;}
+.agnt-cntnt .gform_wrapper .top_label select.medium{width: 100%;border: 1px solid #cecece;margin-bottom: 12px;}
+.agnt-cntnt .gform_wrapper table.gfield_list td{vertical-align:top;}
+.agnt-cntnt .gform_wrapper table.gfield_list thead th{font-weight:normal;}
+.agnt-cntnt .gform_wrapper .prop-note textarea{height: 38px;min-height: 110px;margin-bottom: 20px;border: 1px solid #cecece;width:100%;}
+.agnt-cntnt .gform_wrapper .prop-note .fa{color: #1A1819;}
+.agnt-cntnt .spacer {height: 24px;margin-top: 0px;margin-bottom: 12px;border-bottom: 1px solid #cecece;}
+.agnt-cntnt .gform_wrapper .gform_footer{margin-top:32px;text-align:left;}
+.agnt-cntnt .gform_wrapper .gform_footer .btn i{margin-left: 12px;font-size: 16px;}
+.agnt-cntnt .gform_wrapper .gform_footer a.gform_save_link{font-size: 14px;float:right;}
+.agnt-cntnt .gform_wrapper a.gform_save_link:after{font-family: 'FontAwesome';content: '\f044';padding-left: 5px;position: relative;font-size: 16px;color:#FFF;margin-left: 12px;}
+.agnt-cntnt .ftr-txt{width:50%;}
+.agnt-cntnt .gform_wrapper div.validation_error,
+.agnt-cntnt .gform_wrapper li.gfield.gfield_error.gfield_contains_required div.gfield_description{display:none;}
+.agnt-cntnt .gform_wrapper li.gfield.gfield_error{border:0;}
+.agnt-cntnt .gform_wrapper .gfield_label{color: #333 !important;}
+.agnt-cntnt .gform_wrapper .top_label .gfield_error{width:100% !important;}
+.agnt-cntnt .gform_wrapper li.gfield_error div.ginput_complex.ginput_container label{color: #333;}
+.agnt-cntnt .gform_wrapper .field_sublabel_below ul.gfield_checkbox li label{font-weight:normal;font-size: 14px;margin-left: 5px;}
+.agnt-cntnt .form-container.thank-you {padding-top: 88px;padding-bottom: 88px;font-size: 18px;text-align: center;}
+.tick-icon {display: -webkit-box;display: -webkit-flex;display: -ms-flexbox;display: flex;width: 100px;height: 100px;margin-right: auto;margin-bottom: 48px;margin-left: auto;-webkit-box-pack: center;-webkit-justify-content: center;-ms-flex-pack: center;justify-content: center;-webkit-box-align: center;-webkit-align-items: center;-ms-flex-align: center;align-items: center;border-radius: 50px;background-color: #6dff84;color: #fff;font-size: 44px;}
+.text-block {line-height: 27px;}
+.return-btn {display: inline-block;margin-top: 18px;color: #818181;font-size: 14px;}
+.agnt-cntnt .gform_wrapper ul li.gfield,
+.agnt-cntnt .gform_wrapper ul li.gfield.gfield_error  {clear:both !important;}
+body .agnt-cntnt .gform_wrapper ul li.gfield.prop-note > label,
+.hide-lbl > label{display:none !important;}
+body .agnt-cntnt .ginput_container_list table.gfield_list tbody tr td.gfield_list_icons{display:none;}
+.login-section {position: fixed;left: 0px;top: 0px;right: 0px;bottom: 0px;display: -webkit-box;display: -webkit-flex;display: -ms-flexbox;display: flex;padding-bottom: 140px;-webkit-box-orient: vertical;-webkit-box-direction: normal;-webkit-flex-direction: column;-ms-flex-direction: column;flex-direction: column;-webkit-box-pack: center;-webkit-justify-content: center;-ms-flex-pack: center;justify-content: center;-webkit-box-align: center;-webkit-align-items: center;-ms-flex-align: center;align-items: center;background-image: url('../img/blog-bg.jpg');background-position: 100% 100%;background-size: contain;background-repeat: no-repeat;}
+.form-container.login {width:525px;max-width:525px;min-width:300px;-webkit-box-orient: vertical;-webkit-box-direction: normal;-webkit-flex-direction: column;-ms-flex-direction: column;flex-direction: column;box-shadow: 0 0 47px 0 rgba(0, 0, 0, .14);}
+.text-field {margin-bottom: 18px;font-weight: 300;}
+body.page-template-page-update-entry .agnt-cntnt .gform_wrapper a.gform_save_link{display:none;}
+.entry-row {border-bottom: 1px solid #dadada;padding: 20px;font-size:13px;text-align:left;word-wrap: break-word;}
+.entry-row.last{border:0;}
+.entry-row .entry-title{font-weight:700;}
+.notes-table{width: 100%;}
+.notes-table th,
+.notes-table td{padding: 10px 5px;vertical-align: top;}
+.txt-right{text-align:right !important;}
+.del-error,
+.del-success{float:left;font-size:16px;text-align:center;text-transform:none;width:100%}
+.del-success{color:#3c763d}
+.del-error{color:red}
+.nav-btn{color:#000;margin-left:20px;margin-right:20px;text-decoration:none}
+.agent-email-form .gform_wrapper div.validation_error{display:none;}
+.agent-email-form .gform_wrapper ul li.gfield, 
+.agent-email-form .gform_wrapper ul li.gfield.gfield_error{clear:both !important;}
+.agent-email-form .gform_wrapper li.gfield.gfield_error, 
+.agent-email-form .gform_wrapper li.gfield.gfield_error.gfield_contains_required.gfield_creditcard_warning{background-color:#fff;border:none;}
+.agent-email-form .gform_wrapper .top_label .gfield_error{width:100% !important;}
+.agent-email-form .gform_wrapper li.gfield.gfield_error.gfield_contains_required div.gfield_description{display:none;}
+#overlay{position:fixed;left:0;top:0;bottom:0;right:0;background:#fff;opacity:.8;filter:alpha(opacity=80);display:none;z-index:99}#loader,#loading{width:34px;height:34px;position:absolute;top:50%;left:50%;margin:-17px 0 0 -17px}
+body.page-template-page-update-entry .gfmailmodule .gform_wrapper a.gform_save_link{display:none;}
+.pagination{border-radius:4px;display:inline-block;margin:20px 0;padding-left:0}
+.pagination > li{display:inline}
+.pagination > li > a{border-bottom-left-radius:4px;border-top-left-radius:4px;margin-left:0;background-color:#fff;border:1px solid #ddd;color:#1a1819;font-size:13px;float:left;line-height:1.42857;padding:6px 12px;position:relative;text-decoration:none}
+.pagination > .active > a, 
+.pagination > .active > a:focus, 
+.pagination > .active > a:hover{background-color:#000;border-color:#000;color:#fff;cursor:default;z-index:3}
+.accouncement-section {background-color: #000;color: #fff;font-size: 11px;padding-bottom: 8px;padding-top: 8px;text-align: center;position: fixed;width: 100%;z-index: 2001;top:0;}
+.accouncement-section a,
+.accouncement-section a:hover{color: #fff;text-decoration:none;}
+.accouncement-section p{color: #fff;font-size:12px;}
+.agnt-header .navbar-toggler{color: #fff;font-size: 14px;float: right;margin-right: 15px;margin-top: 18px;display:none;}
+.agnt-cntnt .gform_wrapper .product-row{margin-top: 25px;}
+.agnt-cntnt .gform_wrapper .product-row a{color: #333;text-decoration: none;font-size: 14px;font-weight: 700;margin-bottom: 25px;display: inline-block;}
+.agnt-cntnt .gform_wrapper .product-row a i{margin-right:10px;}
+.agnt-cntnt .gform_wrapper .product-row .prdct-row-tmplt{margin-bottom:25px;}
+.agnt-cntnt .gform_wrapper .product-row .prdct-row-tmplt a{margin-bottom: 0;}
+.error404{background:#f3f3f3;}
+.error404 .fullwidth{text-align:center;}
+.error404 .fullwidth img{margin:0 auto; float:none;width:100%;max-width:800px;}
+.f_right{ float:right !important; }
+.date_field{width: 49.5% !important;}
+.bg-black{background-color:#000 !important; color:#ffffff}
+.bg-black > container > navbar-brand > a, .bg-black > container { color:#ffffff !important}
+
+
+
+@media (max-width: 991px) {
+	.gfmailmodule{max-width: 650px;padding:20px 20px;}
+	.agnt-cntnt.body-section{padding: 60px 12px;}
+	.form-container.login {width:auto;max-width:525px;min-width:300px;-webkit-box-orient: vertical;-webkit-box-direction: normal;-webkit-flex-direction: column;-ms-flex-direction: column;flex-direction: column;box-shadow: 0 0 47px 0 rgba(0, 0, 0, .14);}
+}
+@media (max-width: 767px) {
+	.gfmailmodule{padding:30px 20px 30px 10px;}
+	.agnt-header .nav-bar{display:block;}
+	.agnt-header .brand{display: inline-block;width: auto;margin-left: 0;}
+	.agnt-header .navbar-toggler{display:block;}
+	.agnt-header .nav-btn.user-name{display:none;}
+	.agnt-header .nav-bar .navbtn-wrapper{text-align: center;display:none;}
+	.agnt-cntnt.body-section{padding: 45px 12px;}
+	.agnt-cntnt .form-container {overflow:auto;}
+	.agnt-cntnt .overview-row{display:flex;}
+	.agnt-cntnt .overview-col.w-col.w-col-2{width: 16.66666667%;min-width:120px;}
+	.agnt-cntnt .overview-col.w-col.w-col-3{width: 25%;min-width:180px;}
+	.agnt-cntnt .overview-col.w-col.w-col-5{width: 41.66666667%;min-width:300px;}
+	.agnt-cntnt .form-container.new-email{text-align:center;}
+	.form-container.login {width:auto;max-width:525px;min-width:300px;-webkit-box-orient: vertical;-webkit-box-direction: normal;-webkit-flex-direction: column;-ms-flex-direction: column;flex-direction: column;box-shadow: 0 0 47px 0 rgba(0, 0, 0, .14);}
+}
+@media (max-width: 479px) {
+	.gfmailmodule{padding:10px 10px; }
+	.gfmailmodule .gform_wrapper .top_label li.gfield.gf_left_half,
+	.gfmailmodule .gform_wrapper .top_label li.gfield.gf_right_half,
+	.gfmailmodule .gform_wrapper li{width:100%}
+	.gfmailmodule #loginform input[type=submit]{margin:5px 20px}
+	.gfmailmodule .gform_wrapper div.ginput_complex.ginput_container.gf_name_has_2 span{width:100%;padding-right:0}
+	.gfmailmodule .gform_wrapper div.ginput_complex.ginput_container.gf_name_has_2 span.name_first{margin-bottom:18px}
+	.gfmailmodule .gform_wrapper li.gfield.gf_list_3col ul.gfield_checkbox li{width:50%}
+	.gfmailmodule .gform_wrapper .gform_button{margin-right:10px;padding:10px}
+	body .gfmailmodule .gform_wrapper a.gform_save_link{padding:10px 11px}
+	.gfmailmodule .gform_wrapper table.gfield_list td.gfield_list_cell{float:left!important;width:100%!important;margin:10px 0}
+	.agnt-cntnt .gform_wrapper .gform_footer{text-align:center;}
+	.agnt-cntnt .gform_wrapper .gform_footer a.gform_save_link{float: unset;display: inline-block;}
+	.agnt-cntnt .ftr-txt{width:100%;}
+	.form-container.login {width:auto;max-width:525px;min-width:300px;-webkit-box-orient: vertical;-webkit-box-direction: normal;-webkit-flex-direction: column;-ms-flex-direction: column;flex-direction: column;box-shadow: 0 0 47px 0 rgba(0, 0, 0, .14);}
+}
+@media (max-width: 390px) {
+	body .gfmailmodule .gform_wrapper a.gform_save_link{clear: both;float: left;margin: 10px 0;}
+	.form-container.login {width:auto;max-width:350px;min-width:300px;-webkit-box-orient: vertical;-webkit-box-direction: normal;-webkit-flex-direction: column;-ms-flex-direction: column;flex-direction: column;box-shadow: 0 0 47px 0 rgba(0, 0, 0, .14);}
+}
+@media screen and (min-width: 768px) {
+	.navbtn-wrapper{display:block !important;}
+}
+@media screen and (min-width: 1200px) {
+	.w-container {max-width: 1100px;}
+}
+@media {
+	.agnt-cntnt {min-height: 550px; background-color: #fff;}	
+}
