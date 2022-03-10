@@ -114,10 +114,7 @@ class PropertyController
         if (isset($rateQuote['Message'])) {
             throw new Exception(ucwords($rateQuote['Message']));
         }
-		
-        //$datefrom = $this->params['arrivalDate'];
-       // $dateto = $this->params['departureDate'];
-		
+				
 		$fDate = strtotime($this->params['arrivalDate']);
 		$datefrom = date('Y-m-d', $fDate);
 		$tDate = strtotime($this->params['departureDate']);
@@ -194,9 +191,24 @@ class PropertyController
 			
 			$data['bookingId'] = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
 			
+			$pencilDetails = $api->getReservationDetails($data['bookingId']);
+			if(isset($pencilDetails['Message'])) {
+				throw new Exception(ucwords($pencilDetails['Message']));
+			}
+			
+			if(strpos($pencilDetails['userDefined1'],"+") && strpos($pencilDetails['userDefined1'],"+") >= 0){
+				$d1 = $pencilDetails['userDefined1'];
+				$pdt = explode('+', $d1);
+				$dateTimeExpiry = strtotime($pdt[0]);
+				$newExpiryDate = date('Y-m-d H:i:s', $dateTimeExpiry);
+			}
+			else{
+				$newExpiryDate = $expiryDate;
+			}
+			
 			$model = SessionDetails::where('access_token', $this->webToken)->first();
 			$model->booking_id = $data['bookingId'];
-			$model->expiry_date = $expiryDate;
+			$model->expiry_date = $newExpiryDate;
 			$model->save();
 			$data['access_id'] = $model->access_token;
 			
@@ -206,6 +218,7 @@ class PropertyController
 			$modelTiming->rate_end = $rateend;
 			$modelTiming->pencil_start = $pencilstart;
 			$modelTiming->pencil_end = $pencilend;
+			$modelTiming->expiry_date = $newExpiryDate;
 			$modelTiming->booking_id = $data['bookingId'];
 			$modelTiming->process_type = 'Pencil';
 			$modelTiming->status = '1';
