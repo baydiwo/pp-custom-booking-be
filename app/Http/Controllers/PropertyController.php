@@ -159,7 +159,7 @@ class PropertyController
 			
 			//$date = new \DateTime("now", new \DateTimeZone('Australia/Perth'));
 			//$date_time = $date->format('Y-m-d H:i:s');
-			$date_time = Carbon::now('Australia/Perth');
+			$date_time = Carbon::now();//('Australia/Perth');
 			$expiryDate = date('Y-m-d H:i:s',strtotime('+11 minutes', strtotime($date_time)));
 
 			$paramPencilData = [
@@ -255,8 +255,9 @@ class PropertyController
 		$data['departure_date'] = $this->params['dateTo'];
 		$data['user_ip'] = $this->params['userIp'];
 		
-		$date_checker = new \DateTime("now", new \DateTimeZone('Australia/Perth'));
-		$now = $date_checker->format('Y-m-d H:i:s');
+		//$date_checker = new \DateTime("now", new \DateTimeZone('Australia/Perth'));
+		//$now = $date_checker->format('Y-m-d H:i:s');
+		$now = Carbon:now();
 		
 		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
 									->where('departure_date', $data['departure_date'])
