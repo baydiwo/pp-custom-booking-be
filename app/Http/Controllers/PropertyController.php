@@ -219,8 +219,8 @@ class PropertyController
 			$modelTiming->rate_end = $rateend;
 			$modelTiming->pencil_start = $pencilstart;
 			$modelTiming->pencil_end = $pencilend;
-			$modelTiming->pencil_created = $newExpiryDate;
-			$modelTiming->expiry_date = $pencil_date;
+			$modelTiming->pencil_created = $pencil_date;
+			$modelTiming->expiry_date = $newExpiryDate;
 			$modelTiming->booking_id = $data['bookingId'];
 			$modelTiming->process_type = 'Pencil';
 			$modelTiming->status = '1';
