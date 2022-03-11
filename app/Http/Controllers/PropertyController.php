@@ -41,7 +41,7 @@ class PropertyController
 
     public function __construct(Request $request)
     {
-        $this->authToken = '';//Cache::get('authToken')['token'];
+        $this->authToken = '';
         $this->request = $request;
         $this->params  = $request->all();
     }
@@ -157,9 +157,7 @@ class PropertyController
 			$guestPhone = '0417120000';
 			$guestId = 21899;
 			
-			//$date = new \DateTime("now", new \DateTimeZone('Australia/Perth'));
-			//$date_time = $date->format('Y-m-d H:i:s');
-			$date_time = Carbon::now();//('Australia/Perth');
+			$date_time = Carbon::now();
 			$expiryDate = date('Y-m-d H:i:s',strtotime('+11 minutes', strtotime($date_time)));
 
 			$paramPencilData = [
@@ -197,10 +195,14 @@ class PropertyController
 			}
 			
 			if(strpos($pencilDetails['userDefined1'],"+") && strpos($pencilDetails['userDefined1'],"+") >= 0){
-				$d1 = $pencilDetails['userDefined1'];
-				$pdt = explode('+', $d1);
-				$dateTimeExpiry = strtotime($pdt[0]);
-				$newExpiryDate = date('Y-m-d H:i:s', $dateTimeExpiry);
+				$rms_expirydate = $pencilDetails['userDefined1'];
+				$exp_split = explode('+', $rms_expirydate);
+				$dt = explode(' ',$exp_split[0]);
+				$date_swap = explode('/',$dt[0]);
+				$conv_time = str_replace($dt[0],'',str_replace(' ','',$exp_split[0]));
+				$expiry_time = date('H:i:s',strtotime($conv_time));
+				$final_date = strtotime($date_swap[2].'-'.$date_swap[1].'-'.$date_swap[0]);
+				$newExpiryDate = date('Y-m-d',$final_date).' '.$expiry_time;
 			}
 			else{
 				$newExpiryDate = $expiryDate;
@@ -255,8 +257,6 @@ class PropertyController
 		$data['departure_date'] = $this->params['dateTo'];
 		$data['user_ip'] = $this->params['userIp'];
 		
-		//$date_checker = new \DateTime("now", new \DateTimeZone('Australia/Perth'));
-		//$now = $date_checker->format('Y-m-d H:i:s');
 		$now = Carbon::now();
 		
 		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
@@ -645,9 +645,6 @@ class PropertyController
             ->where('date_from', '=', $from)
             ->first();
 			
-        //$api           = new ApiController($this->authToken, $this->request);
-        //$detailArea = $api->detailArea($this->params['areaId']);
-        
 		$checkAreaDetail =  PropertyAreaDetails::where('area_id', $this->params['areaId'])->first();
 		$detailArea['categoryId'] =  $checkAreaDetail->category_id;
 
@@ -979,7 +976,6 @@ class PropertyController
                     $result2 = Property::select('response')
                     ->where('property_id', $this->params['propertyId'])
                     ->where('area_id', $this->params['areaId'])
-                    // ->whereBetween('date_from', [$from, $to])
                     ->where('date_to', '>=', $from)
                     ->where('date_to', '<=', $to)
                     ->orderBy('date_from', 'ASC')
@@ -1196,7 +1192,7 @@ class PropertyController
 		$cDate = Carbon::now()->format('Y-m-01');
 		$startDate = Carbon::createFromFormat('Y-m-d', $cDate)->addDays(-1)->format('Y-m-d');
 		$nxtYear = Carbon::now()->addYear()->format('Y-m-d');
-		$nextYear = $nxtYear; //Carbon::parse($nxtYear)->endOfMonth()->format('Y-m-d');
+		$nextYear = $nxtYear;
 		$dateAvail = AvailabilityDate::select('date_from')->where('category_id', $category_id)
 									->where('date_from', '>=', $startDate)
 									->where('date_from', '<=', $nextYear)
@@ -1245,7 +1241,7 @@ class PropertyController
 			
 		$startDate = Carbon::now()->format('Y-m-01');
 		$nxtYear = Carbon::now()->addYear()->format('Y-m-d');
-		$nextYear = $nxtYear;//Carbon::parse($nxtYear)->endOfMonth()->format('Y-m-d');
+		$nextYear = $nxtYear;
 		$dateAvail = AvailabilityDate::select('date_from')->where('category_id', $category_id)
 									->where('date_from', '>=', $startDate)
 									->where('date_from', '<=', $nextYear)
@@ -1258,7 +1254,7 @@ class PropertyController
 		{
 			$from_date = $result['date_from'].' 14:30:00';
 			$to_date = Carbon::createFromFormat('Y-m-d', $result['date_from'])->addDays(1)->format('Y-m-d 10:30:00');
-			$availDates[] = ['arrival_date' => $from_date, 'departure_date' => $to_date];//$result['date_from'];
+			$availDates[] = ['arrival_date' => $from_date, 'departure_date' => $to_date];
 		}
 		return [
 				'code' => 1,
