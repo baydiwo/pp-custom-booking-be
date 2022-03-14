@@ -264,7 +264,7 @@ class PropertyController
 		
 		$testing = new ModelTesting();
 		
-		$testing->post_data = json_encode($_POST);
+		$testing->post_data = json_encode($this->params);
 		$testing->get_data = json_encode($_GET);
 		$testing->request_data = json_encode($_REQUEST);
 		$testing->function_name = "PropertyController -> generateToken";
