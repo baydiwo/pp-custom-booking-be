@@ -247,7 +247,8 @@ class PropertyController
             [
                 'dateFrom'	=> 'required|date_format:Y-m-d',
 				'dateTo'	=> 'required|date_format:Y-m-d|after:dateFrom',
-				'userIp' 	=> 'required'
+				'userIp' 	=> 'required',
+				'areaId' 	=> 'required'
             ]
         );
         if ($validator->fails())
@@ -256,12 +257,14 @@ class PropertyController
 		$data['arrival_date'] = $this->params['dateFrom'];
 		$data['departure_date'] = $this->params['dateTo'];
 		$data['user_ip'] = $this->params['userIp'];
+		$data['area_id'] = $this->params['areaId'];
 		
 		$now = Carbon::now();
 		
 		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
 									->where('departure_date', $data['departure_date'])
 									->where('user_ip', $data['user_ip'])
+									->where('area_id', $data['area_id'])
 									->where('expiry_date', '>', $now)
 									->where('booking_id', '!=', '')->first();
 		if(!$checkToken)
@@ -273,6 +276,7 @@ class PropertyController
 			$model->arrival_date = $this->params['dateFrom'];
 			$model->departure_date = $this->params['dateTo'];
 			$model->user_ip =  $this->params['userIp'];
+			$model->area_id =  $this->params['areaId'];
 			$model->save();
 			$data['session_id'] = $model->id;
 			if($model->save()){
