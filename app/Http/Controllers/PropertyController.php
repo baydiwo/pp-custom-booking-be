@@ -17,6 +17,7 @@ use App\Models\AvailabilityDate;
 use App\Models\SessionDetails;
 use App\Models\BookingSource;
 use App\Models\ModelTiming;
+use App\Models\ModelTesting;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -260,6 +261,16 @@ class PropertyController
 		$data['area_id'] = $this->params['areaId'];
 		
 		$now = Carbon::now();
+		
+		$testing = new ModelTesting();
+		
+		$testing->post_data = json_encode($_POST);
+		$testing->get_data = json_encode($_GET);
+		$testing->request_data = json_encode($_REQUEST);
+		$testing->function_name = "PropertyController -> generateToken";
+		$testing->created_date = $now;
+		$testing->save();
+		
 		
 		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
 									->where('departure_date', $data['departure_date'])
