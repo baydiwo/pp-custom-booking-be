@@ -261,12 +261,10 @@ class PropertyController
 		$data['area_id'] = $this->params['areaId'];
 		
 		$now = Carbon::now();
-		
+		$testData = "DateFrom:".$this->params['dateFrom']."||DateTo:".$this->params['dateTo']."||UserIp:".$this->params['userIp']."||AreaId:".$this->params['areaId'];
 		$testing = new ModelTesting();
 		
-		$testing->post_data = json_encode($this->params);
-		$testing->get_data = json_encode($_GET);
-		$testing->request_data = json_encode($_REQUEST);
+		$testing->post_data = $testData;
 		$testing->function_name = "PropertyController -> generateToken";
 		$testing->created_date = $now;
 		$testing->save();		
