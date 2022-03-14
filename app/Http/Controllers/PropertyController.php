@@ -253,6 +253,8 @@ class PropertyController
         );
         if ($validator->fails())
             throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+		
+		echo '<pre>'; print_r($_REQUEST);echo '</pre>';die;
 			
 		$data['arrival_date'] = $this->params['dateFrom'];
 		$data['departure_date'] = $this->params['dateTo'];
