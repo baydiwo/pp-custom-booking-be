@@ -269,8 +269,7 @@ class PropertyController
 		$testing->request_data = json_encode($_REQUEST);
 		$testing->function_name = "PropertyController -> generateToken";
 		$testing->created_date = $now;
-		$testing->save();
-		
+		$testing->save();		
 		
 		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
 									->where('departure_date', $data['departure_date'])
