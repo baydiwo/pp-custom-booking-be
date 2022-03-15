@@ -160,6 +160,7 @@ class PropertyController
 			
 			$date_time = Carbon::now();
 			$expiryDate = date('Y-m-d H:i:s',strtotime('+11 minutes', strtotime($date_time)));
+			$data['expiry_time']   = date('c', strtotime('+10 minutes', strtotime($date_time)));
 
 			$paramPencilData = [
 									"id" => 0,
@@ -233,6 +234,7 @@ class PropertyController
 		{
 			$data['bookingId'] = (integer)$checkExpiry->booking_id;
 			$data['access_id'] = $checkExpiry->access_token;
+			$data['expiry_time']   = date('c', strtotime('-1 minutes', strtotime($checkExpiry->expiry_date)));
 		}
 		return [
 			'code' => 1,
@@ -267,13 +269,15 @@ class PropertyController
 		$testing->post_data = $testData;
 		$testing->function_name = "PropertyController -> generateToken";
 		$testing->created_date = $now;
-		$testing->save();		
+		$testing->save();
+		
+		$expTime = date('Y-m-d H:i:s', strtotime('+1 minutes', strtotime($now)));
 		
 		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
 									->where('departure_date', $data['departure_date'])
 									->where('user_ip', $data['user_ip'])
 									->where('area_id', $data['area_id'])
-									->where('expiry_date', '>', $now)
+									->where('expiry_date', '>', $expTime)
 									->where('booking_id', '!=', '')->first();
 		if(!$checkToken)
 		{
@@ -297,7 +301,7 @@ class PropertyController
 			else
 			{
 				return [
-					'code' => 1,
+					'code' => 2,
 					'status' => 'error',
 					'message' => 'Token not generated. Please Try Again!'
 				];
@@ -307,8 +311,59 @@ class PropertyController
 		{
 			$data['access_token'] = $checkToken->access_token;
 			$dateNow = strtotime($now);
-   			$dateExpiry   = strtotime($checkToken->expiry_date); 
-			$data['expiry_time'] = $dateExpiry - $dateNow;
+   			$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($checkToken->expiry_date)));
+			$data['expiry_time'] = $dateExpiry;
+			$data['session_id'] = $checkToken->id;
+			return [
+				'code' => 1,
+				'status' => 'success',
+				'data' => $data
+			];
+		}
+	}	
+	
+	public function validateToken(Request $request)
+	{
+		$validator = Validator::make(
+            $this->params,
+            [
+                'dateFrom'	=> 'required|date_format:Y-m-d',
+				'dateTo'	=> 'required|date_format:Y-m-d|after:dateFrom',
+				'userIp' 	=> 'required',
+				'areaId' 	=> 'required'
+            ]
+        );
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+			
+		$data['arrival_date'] = $this->params['dateFrom'];
+		$data['departure_date'] = $this->params['dateTo'];
+		$data['user_ip'] = $this->params['userIp'];
+		$data['area_id'] = $this->params['areaId'];
+		
+		$expTime = date('Y-m-d H:i:s', strtotime('+1 minutes', strtotime($now)));
+		
+		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
+									->where('departure_date', $data['departure_date'])
+									->where('user_ip', $data['user_ip'])
+									->where('area_id', $data['area_id'])
+									->where('expiry_date', '>', $expTime)
+									->where('booking_id', '!=', '')
+									->orderBy('id', 'DESC')->first();
+		if(!$checkToken)
+		{
+			return [
+				'code' => 2,
+				'status' => 'error',
+				'message' => 'Session Expired. Please Try Again!'
+			];
+		}
+		else
+		{
+			$data['access_token'] = $checkToken->access_token;
+			$dateNow = strtotime($now);
+   			$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($checkToken->expiry_date)));
+			$data['expiry_time'] = $dateExpiry;
 			$data['session_id'] = $checkToken->id;
 			return [
 				'code' => 1,
