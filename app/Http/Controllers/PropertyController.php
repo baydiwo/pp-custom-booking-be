@@ -341,6 +341,7 @@ class PropertyController
 		$data['user_ip'] = $this->params['userIp'];
 		$data['area_id'] = $this->params['areaId'];
 		
+		$now = Carbon::now();
 		$expTime = date('Y-m-d H:i:s', strtotime('+1 minutes', strtotime($now)));
 		
 		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
