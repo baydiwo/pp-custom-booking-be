@@ -353,11 +353,13 @@ class PropertyController
 									->orderBy('id', 'DESC')->first();
 		if(!$checkToken)
 		{
-			return [
-				'code' => 2,
-				'status' => 'error',
+			$httpCode = 500;
+			$data = [
+				'code' => 0,
+				'status' => 'failed',
 				'message' => 'Session Expired. Please Try Again!'
 			];
+			return response()->json($data, $httpCode);
 		}
 		else
 		{
