@@ -270,6 +270,8 @@ class BookingController
 		$reservation['dueToday']		= $booking_details['due_today'];
 		$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($booking_details['expiry_date'])));
 		$reservation['expiryTime'] = $dateExpiry;
+		$reservation['id'] =  $booking_details['id'];
+		$reservation['bookingId'] =  $booking_details['booking_id']y;
 
 		
 		$bs_result = BookingSource::where('status', '1')->get();
@@ -425,7 +427,7 @@ class BookingController
         return [
             'code' => 1,
             'status' => 'success',
-            'data' => ["id" => $booking_id, 'expiryTime' => $dateExpiry]
+            'data' => ["id" => $booking_id, 'booking_id' => $this->booking_id,  'expiryTime' => $dateExpiry]
         ];
     }
 
