@@ -32,11 +32,7 @@ class BookingController
 		else
 			$this->booking_id = $this->params['bookingId'];
 			
-			$checkExpiry = SessionDetails::where('arrival_date', $this->params['dateFrom'])
-									->where('departure_date', $this->params['dateTo'])
-									->where('user_ip', $this->params['userIp'])
-									->where('area_id', $this->params['areaId'])
-									->where('expiry_date', '!=', '')
+			$checkExpiry = SessionDetails::where('user_ip', $this->params['userIp'])
 									->where('booking_id', '=', $this->params['bookingId'])
 									->orderBy('id', 'DESC')->first();
 			$sessionFlag = 0;
