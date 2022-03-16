@@ -178,6 +178,8 @@ class BookingController
 		$model->save();
 		$booking_details_id = $model->id;
 		
+		$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($this->expiry_date)));
+		
 		$response = array();
 		$response = [
 						"adults" => $this->params['adults'],
@@ -224,7 +226,8 @@ class BookingController
 						"rateTypeId" => $rate_type_id,
 						"rateTypeName" => ($rate_type_id+1)." Night OTA",
 						"bookingSource" => $this->params['bookingSource'],
-						"status" => "Unconfirmed"
+						"status" => "Unconfirmed",
+						"expiryTime"=>$dateExpiry
 					];
 		
         return [
@@ -265,6 +268,9 @@ class BookingController
 		$reservation['pets']			= $booking_details['pets'];
 		$reservation['totalAmount']		= $booking_details['accomodation_fee'] + ($booking_details['pets'] * $booking_details['pet_fee']);
 		$reservation['dueToday']		= $booking_details['due_today'];
+		$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($booking_details['expiry_date'])));
+		$reservation['expiryTime'] = $dateExpiry;
+
 		
 		$bs_result = BookingSource::where('status', '1')->get();
 		$bs_data = [];
@@ -414,11 +420,12 @@ class BookingController
 		$booking_details->guest_id			= $guestId;
 		
 		$booking_details->save();
-		
+		$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($booking_details['expiry_date'])));
+
         return [
             'code' => 1,
             'status' => 'success',
-            'data' => ["id" => $booking_id]
+            'data' => ["id" => $booking_id, 'expiryTime' => $dateExpiry]
         ];
     }
 
