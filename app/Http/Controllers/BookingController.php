@@ -241,7 +241,7 @@ class BookingController
     {
         $api = new ApiController($this->authToken, $this->request);
 		$reservation = array();
-		$booking_details = BookingDetails::where('id', $id)->first();
+		$booking_details = BookingDetails::where('id', $id)->where('booking_id', $this->booking_id)->first();
 		
 		$reservation['arrivalDate'] 	= $booking_details['arrival_date'];
 		$reservation['departureDate']	= $booking_details['departure_date'];
@@ -377,7 +377,7 @@ class BookingController
             $guestId = $searchGuest['id'];
         }
 		
-		$booking_details = BookingDetails::where('id', $booking_id)->first();
+		$booking_details = BookingDetails::where('id', $booking_id)->where('booking_id', $this->booking_id)->first();
 		
 		$areaData = PropertyAreaDetails::where('property_id', $id)
 							->where('area_id', $this->params['areaId'])
