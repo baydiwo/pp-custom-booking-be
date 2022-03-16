@@ -27,13 +27,41 @@ class BookingController
         $this->authToken = Cache::get('authToken')['token'];
         $this->request = $request;
         $this->params  = $request->all();
-		$this->webToken = ($request->bearerToken() !== '') ? $request->bearerToken() : '';//($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
-		$now = Carbon::now();
-		$checkExpiry = SessionDetails::where('access_token', $this->webToken)->first();
-		if(!$checkExpiry || ($checkExpiry->expiry_date < $now && $checkExpiry->status == 0))
+		if(!$this->params['bookingId'])
 			 throw new Exception(ucwords('Transaction Timed-out! Please try again.'));
 		else
-			$this->booking_id = $checkExpiry->booking_id;
+			$this->booking_id = $this->params['bookingId'];
+			
+			$checkExpiry = SessionDetails::where('arrival_date', $this->params['dateFrom'])
+									->where('departure_date', $this->params['dateTo'])
+									->where('user_ip', $this->params['userIp'])
+									->where('area_id', $this->params['areaId'])
+									->where('expiry_date', '!=', '')
+									->where('booking_id', '=', $this->params['bookingId'])
+									->orderBy('id', 'DESC')->first();
+			$sessionFlag = 0;
+			if($checkExpiry)
+			{
+				$cTime = time();
+				$expDate =strtotime($checkExpiry->expiry_date);
+				$diffTime = $expDate-$cTime;
+				if($diffTime > 60)
+				{
+					$sessionFlag = 1;
+					$this->expiry_date = $checkExpiry->expiry_date;
+				}
+			}
+			if($sessionFlag == 0)
+			{
+				$httpCode = 500;
+				$data = [
+					'code' => 0,
+					'status' => 'failed',
+					'message' => 'Session Expired. Please Try Again!'
+				];
+				return response()->json($data, $httpCode);
+			}
+			
     }
 
     public function create()
@@ -60,7 +88,8 @@ class BookingController
                 'nights'        => 'required|integer',
                 'phone'         => 'required',
                 'postCode'      => 'required',
-                'bookingSource' => 'required|integer'
+                'bookingSource' => 'required|integer',
+                'userIp'      => 'required'
             ]
         );
 		
@@ -140,6 +169,8 @@ class BookingController
 		$model->nights        	= $this->params['nights'];
 		$model->phone         	= $this->params['phone'];
 		$model->post_code     	= $this->params['postCode'];
+		$model->user_ip     	= $this->params['userIp'];
+		$model->expiry_date = $this->expiry_date;
 		$model->pets      		= $petCount;
 		$model->accomodation_fee= $accomodationFee;
 		$model->pet_fee     	= $petFees;

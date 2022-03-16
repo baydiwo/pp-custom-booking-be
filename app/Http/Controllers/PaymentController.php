@@ -36,11 +36,6 @@ class PaymentController
 
     public function payment(Request $request, $reservationId)
     {
-		$this->webToken = ($request->bearerToken() !== '') ? $request->bearerToken() : '';//($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
-		$now = Carbon::now();
-		$checkExpiry = SessionDetails::where('access_token', $this->webToken)->where('expiry_date', '>', $now)->first();
-		if(!$checkExpiry)
-			 throw new Exception(ucwords('Transaction Timed-out! Please try again.'));
         $validator = Validator::make(
             $this->params,
             [
@@ -61,6 +56,20 @@ class PaymentController
 			throw new Exception(ucwords('Booking details not found!'));
 		else
 		{
+			$cTime = time();
+			$expDate =strtotime($booking_details->expiry_date);
+			$diffTime = $expDate-$cTime;
+			if($diffTime < 60)
+			{
+				$httpCode = 500;
+				$data = [
+					'code' => 0,
+					'status' => 'failed',
+					'message' => 'Session Expired. Please Try Again!'
+				];
+				return response()->json($data, $httpCode);	
+			}
+				
 			$now = Carbon::now();
 			$from_date = Carbon::parse($booking_details['arrival_date']);
 			$diffWeek = $now->diffIndays($from_date);
