@@ -271,7 +271,7 @@ class BookingController
 		$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($booking_details['expiry_date'])));
 		$reservation['expiryTime'] = $dateExpiry;
 		$reservation['id'] =  $booking_details['id'];
-		$reservation['bookingId'] =  $booking_details['booking_id']y;
+		$reservation['bookingId'] =  $booking_details['booking_id'];
 
 		
 		$bs_result = BookingSource::where('status', '1')->get();
