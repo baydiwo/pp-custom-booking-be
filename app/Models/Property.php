@@ -19,6 +19,7 @@ class Property extends Model
             'bookingSourceId' => 'required|integer',
             'arrivalDate'     => 'required|date_format:Y-m-d',
             'departureDate'   => 'required|date_format:Y-m-d|after:arrivalDate',
+            'userIp'   => 'required',
         ],
         'availability-grid' => [
             // 'categoryId' => 'required|integer',

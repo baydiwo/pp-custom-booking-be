@@ -27,13 +27,37 @@ class BookingController
         $this->authToken = Cache::get('authToken')['token'];
         $this->request = $request;
         $this->params  = $request->all();
-		$this->webToken = ($request->bearerToken() !== '') ? $request->bearerToken() : '';//($request->header('authtoken') !== '') ? $request->header('authtoken') : '';
-		$now = Carbon::now();
-		$checkExpiry = SessionDetails::where('access_token', $this->webToken)->first();
-		if(!$checkExpiry || ($checkExpiry->expiry_date < $now && $checkExpiry->status == 0))
+		if(!$this->params['bookingId'])
 			 throw new Exception(ucwords('Transaction Timed-out! Please try again.'));
 		else
-			$this->booking_id = $checkExpiry->booking_id;
+			$this->booking_id = $this->params['bookingId'];
+			
+			$checkExpiry = SessionDetails::where('user_ip', $this->params['userIp'])
+									->where('booking_id', '=', $this->params['bookingId'])
+									->orderBy('id', 'DESC')->first();
+			$sessionFlag = 0;
+			if($checkExpiry)
+			{
+				$cTime = time();
+				$expDate =strtotime($checkExpiry->expiry_date);
+				$diffTime = $expDate-$cTime;
+				if($diffTime > 60)
+				{
+					$sessionFlag = 1;
+					$this->expiry_date = $checkExpiry->expiry_date;
+				}
+			}
+			if($sessionFlag == 0)
+			{
+				$httpCode = 500;
+				$data = [
+					'code' => 0,
+					'status' => 'failed',
+					'message' => 'Session Expired. Please Try Again!'
+				];
+				return response()->json($data, $httpCode);
+			}
+			
     }
 
     public function create()
@@ -60,7 +84,8 @@ class BookingController
                 'nights'        => 'required|integer',
                 'phone'         => 'required',
                 'postCode'      => 'required',
-                'bookingSource' => 'required|integer'
+                'bookingSource' => 'required|integer',
+                'userIp'      => 'required'
             ]
         );
 		
@@ -140,6 +165,8 @@ class BookingController
 		$model->nights        	= $this->params['nights'];
 		$model->phone         	= $this->params['phone'];
 		$model->post_code     	= $this->params['postCode'];
+		$model->user_ip     	= $this->params['userIp'];
+		$model->expiry_date = $this->expiry_date;
 		$model->pets      		= $petCount;
 		$model->accomodation_fee= $accomodationFee;
 		$model->pet_fee     	= $petFees;
@@ -150,6 +177,8 @@ class BookingController
 		$model->booking_status	= '0';
 		$model->save();
 		$booking_details_id = $model->id;
+		
+		$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($this->expiry_date)));
 		
 		$response = array();
 		$response = [
@@ -197,7 +226,8 @@ class BookingController
 						"rateTypeId" => $rate_type_id,
 						"rateTypeName" => ($rate_type_id+1)." Night OTA",
 						"bookingSource" => $this->params['bookingSource'],
-						"status" => "Unconfirmed"
+						"status" => "Unconfirmed",
+						"expiryTime"=>$dateExpiry
 					];
 		
         return [
@@ -211,7 +241,7 @@ class BookingController
     {
         $api = new ApiController($this->authToken, $this->request);
 		$reservation = array();
-		$booking_details = BookingDetails::where('id', $id)->first();
+		$booking_details = BookingDetails::where('id', $id)->where('booking_id', $this->booking_id)->first();
 		
 		$reservation['arrivalDate'] 	= $booking_details['arrival_date'];
 		$reservation['departureDate']	= $booking_details['departure_date'];
@@ -238,6 +268,11 @@ class BookingController
 		$reservation['pets']			= $booking_details['pets'];
 		$reservation['totalAmount']		= $booking_details['accomodation_fee'] + ($booking_details['pets'] * $booking_details['pet_fee']);
 		$reservation['dueToday']		= $booking_details['due_today'];
+		$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($booking_details['expiry_date'])));
+		$reservation['expiryTime'] = $dateExpiry;
+		$reservation['id'] =  $booking_details['id'];
+		$reservation['bookingId'] =  $booking_details['booking_id'];
+
 		
 		$bs_result = BookingSource::where('status', '1')->get();
 		$bs_data = [];
@@ -344,7 +379,7 @@ class BookingController
             $guestId = $searchGuest['id'];
         }
 		
-		$booking_details = BookingDetails::where('id', $booking_id)->first();
+		$booking_details = BookingDetails::where('id', $booking_id)->where('booking_id', $this->booking_id)->first();
 		
 		$areaData = PropertyAreaDetails::where('property_id', $id)
 							->where('area_id', $this->params['areaId'])
@@ -387,11 +422,12 @@ class BookingController
 		$booking_details->guest_id			= $guestId;
 		
 		$booking_details->save();
-		
+		$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($booking_details['expiry_date'])));
+
         return [
             'code' => 1,
             'status' => 'success',
-            'data' => ["id" => $booking_id]
+            'data' => ["id" => $booking_id, 'booking_id' => $this->booking_id,  'expiryTime' => $dateExpiry]
         ];
     }
 

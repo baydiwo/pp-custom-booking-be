@@ -17,6 +17,7 @@ use App\Models\AvailabilityDate;
 use App\Models\SessionDetails;
 use App\Models\BookingSource;
 use App\Models\ModelTiming;
+use App\Models\ModelTesting;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
@@ -58,6 +59,233 @@ class PropertyController
     }
 	
     public function detail(Request $request, $id)
+    {
+		$from = Carbon::parse($this->params['arrivalDate']);
+        $to = Carbon::parse($this->params['departureDate']);
+		$now = Carbon::now();
+		$dateDiff = $now->diffInDays($from);
+        $this->params['rateTypeId'] = $this->rateByDate($from, $to);
+		
+		if($dateDiff < 5)
+			throw new Exception(ucwords('Contact our Booking Consultant for last minute bookings'));
+
+		$this->authToken = Cache::get('authToken')['token'];
+        $api = new ApiController($this->authToken, $this->request);
+	   
+		$validator = Validator::make(
+            $this->params,
+            Property::$rules['detail']
+        );
+
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+		
+		$propertyData = PropertyDetails::select('name')->where('property_id', $id)
+            ->first();
+		
+		$areaData = PropertyAreaDetails::where('property_id', $id)
+            ->where('area_id', $this->params['areaId'])
+            ->where('category_id', $this->params['categoryId'])
+            ->first();
+
+        $paramsRateQuote = [
+            'adults'        => $this->params['adults'],
+            'areaId'        => $this->params['areaId'],
+            'arrivalDate'   => $this->params['arrivalDate'],
+            'categoryId'    => $this->params['categoryId'],
+            'children'      => $this->params['children'],
+            'departureDate' => $this->params['departureDate'],
+            'infants'       => $this->params['infants'],
+            'propertyId'    => $id,
+            'rateTypeId'    => $this->params['rateTypeId'],
+        ];
+		
+		$diffWeek = $now->diffIndays($from);
+		$petCount = (isset($this->params['pets']) && $this->params['pets'] > 0) ? $this->params['pets'] : 0;
+		$ratestart = Carbon::now();
+		$rateQuote = $api->rateQuote($paramsRateQuote);
+		$rateend = Carbon::now();
+		
+        if (isset($rateQuote['Message'])) {
+            throw new Exception(ucwords($rateQuote['Message']));
+        }
+				
+		$fDate = strtotime($this->params['arrivalDate']);
+		$datefrom = date('Y-m-d', $fDate);
+		$tDate = strtotime($this->params['departureDate']);
+		$dateto = date('Y-m-d', $tDate);
+		
+		$to   = Carbon::createFromFormat('Y-m-d', $this->params['arrivalDate']);
+		$from = Carbon::createFromFormat('Y-m-d', $this->params['departureDate']);
+        $data['categoryId']      = $areaData['category_id'];
+        $data['areaName']    	 = $areaData['name'];
+        $data['town']    	 	 = $areaData['external_ref'];
+        $data['description']     = $areaData['long_description'];
+        $data['imageUrl']     	 = $areaData['image_link'];
+        $data['bond']    	 	 = $areaData['bond'];
+        $data['petAllowed']      = $areaData['pets_allowed'] == 0 ? false : true;
+        $data['petFee']          = $areaData['pets_allowed'] == 0 ? 0 : 150;
+        $data['maxOccupants']    = (integer)$areaData['max_occupants'];
+        $data['totalRooms']      = (integer)$areaData['total_rooms'];
+        $data['totalGuests']     = $this->params['adults'] . ' adults, ' . $this->params['children'] . ' children, ' . $this->params['infants'] . ' infants';
+        $data['totalBedrooms']   = (integer)$areaData['total_bedrooms'];
+        $data['totalBaths']      = (integer)$areaData['total_baths'];
+        $data['nights']          = $to->diffInDays($from);
+        $data['accomodation']    = collect($rateQuote['rateBreakdown'])->sum('totalRate');
+        $data['totalAmount']     = $data['accomodation'] + ($petCount * $data['petFee']);
+		if($diffWeek > 20)
+        	$data['dueToday']        = number_format((0.3* $data['accomodation']) * 1.012,2, '.', '');
+		else
+        	$data['dueToday']        = number_format($data['totalAmount'] * 1.012,2, '.', '');
+		
+		$bs_result = BookingSource::where('status', '1')->get();
+		$bs_data = [];
+		foreach($bs_result as $bs){
+			$bs_data[] = ['id' => $bs->bs_id, 'name' => $bs->bs_name];
+		}
+		$data['bookingSourceList'] = $bs_data;
+		
+		if($this->params['bookingId'] && $this->params['bookingId'] != '')
+		{
+			$checkExpiry = SessionDetails::where('arrival_date', $datefrom)
+										->where('departure_date', $dateto)
+										->where('user_ip', $this->params['userIp'])
+										->where('area_id', $this->params['areaId'])
+										->where('expiry_date', '!=', '')
+										->where('booking_id', '=', $this->params['bookingId'])
+										->orderBy('id', 'DESC')->first();
+		}
+		else
+		{
+			$checkExpiry = SessionDetails::where('arrival_date', $datefrom)
+										->where('departure_date', $dateto)
+										->where('user_ip', $this->params['userIp'])
+										->where('area_id', $this->params['areaId'])
+										->where('expiry_date', '!=', '')
+										->where('booking_id', '!=', '')
+										->orderBy('id', 'DESC')->first();
+		}
+		
+		$checkStatus = 0;
+		if($checkExpiry)
+		{
+			$cTime = time();
+			$expDate =strtotime($checkExpiry->expiry_date);
+			$diffTime = $expDate-$cTime;
+			if($diffTime > 60)
+				$checkStatus = 1;
+			else if($diffTime < 60 && $this->params['bookingId'] == '')
+				$checkStatus = 2;
+				
+		}
+		else
+			$checkStatus = 2;
+			
+		if($checkStatus == 1)
+		{
+			$data['bookingId'] = (integer)$checkExpiry->booking_id;
+			$data['expiryTime']   = date('c', strtotime('-1 minutes', strtotime($checkExpiry->expiry_date)));
+		}
+		else if($checkStatus == 2)
+		{
+			$guestGiven = 'PPB';
+			$guestSurname = 'Pending';
+			$guestPhone = '0417120000';
+			$guestId = 21899;
+			
+			$date_time = Carbon::now();
+			$expiryDate = date('Y-m-d H:i:s',strtotime('+11 minutes', strtotime($date_time)));
+			$data['expiryTime']   = date('c', strtotime('+10 minutes', strtotime($date_time)));
+
+			$paramPencilData = [
+									"id" => 0,
+									"areaId" => $this->params['areaId'],
+									"arrivalDate" => $datefrom." 15:00:00",
+									"categoryId" => $this->params['categoryId'],
+									"departureDate" => $dateto." 11:30:00",
+									"expiryDate" => $expiryDate,
+									"guestId" => $guestId,
+									"guestEmail" => "sasikumar@versatile-soft.com",
+									"guestGiven" => $guestGiven,
+									"guestMobile" => $guestPhone,
+									"guestSurname" => $guestSurname,
+									"notes" => "This is a note about my test pencil reservation",
+									"status" => "Pencil"
+								];
+	
+			$endpoint = 'reservations/pencil';
+			$pencilstart = Carbon::now();
+			$response = Http::withHeaders([
+				'authtoken' => $this->authToken
+			])->post(env('BASE_URL_RMS') . $endpoint, $paramPencilData);
+			$pencilend = Carbon::now();
+	
+			if(isset($response['message'])) {
+				throw new Exception(ucwords($response['message']));
+			}
+			
+			$data['bookingId'] = (isset($response['id']) && $response['id'] != '') ? $response['id'] : 0;
+			
+			$pencilDetails = $api->getReservationDetails($data['bookingId']);
+			if(isset($pencilDetails['Message'])) {
+				throw new Exception(ucwords($pencilDetails['Message']));
+			}
+			
+			if(strpos($pencilDetails['userDefined1'],"+") && strpos($pencilDetails['userDefined1'],"+") >= 0){
+				$rms_expirydate = $pencilDetails['userDefined1'];
+				$exp_split = explode('+', $rms_expirydate);
+				$dt = explode(' ',$exp_split[0]);
+				$date_swap = explode('/',$dt[0]);
+				$conv_time = str_replace($dt[0],'',str_replace(' ','',$exp_split[0]));
+				$expiry_time = date('H:i:s',strtotime($conv_time));
+				$final_date = strtotime($date_swap[2].'-'.$date_swap[1].'-'.$date_swap[0]);
+				$newExpiryDate = date('Y-m-d',$final_date).' '.$expiry_time;
+			}
+			else{
+				$newExpiryDate = $expiryDate;
+			}
+			$pencil_date = $pencilDetails['createdDate'];
+			
+			$model = new SessionDetails();
+			$model->booking_id = $data['bookingId'];
+			$model->expiry_date = $newExpiryDate;
+			$model->arrival_date = $this->params['arrivalDate'];
+			$model->departure_date = $this->params['departureDate'];
+			$model->user_ip =  $this->params['userIp'];
+			$model->area_id =  $this->params['areaId'];
+			$model->save();
+			
+			$modelTiming = new ModelTiming();
+			$modelTiming->rate_start = $ratestart;
+			$modelTiming->rate_end = $rateend;
+			$modelTiming->pencil_start = $pencilstart;
+			$modelTiming->pencil_end = $pencilend;
+			$modelTiming->pencil_created = $pencil_date;
+			$modelTiming->expiry_date = $newExpiryDate;
+			$modelTiming->booking_id = $data['bookingId'];
+			$modelTiming->process_type = 'Pencil';
+			$modelTiming->status = '1';
+			$modelTiming->save();
+		}
+		else
+		{
+			$httpCode = 500;
+			$data = [
+				'code' => 0,
+				'status' => 'failed',
+				'message' => 'Session Expired. Please Try Again!'
+			];
+			return response()->json($data, $httpCode);
+		}
+		
+		return [
+			'code' => 1,
+			'status' => 'success',
+			'data' => $data
+		];
+    }
+	
+    public function detail_old(Request $request, $id)
     {
 		$this->webToken = ($request->bearerToken() !== '') ? $request->bearerToken() : '';
 		$now = Carbon::now();
@@ -159,6 +387,7 @@ class PropertyController
 			
 			$date_time = Carbon::now();
 			$expiryDate = date('Y-m-d H:i:s',strtotime('+11 minutes', strtotime($date_time)));
+			$data['expiry_time']   = date('c', strtotime('+10 minutes', strtotime($date_time)));
 
 			$paramPencilData = [
 									"id" => 0,
@@ -232,6 +461,7 @@ class PropertyController
 		{
 			$data['bookingId'] = (integer)$checkExpiry->booking_id;
 			$data['access_id'] = $checkExpiry->access_token;
+			$data['expiry_time']   = date('c', strtotime('-1 minutes', strtotime($checkExpiry->expiry_date)));
 		}
 		return [
 			'code' => 1,
@@ -247,7 +477,8 @@ class PropertyController
             [
                 'dateFrom'	=> 'required|date_format:Y-m-d',
 				'dateTo'	=> 'required|date_format:Y-m-d|after:dateFrom',
-				'userIp' 	=> 'required'
+				'userIp' 	=> 'required',
+				'areaId' 	=> 'required'
             ]
         );
         if ($validator->fails())
@@ -256,13 +487,24 @@ class PropertyController
 		$data['arrival_date'] = $this->params['dateFrom'];
 		$data['departure_date'] = $this->params['dateTo'];
 		$data['user_ip'] = $this->params['userIp'];
+		$data['area_id'] = $this->params['areaId'];
 		
 		$now = Carbon::now();
+		$testData = "DateFrom:".$this->params['dateFrom']."||DateTo:".$this->params['dateTo']."||UserIp:".$this->params['userIp']."||AreaId:".$this->params['areaId'];
+		$testing = new ModelTesting();
+		
+		$testing->post_data = $testData;
+		$testing->function_name = "PropertyController -> generateToken";
+		$testing->created_date = $now;
+		$testing->save();
+		
+		$expTime = date('Y-m-d H:i:s', strtotime('+1 minutes', strtotime($now)));
 		
 		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
 									->where('departure_date', $data['departure_date'])
 									->where('user_ip', $data['user_ip'])
-									->where('expiry_date', '>', $now)
+									->where('area_id', $data['area_id'])
+									->where('expiry_date', '>', $expTime)
 									->where('booking_id', '!=', '')->first();
 		if(!$checkToken)
 		{
@@ -273,6 +515,7 @@ class PropertyController
 			$model->arrival_date = $this->params['dateFrom'];
 			$model->departure_date = $this->params['dateTo'];
 			$model->user_ip =  $this->params['userIp'];
+			$model->area_id =  $this->params['areaId'];
 			$model->save();
 			$data['session_id'] = $model->id;
 			if($model->save()){
@@ -285,7 +528,7 @@ class PropertyController
 			else
 			{
 				return [
-					'code' => 1,
+					'code' => 2,
 					'status' => 'error',
 					'message' => 'Token not generated. Please Try Again!'
 				];
@@ -295,8 +538,62 @@ class PropertyController
 		{
 			$data['access_token'] = $checkToken->access_token;
 			$dateNow = strtotime($now);
-   			$dateExpiry   = strtotime($checkToken->expiry_date); 
-			$data['expiry_time'] = $dateExpiry - $dateNow;
+   			$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($checkToken->expiry_date)));
+			$data['expiry_time'] = $dateExpiry;
+			$data['session_id'] = $checkToken->id;
+			return [
+				'code' => 1,
+				'status' => 'success',
+				'data' => $data
+			];
+		}
+	}	
+	
+	public function validateToken(Request $request)
+	{
+		$validator = Validator::make(
+            $this->params,
+            [
+                'dateFrom'	=> 'required|date_format:Y-m-d',
+				'dateTo'	=> 'required|date_format:Y-m-d|after:dateFrom',
+				'userIp' 	=> 'required',
+				'areaId' 	=> 'required'
+            ]
+        );
+        if ($validator->fails())
+            throw new Exception(ucwords(implode(' | ', $validator->errors()->all())));
+			
+		$data['arrival_date'] = $this->params['dateFrom'];
+		$data['departure_date'] = $this->params['dateTo'];
+		$data['user_ip'] = $this->params['userIp'];
+		$data['area_id'] = $this->params['areaId'];
+		
+		$now = Carbon::now();
+		$expTime = date('Y-m-d H:i:s', strtotime('+1 minutes', strtotime($now)));
+		
+		$checkToken = SessionDetails::where('arrival_date', $data['arrival_date'])
+									->where('departure_date', $data['departure_date'])
+									->where('user_ip', $data['user_ip'])
+									->where('area_id', $data['area_id'])
+									->where('expiry_date', '>', $expTime)
+									->where('booking_id', '!=', '')
+									->orderBy('id', 'DESC')->first();
+		if(!$checkToken)
+		{
+			$httpCode = 500;
+			$data = [
+				'code' => 0,
+				'status' => 'failed',
+				'message' => 'Session Expired. Please Try Again!'
+			];
+			return response()->json($data, $httpCode);
+		}
+		else
+		{
+			$data['access_token'] = $checkToken->access_token;
+			$dateNow = strtotime($now);
+   			$dateExpiry   = date('c', strtotime('-1 minutes', strtotime($checkToken->expiry_date)));
+			$data['expiry_time'] = $dateExpiry;
 			$data['session_id'] = $checkToken->id;
 			return [
 				'code' => 1,

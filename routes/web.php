@@ -71,6 +71,7 @@ $router->group(['middleware' => 'auth.token'], function () use ($router) {
 	
     $router->group(['prefix' => 'token'], function () use ($router) {
         $router->post('create', 'PropertyController@generateToken');
+        $router->post('check', 'PropertyController@validateToken');
     });
 
 
