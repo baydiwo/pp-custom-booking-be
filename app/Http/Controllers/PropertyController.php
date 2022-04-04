@@ -1489,7 +1489,7 @@ class PropertyController
 		$cDate = Carbon::now()->format('Y-m-01');
 		$startDate = Carbon::createFromFormat('Y-m-d', $cDate)->addDays(-1)->format('Y-m-d');
 		$curDate = date('Y-m-d');
-		if($curDate >= '2022-04-06' && $curDate <= '2022-04-30')
+		if($curDate <= '2022-04-30')
 				$nxtYear = Carbon::now()->addYear()->format('Y-m-30');
 		else
 				$nxtYear = Carbon::now()->addYear()->format('Y-m-d');
@@ -1543,7 +1543,7 @@ class PropertyController
 			
 		$startDate = Carbon::now()->format('Y-m-01');
 		$curDate = date('Y-m-d');
-		if($curDate >= '2022-04-06' && $curDate <= '2022-04-30')
+		if($curDate <= '2022-04-30')
 			$nxtYear = Carbon::now()->addYear()->format('Y-m-30');
 		else
 			$nxtYear = Carbon::now()->addYear()->format('Y-m-d');
