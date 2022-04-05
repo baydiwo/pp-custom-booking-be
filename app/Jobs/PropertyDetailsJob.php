@@ -104,10 +104,6 @@ class PropertyDetailsJob implements ShouldQueue
 				$dataToken['token']
 			);
 			
-			$saveData = PropertyAreaDetails::where('property_id', $id)
-										->where('area_id', $areaId)
-										->first();
-			
 			$saveAreaConfigDetails = self::requestAreaConfigDetails(
 				$areaId,
 				$dataToken['token']
@@ -128,6 +124,9 @@ class PropertyDetailsJob implements ShouldQueue
 				$dataToken['token']
 			);
 			
+			$saveData = PropertyAreaDetails::where('property_id', $id)
+										->where('category_id', $saveAreaDetails['categoryId'])
+										->first();
 			$bathrooms = $bedrooms = 0;
 			$bed_list = ['1' => '165', '2' => '166', '3' => '167', '4' => '168', '5' => '169', '6' => '170', '8' => '177'];
 			$bath_list = ['1' => '171', '2' => '172', '3' => '173', '4' => '174', '5' => '175', '6' => '176', '7' => '178'];
