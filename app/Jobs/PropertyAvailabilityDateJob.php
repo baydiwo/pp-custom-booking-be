@@ -120,6 +120,7 @@ class PropertyAvailabilityDateJob implements ShouldQueue
 										$model->available_area 	= (int)$dayBd['availableAreas'];
 										$model->date_from 		= $theDate;
 										$model->stop_sell 		= ($dayBd['stopSell'] == true)? '1' : '0';
+										$model->closed_on_arrival 		= ($dayBd['closedOnArrival'] == true)? '1' : '0';
 										$model->created_date	= date('Y-m-d H:i:s');
 										$model->save();
 									}

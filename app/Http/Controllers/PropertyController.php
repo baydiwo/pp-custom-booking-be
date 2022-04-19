@@ -1099,6 +1099,20 @@ class PropertyController
 						$resultData['stopSell'] = 0;
 					// End - Checking StopSell for selected dates
 					
+					$dataCoA = AvailabilityDate::select('*')->where('category_id', $cid)
+									->where('date_from', '>=', $this->params['dateFrom'])
+									->where('date_from', '<=', $this->params['dateTo'])
+									->where('available_area', 1)
+									->where('closed_on_arrival', '1')
+									->get();
+					
+					// Start - Checking closedOnArrival for selected dates
+					if(count($dataCoA) > 0)
+						$resultData['closedOnArrival'] = 1;
+					else
+						$resultData['closedOnArrival'] = 0;
+					// End - Checking closedOnArrival for selected dates
+					
 					return $resultData;
 				}
 			}
