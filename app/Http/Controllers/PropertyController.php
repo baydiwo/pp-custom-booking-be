@@ -1100,8 +1100,7 @@ class PropertyController
 					// End - Checking StopSell for selected dates
 					
 					$dataCoA = AvailabilityDate::select('*')->where('category_id', $cid)
-									->where('date_from', '>=', $this->params['dateFrom'])
-									->where('date_from', '<=', $this->params['dateTo'])
+									->where('date_from', '=', $this->params['dateFrom'])
 									->where('available_area', 1)
 									->where('closed_on_arrival', '1')
 									->get();
